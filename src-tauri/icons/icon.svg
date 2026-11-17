@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="128" height="128" viewBox="0 0 128 128"
+     fill="none" role="img">
+  <title>FontNest · 探头喵</title>
+  <rect x="4" y="4" width="120" height="120"
+        rx="30" fill="#F5F0E8"/>
+
+  <!-- 猫咪从卡片后探头 -->
+  <path d="M35 53V27Q35 22 40 25
+           L51 34Q64 29 77 34
+           L88 25Q93 22 93 27V53
+           Q93 70 64 70Q35 70 35 53Z"
+        fill="#6654A4"/>
+  <path d="M49 44V47M79 44V47"
+        stroke="#F5F0E8" stroke-width="5"
+        stroke-linecap="round"/>
+  <path d="M61 51Q64 54 67 51"
+        stroke="#E9AD9D" stroke-width="3.5"
+        stroke-linecap="round"/>
+
+  <!-- 字体卡 -->
+  <rect x="27" y="58" width="74" height="49"
+        rx="13" fill="#6654A4"/>
+  <rect x="32" y="63" width="64" height="39"
+        rx="9" fill="#F5F0E8"/>
+
+  <!-- 趴在卡片边缘的小爪 -->
+  <rect x="39" y="54" width="14" height="15"
+        rx="7" fill="#E9AD9D"/>
+  <rect x="75" y="54" width="14" height="15"
+        rx="7" fill="#E9AD9D"/>
+
+  <path d="M51 94V73H57L70 85V73
+           H77V94H71L58 82V94Z"
+        fill="#6654A4"/>
+</svg>

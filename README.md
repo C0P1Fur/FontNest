@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="src-tauri/icons/128x128.png" width="96" height="96" alt="FontNest 图标">
+
 # FontNest
 
 **极简 · 本地 · 跨平台字体管理器**
