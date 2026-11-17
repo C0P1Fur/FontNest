@@ -70,3 +70,9 @@ $RECYCLE.BIN/
 # AI 助手的技能包（.agents/skills/…），是开发环境的一部分而非产品源码。
 # 如果团队需要共享同一套技能，把下面这行删掉即可。
 .agents/
+
+# ───────── 设计参考（不进库）─────────
+# 三版视觉原型，只用于当初选型，已经定稿为 micro-interactions。
+# 它们曾被提交进历史，后来用 git filter-branch 整体移除（见 CHANGELOG 里的说明）。
+# 文件保留在本地，仅是不再纳入版本控制。
+frontend-prototypes/
