@@ -9,6 +9,7 @@ import { StatusBar } from './components/StatusBar'
 import { Toast } from './components/Toast'
 import { SettingsPanel } from './components/SettingsPanel'
 import { RecognizePanel } from './components/RecognizePanel'
+import { Tour } from './components/Tour'
 import { applyQuery } from './lib/filter'
 import { api } from './lib/ipc'
 import { RIPPLE_SELECTOR, rippleFrom, tactile } from './lib/motion'
@@ -233,6 +234,7 @@ export default function App() {
       <StatusBar visible={visible.length} total={fonts.length} />
       <SettingsPanel />
       <RecognizePanel />
+      <Tour />
       <Toast />
     </div>
   )

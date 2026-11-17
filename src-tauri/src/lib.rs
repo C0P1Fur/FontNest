@@ -95,6 +95,8 @@ pub fn run() {
             commands::set_collection_fonts,
             commands::recognize_fonts,
             commands::recognize_fonts_from_clipboard,
+            commands::get_ui_state,
+            commands::save_ui_state,
             commands::app_status,
         ])
         .run(tauri::generate_context!())

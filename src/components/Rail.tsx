@@ -60,7 +60,7 @@ export function Rail() {
 
   return (
     <aside className="rail">
-      <nav aria-label="字体库范围">
+      <nav aria-label="字体库范围" data-tour="filters">
         <h2 className="rail-title">库</h2>
         {SCOPE_ORDER.map((key) => (
           <button
@@ -68,6 +68,7 @@ export function Rail() {
             type="button"
             className={key === scope ? 'rail-item is-active' : 'rail-item'}
             aria-pressed={key === scope}
+            data-scope={key}
             onClick={() => setScope(key)}
           >
             {SCOPE_META[key].icon}
@@ -77,7 +78,7 @@ export function Rail() {
         ))}
       </nav>
 
-      <div className="rail-block">
+      <div className="rail-block" data-tour="filters">
         <h2 className="rail-title">类型</h2>
         {CATEGORY_ORDER.map((category: FontCategory) => (
           <label key={category} className="check">

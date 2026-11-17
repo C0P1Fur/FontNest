@@ -1,6 +1,6 @@
 use tauri::State;
 
-use fontnest_core::{Collection, Font, ReconcileReport, RecognizeReport, ScanSummary};
+use fontnest_core::{Collection, Font, ReconcileReport, RecognizeReport, ScanSummary, UiState};
 
 use crate::{AppState, ClipFrame};
 
@@ -79,6 +79,18 @@ pub fn remove_custom_dir(state: State<'_, AppState>, path: String) -> Result<Vec
 }
 
 /* ───────────── 启动对账 ───────────── */
+
+/* ───────────── UI 偏好（引导是否看过） ───────────── */
+
+#[tauri::command]
+pub fn get_ui_state() -> Result<UiState, String> {
+    Ok(fontnest_core::ui::load())
+}
+
+#[tauri::command]
+pub fn save_ui_state(state: UiState) -> Result<(), String> {
+    fontnest_core::ui::save(&state).map_err(|error| error.to_string())
+}
 
 /* ───────────── 字体识别 ───────────── */
 

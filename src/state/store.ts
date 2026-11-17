@@ -44,6 +44,10 @@ export interface AppState {
   theme: Theme
   settingsOpen: boolean
   recognizeOpen: boolean
+  /** 上手引导是否显示 */
+  tourOpen: boolean
+  /** 引导是否已完成或跳过（来自 ui.json） */
+  tourSeen: boolean
   /** 热键抓到的截图；null 表示这次识别要从文件里选图 */
   capture: ClipboardCapture | null
   /** 启动时问到的快捷键状态，用来决定要不要劝用户按热键 */
@@ -73,6 +77,9 @@ export interface AppState {
   toggleTheme: () => void
   openSettings: () => void
   closeSettings: () => void
+  openTour: () => void
+  /** 完成或跳过引导：关掉并落盘 */
+  finishTour: (step: number) => Promise<void>
   openRecognize: () => void
   closeRecognize: () => void
   /** 热键抓到了图：直接带着它打开面板 */
@@ -132,6 +139,8 @@ export const useApp = create<AppState>()((set, get) => ({
   theme: readTheme(),
   settingsOpen: false,
   recognizeOpen: false,
+  tourOpen: false,
+  tourSeen: true,
   capture: null,
   appStatus: null,
 
@@ -143,11 +152,12 @@ export const useApp = create<AppState>()((set, get) => ({
     if (get().status !== 'idle') return
     set({ status: 'loading' })
     try {
-      const [fonts, dirs, collections, appStatus] = await Promise.all([
+      const [fonts, dirs, collections, appStatus, ui] = await Promise.all([
         api.listFonts(),
         api.getCustomDirs(),
         api.listCollections(),
         api.getAppStatus(),
+        api.getUiState(),
       ])
       set((state) => ({
         fonts,
@@ -157,6 +167,10 @@ export const useApp = create<AppState>()((set, get) => ({
         status: 'ready',
         lastScanAt: Date.now(),
         selectedId: state.selectedId ?? fonts[0]?.id ?? null,
+        // 首次启动（或从未看过）→ 自动开始引导。
+        // 字体先加载完再开，否则锚点还不在 DOM 里。
+        tourOpen: !ui.tourSeen,
+        tourSeen: ui.tourSeen,
       }))
     } catch (error) {
       console.error('[fontnest] 加载字体失败', error)
@@ -274,6 +288,18 @@ export const useApp = create<AppState>()((set, get) => ({
 
   openSettings: () => set({ settingsOpen: true }),
   closeSettings: () => set({ settingsOpen: false }),
+
+  openTour: () => set({ tourOpen: true }),
+
+  finishTour: async (step) => {
+    set({ tourOpen: false, tourSeen: true })
+    try {
+      await api.saveUiState({ tourSeen: true, tourStep: step, tourSeenAt: Date.now() })
+    } catch (error) {
+      // 落盘失败不该让引导卡住；用户下次启动会再看到一次，可接受
+      console.error('[fontnest] 保存引导状态失败', error)
+    }
+  },
   // 从顶栏进来是"重新开始"：上一次抓的图必须丢掉，
   // 否则用户会对着旧截图输新文字。
   openRecognize: () => set({ recognizeOpen: true, capture: null }),

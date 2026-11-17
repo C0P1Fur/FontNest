@@ -10,6 +10,7 @@ export function TopBar() {
   const scanPhase = useApp((state) => state.scanPhase)
   const openSettings = useApp((state) => state.openSettings)
   const openRecognize = useApp((state) => state.openRecognize)
+  const openTour = useApp((state) => state.openTour)
 
   const [keysOpen, setKeysOpen] = useState(false)
 
@@ -41,7 +42,7 @@ export function TopBar() {
         </span>
       </div>
 
-      <div className="search" data-state={query ? 'active' : 'idle'}>
+      <div className="search" data-state={query ? 'active' : 'idle'} data-tour="search">
         <SearchIcon />
         <input
           id="search-input"
@@ -67,6 +68,7 @@ export function TopBar() {
           className="icon-btn"
           aria-label="字体识别"
           title="字体识别（用截图找字体）"
+          data-tour="recognize"
           onClick={openRecognize}
         >
           <ScanTextIcon />
@@ -141,6 +143,17 @@ export function TopBar() {
             </dt>
             <dd>清空搜索</dd>
           </dl>
+
+          <button
+            type="button"
+            className="keys-replay"
+            onClick={() => {
+              setKeysOpen(false)
+              openTour()
+            }}
+          >
+            重新查看上手引导
+          </button>
         </div>
       ) : null}
     </header>

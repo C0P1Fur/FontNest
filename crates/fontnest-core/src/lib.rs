@@ -12,6 +12,7 @@ pub mod paths;
 pub mod recognize;
 pub mod scan;
 pub mod sfnt;
+pub mod ui;
 
 pub use assess::{assess, Assessment, Reason};
 
@@ -24,3 +25,4 @@ pub use recognize::{
     preview_png, recognize, recognize_rgba, render_png, MatchCandidate, RecognizeReport,
 };
 pub use scan::{scan_dirs, ScanResult};
+pub use ui::UiState;

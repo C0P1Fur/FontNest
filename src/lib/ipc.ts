@@ -42,6 +42,13 @@ export interface ScanResult {
   finishedAt: number
 }
 
+/** 与 Rust 侧 ui.json 对应 */
+export interface UiState {
+  tourSeen: boolean
+  tourStep: number
+  tourSeenAt: number
+}
+
 /** mock 下的自定义目录，仅用于浏览器里点得动 */
 const mockDirs: string[] = []
 
@@ -173,6 +180,25 @@ async function setCollectionFonts(id: string, fonts: string[]): Promise<void> {
 }
 
 
+/* ───────────── UI 偏好（引导） ───────────── */
+
+const mockUi: UiState = { tourSeen: false, tourStep: 0, tourSeenAt: 0 }
+
+async function getUiState(): Promise<UiState> {
+  if (isTauriRuntime) {
+    return invokeTauri<UiState>('get_ui_state')
+  }
+  return { ...mockUi }
+}
+
+async function saveUiState(state: UiState): Promise<void> {
+  if (isTauriRuntime) {
+    await invokeTauri<void>('save_ui_state', { state })
+    return
+  }
+  Object.assign(mockUi, state)
+}
+
 /* ───────────── 字体识别 ───────────── */
 
 async function recognizeFonts(
@@ -267,4 +293,6 @@ export const api = {
   getAppStatus,
   onClipboardCapture,
   reconcileFonts,
+  getUiState,
+  saveUiState,
 }
