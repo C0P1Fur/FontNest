@@ -220,6 +220,25 @@ async function main() {
     return
   }
 
+  // B 类：只指路的条目。没有文件源，只有官网地址——
+  // 它们的许可禁止我们再分发文件，所以 variants 必须为空。
+  const linkOnly = (recipes.linkOnly ?? []).map((recipe) => ({
+    id: recipe.id,
+    family: recipe.family,
+    aliases: recipe.aliases ?? [],
+    nameZh: recipe.nameZh ?? '',
+    category: recipe.category ?? '',
+    scripts: recipe.scripts ?? [],
+    coverage: recipe.coverage ?? '',
+    license: recipe.license ?? '',
+    licenseUrl: recipe.licenseUrl ?? '',
+    redistributable: false,
+    homepage: recipe.homepage ?? '',
+    note: recipe.note ?? '',
+    variants: [],
+  }))
+  fonts.push(...linkOnly)
+
   // 一条都没成功时**不要**覆盖已有目录——否则一次网络故障就会把好数据清空
   if (fonts.length === 0) {
     console.error(`\n没有任何条目成功，保留原有 catalog.json 不动。失败 ${failures.length} 个。`)

@@ -790,5 +790,319 @@
         }
       ]
     }
+  ],
+  "linkOnly": [
+    {
+      "id": "alibaba-puhuiti",
+      "family": "Alibaba PuHuiTi",
+      "nameZh": "阿里巴巴普惠体",
+      "aliases": [
+        "普惠体",
+        "alibaba puhuiti",
+        "阿里普惠"
+      ],
+      "category": "sans",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "GB18030",
+      "license": "阿里巴巴字体许可",
+      "licenseUrl": "https://www.alibabafonts.com/",
+      "homepage": "https://www.alibabafonts.com/",
+      "note": "免费商用，但许可明令禁止转载字体文件，请从官网下载"
+    },
+    {
+      "id": "alibaba-sans",
+      "family": "Alibaba Sans",
+      "nameZh": "Alibaba Sans",
+      "aliases": [
+        "alibaba sans"
+      ],
+      "category": "sans",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "latin",
+      "license": "阿里巴巴字体许可",
+      "licenseUrl": "https://www.alibabafonts.com/#/font",
+      "homepage": "https://www.alibabafonts.com/#/font",
+      "note": "与普惠体配套的英文族，需从官网下载"
+    },
+    {
+      "id": "alimama-dongfang-dakaiti",
+      "family": "Alimama DongFangDaKaiTi",
+      "nameZh": "阿里妈妈东方大楷",
+      "aliases": [
+        "东方大楷",
+        "阿里妈妈"
+      ],
+      "category": "kai",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "书法",
+      "license": "阿里巴巴字体许可",
+      "licenseUrl": "https://www.alibabafonts.com/#/font",
+      "homepage": "https://www.alibabafonts.com/#/font",
+      "note": "书法风标题字，需从官网下载"
+    },
+    {
+      "id": "misans",
+      "family": "MiSans",
+      "nameZh": "MiSans",
+      "aliases": [
+        "misans",
+        "小米字体"
+      ],
+      "category": "sans",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "GB18030",
+      "license": "小米字体许可",
+      "licenseUrl": "https://hyperos.mi.com/font",
+      "homepage": "https://hyperos.mi.com/font",
+      "note": "免费商用，可嵌入软件但需注明；字体文件不可再分发"
+    },
+    {
+      "id": "harmonyos-sans",
+      "family": "HarmonyOS Sans",
+      "nameZh": "HarmonyOS Sans",
+      "aliases": [
+        "鸿蒙字体",
+        "harmonyos sans"
+      ],
+      "category": "sans",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "GB18030",
+      "license": "华为字体许可",
+      "licenseUrl": "https://developer.huawei.com/consumer/cn/design/resource/",
+      "homepage": "https://developer.huawei.com/consumer/cn/design/resource/",
+      "note": "需注册华为开发者账号后下载"
+    },
+    {
+      "id": "oppo-sans",
+      "family": "OPPO Sans",
+      "nameZh": "OPPO Sans",
+      "aliases": [
+        "oppo sans"
+      ],
+      "category": "sans",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "GB18030",
+      "license": "OPPO 字体许可",
+      "licenseUrl": "https://www.oppo.com/cn/",
+      "homepage": "https://www.oppo.com/cn/",
+      "note": "见 OPPO 官方设计资源页"
+    },
+    {
+      "id": "vivo-sans",
+      "family": "vivo Sans",
+      "nameZh": "vivo Sans",
+      "aliases": [
+        "vivo sans"
+      ],
+      "category": "sans",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "GB18030",
+      "license": "vivo 字体许可",
+      "licenseUrl": "https://www.vivo.com.cn/",
+      "homepage": "https://www.vivo.com.cn/",
+      "note": "见 vivo 官方设计资源页"
+    },
+    {
+      "id": "douyin-meihaoti",
+      "family": "Douyin MeihaoTi",
+      "nameZh": "抖音美好体",
+      "aliases": [
+        "美好体",
+        "抖音字体"
+      ],
+      "category": "display",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "展示",
+      "license": "字节跳动字体许可",
+      "licenseUrl": "",
+      "homepage": "",
+      "note": "通过字节跳动设计团队官方渠道获取"
+    },
+    {
+      "id": "tencent-sans",
+      "family": "Tencent Sans",
+      "nameZh": "腾讯体",
+      "aliases": [
+        "腾讯体",
+        "tencent sans"
+      ],
+      "category": "display",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "展示",
+      "license": "腾讯字体许可",
+      "licenseUrl": "https://isux.tencent.com/",
+      "homepage": "https://isux.tencent.com/",
+      "note": "由腾讯 ISUX 发布，见其官网"
+    },
+    {
+      "id": "zcool-fonts",
+      "family": "ZCOOL Fonts",
+      "nameZh": "站酷系列",
+      "aliases": [
+        "站酷",
+        "高端黑",
+        "酷黑",
+        "快乐体",
+        "文艺体"
+      ],
+      "category": "display",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "展示",
+      "license": "站酷字体许可",
+      "licenseUrl": "https://www.zcool.com.cn/special/zcoolfonts/",
+      "homepage": "https://www.zcool.com.cn/special/zcoolfonts/",
+      "note": "含站酷高端黑、酷黑、快乐体、文艺体等多款"
+    },
+    {
+      "id": "tsanger-fonts",
+      "family": "Tsanger Fonts",
+      "nameZh": "仓耳系列",
+      "aliases": [
+        "仓耳",
+        "今楷",
+        "渔阳体"
+      ],
+      "category": "display",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "展示",
+      "license": "仓耳字体许可",
+      "licenseUrl": "https://www.tsanger.cn/",
+      "homepage": "https://www.tsanger.cn/",
+      "note": "含仓耳今楷、渔阳体等"
+    },
+    {
+      "id": "pangmenzhengdao",
+      "family": "PangMenZhengDao",
+      "nameZh": "庞门正道系列",
+      "aliases": [
+        "庞门正道",
+        "标题体",
+        "轻松体"
+      ],
+      "category": "display",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "展示",
+      "license": "庞门正道字体许可",
+      "licenseUrl": "",
+      "homepage": "",
+      "note": "通过作者微信公众号获取，无固定官网"
+    },
+    {
+      "id": "uisdc-fonts",
+      "family": "UISDC Fonts",
+      "nameZh": "优设系列",
+      "aliases": [
+        "优设",
+        "标题黑",
+        "好身体体"
+      ],
+      "category": "display",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "展示",
+      "license": "优设字体许可",
+      "licenseUrl": "https://www.uisdc.com/",
+      "homepage": "https://www.uisdc.com/",
+      "note": "含优设标题黑、好身体体等"
+    },
+    {
+      "id": "huxiaobo-fonts",
+      "family": "HuXiaoBo Fonts",
+      "nameZh": "胡晓波系列",
+      "aliases": [
+        "胡晓波",
+        "男神体",
+        "骚包体"
+      ],
+      "category": "display",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "展示",
+      "license": "胡晓波字体许可",
+      "licenseUrl": "https://www.huxiaobo.com/",
+      "homepage": "https://www.huxiaobo.com/",
+      "note": "含胡晓波男神体、骚包体等"
+    },
+    {
+      "id": "yanshi-fonts",
+      "family": "YanShi Fonts",
+      "nameZh": "演示系列",
+      "aliases": [
+        "演示",
+        "悠然小楷",
+        "春风楷"
+      ],
+      "category": "kai",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "书法",
+      "license": "演示字库许可",
+      "licenseUrl": "",
+      "homepage": "",
+      "note": "演示悠然小楷、春风楷，通过作者渠道获取"
+    },
+    {
+      "id": "jiangxi-zhuokai",
+      "family": "JiangXi ZhuoKai",
+      "nameZh": "江西拙楷",
+      "aliases": [
+        "拙楷",
+        "江西拙楷"
+      ],
+      "category": "kai",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "书法",
+      "license": "作者自有许可",
+      "licenseUrl": "https://www.zcool.com.cn/special/zcoolfonts/",
+      "homepage": "https://www.zcool.com.cn/special/zcoolfonts/",
+      "note": "常见于站酷等设计社区，需从作者渠道获取"
+    },
+    {
+      "id": "ruizi-zhenyan",
+      "family": "RuiZi ZhenYan",
+      "nameZh": "锐字真言体",
+      "aliases": [
+        "锐字",
+        "真言体"
+      ],
+      "category": "display",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "展示",
+      "license": "锐字字体许可",
+      "licenseUrl": "https://www.ruiziti.com/",
+      "homepage": "https://www.ruiziti.com/",
+      "note": "锐字潮牌字库出品"
+    }
   ]
 }

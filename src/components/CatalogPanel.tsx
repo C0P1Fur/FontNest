@@ -228,6 +228,9 @@ export function CatalogPanel() {
                   ) : null}
                   <span className="catalog-license">{item.license}</span>
                 </span>
+                {!item.redistributable && item.note ? (
+                  <span className="catalog-note">{item.note}</span>
+                ) : null}
               </div>
 
               <div className="catalog-actions">
@@ -256,7 +259,7 @@ export function CatalogPanel() {
                   >
                     {busy === item.id ? '下载中…' : '下载'}
                   </button>
-                ) : (
+                ) : item.homepage ? (
                   <button
                     type="button"
                     className="catalog-primary"
@@ -265,6 +268,9 @@ export function CatalogPanel() {
                   >
                     {copied === item.id ? '链接已复制' : '去官网下载'}
                   </button>
+                ) : (
+                  // 没有固定官网（靠公众号 / 作者渠道发布），按钮点了也没用
+                  <span className="catalog-badge">见说明</span>
                 )}
 
                 {item.downloaded && !item.installed ? (

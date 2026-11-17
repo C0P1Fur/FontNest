@@ -507,4 +507,47 @@ mod tests {
         assert!(issues.is_empty(), "内置目录有问题：{issues:?}");
         assert!(catalog.validate().is_empty(), "内置目录校验未通过");
     }
+
+    /// B 类的两条硬要求：
+    /// 1. 不能带文件源（带了就是违约）
+    /// 2. 必须有 note（否则界面上只有一个点不动的按钮，用户不知道怎么办）
+    #[test]
+    fn link_only_entries_explain_themselves() {
+        let (catalog, _) = Catalog::load();
+        let link_only: Vec<_> = catalog.only_link_only().collect();
+        assert!(!link_only.is_empty(), "目录里应当有仅链接条目");
+
+        for font in link_only {
+            assert!(
+                font.variants.is_empty(),
+                "{} 不可入库，却携带了文件源",
+                font.id
+            );
+            assert!(!font.note.is_empty(), "{} 缺少获取说明", font.id);
+        }
+    }
+
+    /// A 类必须真的能下载：至少一个变体，且每个变体都有合法源与哈希
+    #[test]
+    fn redistributable_entries_are_downloadable() {
+        let (catalog, _) = Catalog::load();
+        let downloadable: Vec<_> = catalog.only_redistributable().collect();
+        assert!(!downloadable.is_empty(), "目录里应当有可下载条目");
+
+        for font in downloadable {
+            assert!(!font.variants.is_empty(), "{} 没有变体", font.id);
+            for variant in &font.variants {
+                assert!(!variant.sources.is_empty(), "{} 变体无源", font.id);
+                for source in &variant.sources {
+                    assert!(
+                        is_allowed_url(&source.url),
+                        "{} 的源不在白名单：{}",
+                        font.id,
+                        source.url
+                    );
+                    assert!(is_sha256(&source.sha256), "{} 的源缺哈希", font.id);
+                }
+            }
+        }
+    }
 }

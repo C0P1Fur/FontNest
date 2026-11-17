@@ -1005,6 +1005,16 @@ kbd {
   opacity: 0.75;
 }
 
+.catalog-note {
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--faint);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .catalog-actions {
   display: flex;
   align-items: center;
