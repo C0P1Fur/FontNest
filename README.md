@@ -12,7 +12,7 @@
 [![Tauri](https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square&logo=tauri&logoColor=white)](https://tauri.app)
 [![Rust](https://img.shields.io/badge/Rust-1.96-000000?style=flat-square&logo=rust&logoColor=white)](https://www.rust-lang.org)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
-[![License](https://img.shields.io/badge/license-MIT-4a4a4a?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-4a4a4a?style=flat-square)](#许可)
 
 [功能](#功能) · [快速开始](#快速开始) · [字体识别](#字体识别) · [架构](#架构) · [文档](#文档)
 
@@ -277,7 +277,13 @@ $env:FONTNEST_SANDBOX_DIR = "$env:TEMP\fn-sandbox"
 
 ## 许可
 
-代码以 [MIT 许可](LICENSE) 发布。
+代码以 **MIT 或 Apache-2.0 双许可**发布，你可以任选其一：
+
+- [LICENSE-MIT](LICENSE-MIT)
+- [LICENSE-APACHE](LICENSE-APACHE)
+
+这是 Rust 生态的惯例：Apache-2.0 含明确的专利授权条款，适合需要专利兜底的场景；
+MIT 只有一页，适合想要最简条款的场景。**使用者按自己的合规要求挑一个即可。**
 
 **字体不在其中。** 本仓库不包含任何字体文件——字体要么来自用户机器上已安装的，
 要么由用户从官方渠道获取。每款字体各自的许可，见应用内「推荐下载字体」面板里的标注。

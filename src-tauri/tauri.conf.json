@@ -34,7 +34,7 @@
     "category": "Utility",
     "shortDescription": "极简本地字体管理器",
     "longDescription": "跨平台本地字体管理器：扫描本机字体、真实字形预览、当前用户级安装与卸载、截图反查字体。",
-    "licenseFile": "../LICENSE",
+    "licenseFile": "../LICENSE-MIT",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
