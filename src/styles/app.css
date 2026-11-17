@@ -1138,6 +1138,64 @@ kbd {
   white-space: nowrap;
 }
 
+/* ═══════════ 拖放导入提示 ═══════════ */
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  /* 原生拖放事件不经过 DOM，这层绝不能吃掉点击 */
+  pointer-events: none;
+  background: rgba(20, 20, 26, 0.42);
+  backdrop-filter: blur(3px);
+  animation: dropIn 140ms var(--e-out) both;
+}
+
+@keyframes dropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.drop-frame {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 46px 64px;
+  border-radius: 18px;
+  border: 2px dashed var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 24px 60px -28px rgba(23, 23, 29, 0.5);
+}
+
+.drop-title {
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.drop-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* 拖进来的不是字体：换个语气，别让人以为能导 */
+.drop-overlay.is-invalid .drop-frame {
+  border-style: solid;
+  border-color: var(--line-2);
+  background: var(--bg);
+}
+
+.drop-overlay.is-invalid .drop-title {
+  color: var(--muted);
+}
+
 /* ═══════════ 工作区 ═══════════ */
 .workspace {
   grid-area: main;

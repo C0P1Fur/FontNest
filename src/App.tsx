@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { TopBar } from './components/TopBar'
 import { Rail } from './components/Rail'
@@ -30,6 +30,9 @@ const handleToggleEnabled = (id: string) => {
   void useApp.getState().toggleEnabled(id)
 }
 
+/** 拖放时能接受的文件类型。和 Rust 侧的 ALLOWED_EXTENSIONS 保持一致 */
+const FONT_FILE = /\.(ttf|otf|ttc)$/i
+
 export default function App() {
   const fonts = useApp((state) => state.fonts)
   const status = useApp((state) => state.status)
@@ -44,6 +47,9 @@ export default function App() {
   const selectedId = useApp((state) => state.selectedId)
   const collections = useApp((state) => state.collections)
   const activeCollectionId = useApp((state) => state.activeCollectionId)
+
+  /** 拖放提示：null 表示没在拖，`fonts` 可以导入，`invalid` 拖了非字体 */
+  const [dropHint, setDropHint] = useState<'fonts' | 'invalid' | null>(null)
 
   const visible = useMemo(() => {
     const base = applyQuery(fonts, { query, scope, categories, sort })
@@ -108,6 +114,9 @@ export default function App() {
    * 这是 B 类字体唯一的入口场景：许可禁止我们分发文件，用户只能自己
    * 去官网下载，然后拖进来。没有这条路径，"去官网下载"就是死胡同。
    *
+   * 全程有全屏提示：拖进来的东西能不能导，进去之前就该知道，
+   * 而不是松手之后弹个错误。
+   *
    * 监听失败（非 Tauri / 权限不足）时静默跳过——退化成只有「导入字体文件…」
    * 按钮，功能仍在，只是少一条捷径。
    */
@@ -120,17 +129,42 @@ export default function App() {
       try {
         const { getCurrentWebview } = await import('@tauri-apps/api/webview')
         const stop = await getCurrentWebview().onDragDropEvent((event) => {
-          if (event.payload.type !== 'drop') return
-          const paths = event.payload.paths.filter((path) =>
-            /\.(ttf|otf|ttc)$/i.test(path),
-          )
-          if (paths.length === 0) return
-          void useApp
-            .getState()
-            .importFonts(paths)
-            .then((note) => {
+          const payload = event.payload
+
+          // 进入窗口：先判断拖进来的是不是字体，决定提示的语气
+          if (payload.type === 'enter') {
+            if (payload.paths.length === 0) {
+              setDropHint(null)
+              return
+            }
+            const hasFont = payload.paths.some((path) => FONT_FILE.test(path))
+            setDropHint(hasFont ? 'fonts' : 'invalid')
+            return
+          }
+
+          if (payload.type === 'leave') {
+            setDropHint(null)
+            return
+          }
+
+          if (payload.type === 'drop') {
+            setDropHint(null)
+            const fonts = payload.paths.filter((path) => FONT_FILE.test(path))
+            const state = useApp.getState()
+
+            if (fonts.length === 0) {
+              if (payload.paths.length > 0) {
+                state.showToast('只支持 .ttf / .otf / .ttc 字体文件')
+              }
+              return
+            }
+            if (fonts.length < payload.paths.length) {
+              state.showToast(`已跳过 ${payload.paths.length - fonts.length} 个非字体文件`)
+            }
+            void state.importFonts(fonts).then((note) => {
               if (note) useApp.getState().showToast(note)
             })
+          }
         })
         if (cancelled) stop()
         else unlisten = stop
@@ -281,6 +315,24 @@ export default function App() {
       <RecognizePanel />
       <Tour />
       <Toast />
+
+      {dropHint ? (
+        <div
+          className={dropHint === 'fonts' ? 'drop-overlay' : 'drop-overlay is-invalid'}
+          aria-hidden="true"
+        >
+          <div className="drop-frame">
+            <span className="drop-title">
+              {dropHint === 'fonts' ? '松开即可导入字体' : '只能导入字体文件'}
+            </span>
+            <span className="drop-sub">
+              {dropHint === 'fonts'
+                ? '.ttf / .otf / .ttc · 导入后会出现在字体列表里，不影响其他软件'
+                : '拖入 .ttf / .otf / .ttc，其他格式会被拒绝'}
+            </span>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
