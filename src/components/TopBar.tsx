@@ -18,22 +18,58 @@ export function TopBar() {
     <header className="topbar">
       <div className="brand">
         <span className="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
+          {/*
+            探头喵。黑色部分用 currentColor（跟随主题的 --ink），
+            白色部分用 --surface（正好等于顶栏背景色），于是深色主题下自动反相——
+            否则写死 #000 的黑猫在深色顶栏上会整只消失。
+          */}
+          {/*
+            viewBox 收紧到图形边界（原图 0–128 里图形只占 27–101 / 22–107，
+            直接塞进 24px 容器，可见部分只有 14px）。
+          */}
+          <svg viewBox="24 19 80 91" fill="none">
             <path
-              d="M3.2 9.4c0 6.1 3.9 9.8 8.8 9.8s8.8-3.7 8.8-9.8"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
+              d="M35 53V27Q35 22 40 25L51 34Q64 29 77 34L88 25Q93 22 93 27V53Q93 70 64 70Q35 70 35 53Z"
+              fill="currentColor"
+            />
+            <path
+              d="M49 44V47M79 44V47"
+              stroke="var(--surface)"
+              strokeWidth="5"
               strokeLinecap="round"
             />
             <path
-              d="M6.9 7.6c0 4.7 2.3 7.4 5.1 7.4s5.1-2.7 5.1-7.4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
+              d="M61 51Q64 54 67 51"
+              stroke="var(--surface)"
+              strokeWidth="3.5"
               strokeLinecap="round"
             />
-            <circle cx="12" cy="4.3" r="1.7" fill="currentColor" />
+            <rect x="27" y="58" width="74" height="49" rx="13" fill="currentColor" />
+            <rect x="32" y="63" width="64" height="39" rx="9" fill="var(--surface)" />
+            <rect
+              x="39"
+              y="54"
+              width="14"
+              height="15"
+              rx="7"
+              fill="var(--surface)"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+            <rect
+              x="75"
+              y="54"
+              width="14"
+              height="15"
+              rx="7"
+              fill="var(--surface)"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+            <path
+              d="M51 94V73H57L70 85V73H77V94H71L58 82V94Z"
+              fill="currentColor"
+            />
           </svg>
         </span>
         <span className="brand-text">
