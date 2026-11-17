@@ -175,24 +175,100 @@ fn now_millis() -> u64 {
         .unwrap_or(0)
 }
 
+/**
+ * 决定 curl 用哪个代理。
+ *
+ * 为什么需要这个：curl 只读 `http_proxy` / `https_proxy` 环境变量，
+ * **不读 Windows 系统的代理设置**（那存在注册表里）。而从桌面图标
+ * 启动的应用往往拿不到用户 shell 里的环境变量。
+ *
+ * 结果就是：命令行里 `curl` 能下，App 里同样一条命令却报 exit 6
+ * "Could not resolve host" —— 因为 App 里的 curl 在直连。
+ *
+ * 顺序：项目专用变量 → 通用环境变量 → 系统设置。
+ */
+fn proxy_url() -> Option<String> {
+    for key in ["FONTNEST_PROXY", "HTTPS_PROXY", "https_proxy", "ALL_PROXY", "all_proxy"] {
+        if let Ok(value) = std::env::var(key) {
+            let trimmed = value.trim();
+            if !trimmed.is_empty() {
+                return Some(trimmed.to_string());
+            }
+        }
+    }
+    system_proxy()
+}
+
+#[cfg(target_os = "windows")]
+fn system_proxy() -> Option<String> {
+    use winreg::enums::HKEY_CURRENT_USER;
+    use winreg::RegKey;
+
+    let key = RegKey::predef(HKEY_CURRENT_USER)
+        .open_subkey(r"Software\Microsoft\Windows\CurrentVersion\Internet Settings")
+        .ok()?;
+
+    let enabled: u32 = key.get_value("ProxyEnable").ok()?;
+    if enabled == 0 {
+        return None;
+    }
+
+    let server: String = key.get_value("ProxyServer").ok()?;
+    // 两种写法都见过："127.0.0.1:7897" 和 "http=h:p;https=h:p"
+    if let Some(rest) = server.split(';').find_map(|part| part.strip_prefix("https=")) {
+        return Some(rest.to_string());
+    }
+    if let Some(rest) = server.split(';').find_map(|part| part.strip_prefix("http=")) {
+        return Some(rest.to_string());
+    }
+    Some(server)
+}
+
+#[cfg(not(target_os = "windows"))]
+fn system_proxy() -> Option<String> {
+    // macOS / Linux 的图形程序通常带代理环境变量，curl 自己会读
+    None
+}
+
+/// 把 curl 的退出码翻译成用户能行动的话。
+fn describe_curl_failure(code: i32, stderr: &str) -> String {
+    let hint = match code {
+        6 => "无法解析域名——网络不通，或这台机器需要代理才能访问",
+        7 => "连不上服务器",
+        22 => "服务器返回错误，文件可能已失效",
+        28 => "下载超时",
+        35 | 60 => "HTTPS 握手失败，可能被网络中间件拦截",
+        _ => "",
+    };
+    if hint.is_empty() {
+        format!("curl 退出码 {code}：{}", stderr.trim())
+    } else {
+        format!("{hint}（curl {code}）")
+    }
+}
+
 /// 调用 curl 把 url 写到 target，边跑边轮询文件大小报告进度。
 fn fetch_to<F>(url: &str, target: &Path, on_progress: &mut F) -> Result<u64, CoreError>
 where
     F: FnMut(u64),
 {
-    let mut child = Command::new("curl")
-        .args([
-            "-sS",
-            "-L",
-            "--fail",
-            "--max-time",
-            "600",
-            "--user-agent",
-            "fontnest/0.1",
-            "-o",
-        ])
-        .arg(target)
-        .arg(url)
+    let mut command = Command::new("curl");
+    command.args([
+        "-sS",
+        "-L",
+        "--fail",
+        "--max-time",
+        "600",
+        "--user-agent",
+        "fontnest/0.1",
+    ]);
+    if let Some(proxy) = proxy_url() {
+        // curl 的代理参数必须在 URL 之前
+        command.arg("-x").arg(proxy);
+    }
+    command.arg("-o").arg(target).arg(url);
+
+    let mut child = command
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
         .spawn()
@@ -211,10 +287,9 @@ where
                         use std::io::Read;
                         let _ = stderr.read_to_string(&mut message);
                     }
-                    return Err(CoreError::Io(format!(
-                        "curl 退出码 {}：{}",
+                    return Err(CoreError::Io(describe_curl_failure(
                         status.code().unwrap_or(-1),
-                        message.trim()
+                        &message,
                     )));
                 }
                 break;
@@ -383,6 +458,22 @@ mod tests {
         assert!(verify_file(&path, &correct.to_uppercase()).is_ok());
 
         let _ = std::fs::remove_file(path);
+    }
+
+    /// 错误信息要能让用户知道下一步做什么，而不是甩一个 curl 退出码
+    #[test]
+    fn curl_failures_are_explained() {
+        let dns = describe_curl_failure(6, "curl: (6) Could not resolve host: x");
+        assert!(dns.contains("无法解析域名"));
+        assert!(dns.contains("代理"), "DNS 失败最常见的成因就是没走代理");
+
+        assert!(describe_curl_failure(22, "").contains("失效"));
+        assert!(describe_curl_failure(28, "").contains("超时"));
+
+        // 未知退出码至少要把原始 stderr 带出来，否则无从排查
+        let unknown = describe_curl_failure(99, "something odd");
+        assert!(unknown.contains("99"));
+        assert!(unknown.contains("something odd"));
     }
 
     #[test]
