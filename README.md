@@ -12,6 +12,7 @@
 [![Tauri](https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square&logo=tauri&logoColor=white)](https://tauri.app)
 [![Rust](https://img.shields.io/badge/Rust-1.96-000000?style=flat-square&logo=rust&logoColor=white)](https://www.rust-lang.org)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
+[![License](https://img.shields.io/badge/license-MIT-4a4a4a?style=flat-square)](LICENSE)
 
 [功能](#功能) · [快速开始](#快速开始) · [字体识别](#字体识别) · [架构](#架构) · [文档](#文档)
 
@@ -235,7 +236,6 @@ macOS / Linux 上「启用」会明确返回"当前平台尚未实现"，而不�
 - **不支持 WOFF / WOFF2。** 这类文件会被扫描跳过，但会**在界面上报出跳过了多少个**，不会静默消失。
 - **字体识别只对干净图有效**，详见[能力边界](#能力边界)。
 - **没有打包产物。** `bundle.active` 仍是 false，没做过安装器。
-- **尚未添加 LICENSE 文件。** 在补上之前，默认保留所有权利。
 
 ---
 
@@ -272,6 +272,15 @@ $env:FONTNEST_SANDBOX_DIR = "$env:TEMP\fn-sandbox"
 | [docs/BACKEND.md](docs/BACKEND.md) | 后端结构、IPC 契约、实测数据、被否决的方案 |
 | [docs/ONBOARDING.md](docs/ONBOARDING.md) | 首次引导的分步设计稿 |
 | [docs/HANDOFF.md](docs/HANDOFF.md) | 交接说明：现状、踩过的坑、下一步 |
+
+---
+
+## 许可
+
+代码以 [MIT 许可](LICENSE) 发布。
+
+**字体不在其中。** 本仓库不包含任何字体文件——字体要么来自用户机器上已安装的，
+要么由用户从官方渠道获取。每款字体各自的许可，见应用内「推荐下载字体」面板里的标注。
 
 ---
 

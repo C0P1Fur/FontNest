@@ -2,6 +2,7 @@
   "name": "fontnest",
   "private": true,
   "version": "0.1.0",
+  "license": "MIT",
   "type": "module",
   "description": "极简本地字体管理器 · 跨平台桌面",
   "scripts": {
