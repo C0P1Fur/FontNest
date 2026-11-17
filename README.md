@@ -1,297 +1,426 @@
-<div align="center">
-
-<img src="src-tauri/icons/128x128.png" width="96" height="96" alt="FontNest 图标">
-
 # FontNest
 
-**极简 · 本地 · 跨平台字体管理器**
+<img src="src-tauri/icons/128x128.png" width="80" height="80" alt="FontNest 探头喵图标">
 
-只做三件事：**找到字体 → 看清字体 → 用上字体**
+一款极简本地字体管理器，让你先看清字体，再决定是否安装。
 
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-4a4a4a?style=flat-square)](#平台支持)
-[![Tauri](https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square&logo=tauri&logoColor=white)](https://tauri.app)
-[![Rust](https://img.shields.io/badge/Rust-1.96-000000?style=flat-square&logo=rust&logoColor=white)](https://www.rust-lang.org)
-[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
-[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-4a4a4a?style=flat-square)](#许可)
+浏览本机字体、预览未安装的字体、整理收藏，也可以通过截图在本地字库中寻找相似字体。
 
-[功能](#功能) · [快速开始](#快速开始) · [字体识别](#字体识别) · [架构](#架构) · [文档](#文档)
+> **目前仅提供 Windows 版本，需自行从源码编译。**
+>
+> 尚未发布可直接下载的预编译程序或安装包。macOS 和 Linux 暂未提供可用版本。
 
-</div>
+## 界面预览
 
-![FontNest 主界面](docs/images/app-main.png)
+![FontNest Windows 桌面版：字体列表与详情预览](assets/screenshots/fontnest-main.jpg)
 
-> 截图来自 Vite 浏览器预览（数据是内置示例字体），桌面版界面完全一致。
+*实际 Windows 桌面版截图，展示本机字体扫描结果。字体种类和数量取决于你的电脑。*
 
----
+## 核心功能
 
-## 它解决什么问题
+- **扫描字体**：扫描系统字体目录，也可以添加自己的字体文件夹。
+- **真实预览**：无需先安装，即可预览自定义目录中的字体，支持调整样张文字和字号。
+- **搜索与筛选**：搜索字体信息，按状态、字形类别筛选，切换网格或列表视图。
+- **收藏与分类**：收藏常用字体，将字体整理到自定义分类中。
+- **启用与停用**：将自定义目录中的字体安装到 Windows 当前用户范围，并管理由 FontNest 安装的字体。
+- **截图识别**：提供文字截图并输入图中文字，在已扫描的本地字库中查找相似候选。
+- **主题与引导**：支持明暗主题和首次使用引导。
 
-大多数人的硬盘里躺着几百个字体文件，但只敢装几个——装多了，Photoshop 和 Word 的字体列表会变成灾难。
+## 平台支持与限制
 
-于是形成了一个死循环：**想用不敢装，不装又看不清它长什么样。**
+当前仅提供 Windows 版本。代码中的其他平台适配分支不代表已有可用的 macOS 或 Linux 版本。
 
-FontNest 想拆掉这个循环。
+使用前请了解：
 
-| | 常见字体管理器 | FontNest |
-|---|---|---|
-| **未安装的字体** | 列表里看不到 | 用真实字形预览，看得清再决定装不装 |
-| **安装方式** | 系统级，可能要管理员权限 | **当前用户级**，不弹 UAC，随时可撤回 |
-| **找一款字体** | 只能按名字搜 | 还可以**截图反查**——输入图上的文字，从本机全库里找最像的 |
-| **你的数据** | 可能上传、可能联网 | 全部留在本机：无账号、无遥测、离线可用 |
+- 支持扫描 `.ttf`、`.otf`、`.ttc` 和 `.otc`；暂不支持 WOFF、WOFF2 等网页字体格式。
+- 系统字体作为只读内容展示；停用操作只管理 FontNest 自己安装的字体。
+- 截图识别依赖本地字库，无法找出本机没有的字体。
+- 识别时必须手动输入截图中的文字，不会自动识别文字内容。
+- 干净、清晰的单行文字图效果更好；复杂背景、模糊、透视和特殊字间距可能影响结果。
 
----
+## 从源码编译与运行
 
-## 功能
+**目前没有供下载的现成程序或安装包，所有使用方式都需要先获取源码。**
 
-- **扫描** — 系统字体目录 + 任意多个自定义目录，`.ttf / .otf / .ttc` 全支持（含字体集合里的多 face）
-- **预览** — 每张卡的名字和样张**都用该字体本身渲染**，未安装的也一样
-- **检索** — 名字/厂商模糊搜索，按状态、按字形分类筛选，四种排序
-- **收藏与分类** — 收藏是个人标记；分类是你自己圈的组，只用来筛选，**不会改动任何字体文件**
-- **启用 / 停用** — 真正把字体现装进系统（Windows 当前用户级），也可以随时卸掉
-- **截图识别** — 给一张文字截图 + 输入图上的字，返回最相似的几款
-- **首次引导** — 五步聚光灯导览，只讲不显然的事，可跳过、可重看
+下面的命令使用 Windows PowerShell。除环境安装步骤外，请在项目根目录执行，即同时包含 `package.json`、`Cargo.toml` 和 `src-tauri` 的目录。
 
----
+首次安装依赖和编译需要联网，Rust 首次编译可能耗时较长。
 
-## 截图
+### 1. 准备开发环境
 
-### 首次启动的分步引导
+需要准备：
 
-![首次引导](docs/images/app-tour.png)
+- **Git**：用于获取源码。通过 GitHub 下载源码 ZIP 时可跳过。
+- **Node.js 24.x**：包含 npm，用于安装依赖和构建前端。这里选择 24.x，与当前锁文件中的 Vite、Vitest 版本要求兼容。
+- **pnpm 11.x**：项目使用这一版本系列的依赖构建脚本配置。
+- **Rust stable，MSVC 工具链**：用于编译桌面程序。项目尚未声明经过验证的最低 Rust 版本。
+- **Microsoft C++ Build Tools**：需要“使用 C++ 的桌面开发”工作负载。
+- **Microsoft Edge WebView2 Runtime**：用于显示桌面界面，很多 Windows 电脑已预装。
 
-聚光灯只高亮当前这一步要讲的元素，其余压暗。可讲概念的那几步会**拦截点击**，
-避免用户中途跑去点别的而漏掉信息；需要动手的步骤则放行。
+#### 安装 Git 和 Node.js
 
----
+分别从 [Git 官网](https://git-scm.com/downloads/win)和 [Node.js 官网](https://nodejs.org/en/download)下载安装程序。
 
-## 快速开始
+Node.js 选择 **24.x**。安装完成后重新打开 PowerShell，检查：
 
-### 环境要求
-
-| 依赖 | 版本 |
-|---|---|
-| Node.js | ≥ 20 |
-| pnpm | ≥ 11（注意是 11，构建脚本配置项与旧版不同） |
-| Rust | ≥ 1.80（开发时用的是 1.96） |
-
-Windows 还需要 [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/)（Win11 自带）。
-
-### 运行
-
-```bash
-pnpm install
-pnpm desktop          # 启动桌面应用（Tauri 窗口）
+```powershell
+git --version
+node --version
+npm --version
 ```
 
-只想看界面、不启动 Rust 后端的话：
+每条命令都应输出版本号，其中 Node.js 应为 `v24.x.x`。
 
-```bash
-pnpm dev              # 浏览器预览，数据走内置 mock
+#### 安装 pnpm
+
+使用 npm 安装指定主版本，避免直接安装其他主版本：
+
+```powershell
+npm install --global pnpm@11
+pnpm --version
 ```
 
-### 构建
+版本号应以 `11.` 开头。安装方法也可参考 [pnpm 官方文档](https://pnpm.io/installation)。
 
-```bash
-pnpm desktop:build    # 产出安装包（bundle 尚未启用，当前只出可执行文件）
+#### 安装 C++ 构建工具
+
+下载并打开 [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) 安装程序：
+
+1. 选择 **“使用 C++ 的桌面开发”**。
+2. 保留该工作负载中的 MSVC 编译工具和 Windows SDK。
+3. 完成安装；如果提示重启，请先重启。
+
+如果已经安装 Visual Studio，可在 Visual Studio Installer 中检查是否已安装该工作负载。
+
+#### 安装 Rust
+
+从 [Rust 官网](https://www.rust-lang.org/tools/install)下载并运行 `rustup-init.exe`，使用适合本机架构的 MSVC 工具链。
+
+安装后重新打开 PowerShell：
+
+```powershell
+rustup default stable-msvc
+rustc --version
+cargo --version
+rustup show active-toolchain
 ```
 
----
+最后一条输出的工具链名称应包含 `windows-msvc`。
 
-## 使用
+#### 检查 WebView2
 
-### 键盘
+如果电脑已有 **Microsoft Edge WebView2 Runtime**，无需重复安装。
 
-| 按键 | 作用 |
-|---|---|
-| `⌘K` / `/` | 聚焦搜索 |
-| `↑` `↓` | 在结果间移动 |
-| `Space` | 启用 / 停用当前字体 |
-| `F` | 收藏 / 取消收藏 |
-| `1`–`5` | 切换预览字号 |
-| `T` | 切换样张文本 |
-| `G` / `L` | 网格 / 列表视图 |
-| `Esc` | 清空搜索 |
+如果没有，或应用启动时提示缺少 WebView2，请从 [Microsoft WebView2 下载页面](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)安装 Evergreen Runtime。
 
-### 添加字体目录
+C++ 工具、MSVC 工具链和 WebView2 的配置依据可参考 [Tauri Windows 环境准备文档](https://v2.tauri.app/start/prerequisites/#windows)。
 
-点顶栏的**文件夹＋图标**，或左栏底部的「刷新索引」旁的说明入口。
+### 2. 获取源码
 
-支持任意路径，扫描**只读不改**——你加进来的文件夹里的文件，FontNest 一个字节都不会动。
+在希望存放项目的位置打开 PowerShell。
 
-### 启用 / 停用的边界
+将下面的 `仓库克隆地址` 替换为当前 GitHub 仓库 **Code → HTTPS** 中显示的实际地址：
 
-这是全软件**唯一会写入系统文件**的功能，所以边界收得很紧：
-
-| 规则 | 实现 |
-|---|---|
-| 只处理**自定义目录**里的字体 | 系统字体永远不被改动，界面上显示为「系统字体 · 只读」 |
-| 卸载前校验内容哈希 | 文件被替换过就拒绝删除，只提示不动手 |
-| 删除 = 移入回收站 | `%APPDATA%\FontNest\trash\<时间戳>-<文件名>`，7 天内可人工恢复 |
-| 一切以清单为准 | 清单里没有的字体，磁盘上任何文件都不碰 |
-
----
-
-## 字体识别
-
-**这是一个"查表比对"，不是"看懂字体"。**
-
-### 怎么用
-
-1. 点顶栏的扫描框图标
-2. 选一张**含有文字**的图片
-3. 把图上的文字**照抄**进去（这一步不能省，见下）
-4. 得到按相似度排序的候选，每一条都用该字体自身渲染
-
-### 为什么必须输入文字
-
-因为它的原理是：**拿每个候选字体把同一段文字画一遍，再和你的图叠着比。**
-
-```
-你的截图  →  二值化 → 裁到墨迹 → 压成 48×48 的小格子图
-每个候选字体 → 渲染同样文字 → 同样三步 → 48×48
-                                          ↓
-                          两张小图逐格比"墨迹重叠了多少"（IoU）
+```powershell
+git clone "仓库克隆地址" FontNest
+cd FontNest
 ```
 
-不知道画的是什么，就没法画——所以文字必须由你提供。
+也可以通过 GitHub 的 **Code → Download ZIP** 下载源码，解压后在包含 `package.json` 的文件夹中打开 PowerShell。
 
-### 快在哪
+确认当前目录正确：
 
-早期版本跑完 399 个字体要 **123 秒**，现在 release 构建下 **0.23 秒**。关键改动是
-把渲染库从「加载时解码全部字形」换成「用哪个才读哪个」——加载耗时从 46 ms/字体
-降到 0.005 ms/字体，而识别每个字体只需要 6 个字形。
-
-### 能力边界
-
-它假设**输入是干净的单行文字图**。以下情况会明显掉分，且**不会报错**，
-只会安静地给出一个错误的排序：
-
-- 背景不是纯色（照片、渐变、杂纹理）
-- 字间距被手动调大过
-- 图片被拉伸变形、有明显透视
-- 文字过小或严重模糊
-
-代码里有一道**质量门槛**：提取出的墨迹如果不像文字（占比异常、碎块过多、形状不对），
-会直接拒绝并说明原因，而不是硬排一个名次出来。
-
-> 更完整的原理、实测数据与被否决的方案，见 [docs/BACKEND.md](docs/BACKEND.md)。
-
----
-
-## 实测数据
-
-在 24 逻辑核的 Windows 11 机器上，针对本机 377 个字体文件 / 399 个 face：
-
-| 操作 | 耗时 |
-|---|---|
-| 首次全量扫描 | 776 ms |
-| 搜索 / 筛选 / 排序（客户端） | 1–2 ms（10k 条量级仍可用） |
-| 字体识别（全库 399 个，release） | **232 ms** |
-| 字体文件解析（惰性，仅取用到的字形） | 0.005 ms / 字体 |
-
-测试：`cargo test -p fontnest-core` **33 passed** · `pnpm test` **13 passed**
-
----
-
-## 架构
-
-```
-Cargo.toml                  workspace 根
-├─ crates/fontnest-core     扫描 · 解析 · 索引 · 安装 · 识别（无 GUI 依赖，可单测）
-├─ crates/fontnest-cli      调试 CLI：扫描/识别/自测/诊断
-└─ src-tauri                Tauri 2 壳：命令搬运 + 自定义协议
-src/                        React 19 + TypeScript 前端
+```powershell
+Get-Item package.json, Cargo.toml, src-tauri
 ```
 
-**为什么把核心拆出来**：`fontnest-core` 不依赖 Tauri，也不依赖任何窗口系统。
-所以整条链路都能在终端里验证——
+应显示这三个文件或目录，而不是“找不到路径”。
 
-```bash
-cargo run -p fontnest-cli -- scan                      # 扫描摘要
-cargo run -p fontnest-cli -- diag                      # 体检：哪些字体读不出来
-cargo run -p fontnest-cli -- selftest --count 30       # 随机抽样自测识别准确率
+### 3. 安装项目依赖
+
+```powershell
+pnpm install --frozen-lockfile
 ```
 
-后端出问题时先在这里定位，再去怀疑 IPC。
+此步骤安装前端依赖和项目使用的 Tauri 命令行工具。Rust 依赖会在后续桌面编译时下载。
 
----
+### 4. 启动桌面开发模式
 
-## 平台支持
+希望先确认程序能正常运行，可以执行：
 
-| 功能 | Windows | macOS | Linux |
-|---|---|---|---|
-| 扫描 / 预览 / 搜索 / 收藏 / 分类 | ✅ | ✅ | ✅ |
-| 截图识别 | ✅ | ✅ | ✅ |
-| 启用 / 停用（安装到系统） | ✅ 当前用户级 | ❌ 未实现 | ❌ 未实现 |
-| 原生文件夹选择器 | ✅ | ✅ | ✅ |
-| 安装包 | ⏳ 待打包 | ⏳ | ⏳ |
+```powershell
+pnpm desktop
+```
 
-macOS / Linux 上「启用」会明确返回"当前平台尚未实现"，而不是静默失败。
+该命令会自动启动前端开发服务并编译 Rust 后端，无需提前运行 `pnpm dev`。
 
----
+成功后会打开 **FontNest 桌面窗口**，首次启动扫描本机字体，随后显示字体列表。运行期间保留终端；结束调试时在终端按 `Ctrl+C`。
 
-## 已知限制
+这是开发模式，会编译调试版本，**不等同于安装应用**。
 
-- **安装后端只有 Windows。** macOS 需要 CoreText、Linux 需要 fc-cache，都还没写。
-- **不支持 WOFF / WOFF2。** 这类文件会被扫描跳过，但会**在界面上报出跳过了多少个**，不会静默消失。
-- **字体识别只对干净图有效**，详见[能力边界](#能力边界)。
-- **没有打包产物。** `bundle.active` 仍是 false，没做过安装器。
+### 5. 编译正式版本
 
----
+仅需要编译后直接运行，可以跳过安装器打包：
 
-## 开发
+```powershell
+pnpm tauri build --no-bundle
+```
 
-```bash
-pnpm install
-pnpm dev              # 前端热更新（mock 数据）
-pnpm desktop          # 桌面应用
-pnpm build            # tsc --noEmit && vite build
-pnpm test             # vitest
+`--no-bundle` 会跳过打包步骤，但仍编译正式版本，详见 [Tauri CLI 文档](https://v2.tauri.app/reference/cli/#build)。
 
+在默认构建目录、未指定额外目标平台的情况下，可执行文件位于：
+
+```text
+target/release/fontnest.exe
+```
+
+编译成功后运行：
+
+```powershell
+.\target\release\fontnest.exe
+```
+
+这个文件是**可执行程序，不是安装包**。启动它不需要保持 Vite 开发服务运行，但电脑仍需具备 WebView2 Runtime。
+
+如果你配置了 `CARGO_TARGET_DIR` 或额外编译目标，产物目录会有所不同，请以构建日志为准。
+
+### 6. 可选：自行生成安装器
+
+当前配置已启用安装器打包，但尚未提供已发布的安装包。
+
+如果希望从源码生成 NSIS 安装器：
+
+```powershell
+pnpm tauri build --bundles nsis
+```
+
+默认输出目录为：
+
+```text
+target/release/bundle/nsis/
+```
+
+构建成功后，可打开目录，双击生成的安装程序：
+
+```powershell
+Invoke-Item .\target\release\bundle\nsis
+```
+
+当前 NSIS 配置使用当前用户安装模式，提供简体中文和英文界面。
+
+项目的完整构建命令是：
+
+```powershell
+pnpm desktop:build
+```
+
+它会按照当前 `targets: "all"` 配置执行打包。在 Windows 上，MSI 打包可能需要额外系统组件；如果只需要安装使用，可以先选择上面的 NSIS 命令。
+
+所有产物均需本机实际构建成功后才会生成，具体文件名以构建日志为准。
+
+### 仅预览界面
+
+如果只想查看或开发前端界面，在安装前端依赖后运行：
+
+```powershell
+pnpm dev
+```
+
+在浏览器打开：
+
+[http://localhost:1420](http://localhost:1420)
+
+浏览器模式使用内置 mock 数据，不读取真实本地字库，也不执行真实的字体安装、卸载或截图识别。
+
+完整功能请使用桌面模式。
+
+## 基本使用
+
+### 添加自己的字体目录
+
+1. 启动桌面应用。
+2. 点击顶栏的文件夹添加按钮，打开目录设置。
+3. 添加存放字体文件的文件夹。
+4. 等待扫描完成，在字体列表中查看结果。
+
+添加扫描目录不会移动或修改其中的字体文件。目录内容更新后，可使用“刷新索引”重新扫描。
+
+### 预览和查找字体
+
+- 在顶部搜索框输入字体名称等信息。
+- 使用侧边栏和筛选控件缩小范围。
+- 修改样张文字、字号，比较实际显示效果。
+- 点击字体查看详情。
+- 将常用字体加入收藏或自定义分类。
+
+收藏和分类只是整理标记，不会安装字体或改变字体文件。
+
+### 启用与停用字体
+
+对自定义目录中的字体执行“启用”，会将字体安装到 Windows 当前用户范围。
+
+停用时，FontNest 会核对安装清单和文件哈希，仅处理自己安装且内容未被替换的字体副本，不删除自定义目录中的原文件。
+
+停用后的副本移入 FontNest 自己的回收目录：
+
+```text
+%APPDATA%\FontNest\trash
+```
+
+这不是 Windows 系统回收站。系统字体以及不属于 FontNest 安装清单的字体不会被随意卸载。
+
+### 用截图寻找字体
+
+![FontNest 桌面版的字体识别入口](assets/screenshots/fontnest-recognize.jpg)
+
+*识别面板：选择截图并输入图中文字。此图展示操作入口，不是识别结果。*
+
+有两种入口：
+
+- 点击顶栏“字体识别”，选择一张文字图片。
+- 将截图复制到剪贴板，在 FontNest 运行时按 `Ctrl+Alt+F`。
+
+随后：
+
+1. 输入截图中实际显示的文字。
+2. 开始识别。
+3. 查看相似候选，并结合预览判断。
+
+识别会让本地候选字体渲染同一段文字，再与截图比较。因此，输入文字必须准确，结果也不保证一定是原字体。
+
+如果全局快捷键被其他软件占用，可以使用界面中的图片选择入口。
+
+## 常见问题
+
+### PowerShell 提示找不到 node、pnpm 或 cargo
+
+先关闭并重新打开 PowerShell，让新安装工具的 PATH 设置生效，再运行对应的版本检查命令。
+
+如果仍然找不到，请确认相关工具已经安装，并检查安装程序是否配置了 PATH。
+
+如果提示无法运行 `npm.ps1` 或 `pnpm.ps1`，可以使用对应的命令入口，例如：
+
+```powershell
+npm.cmd install --global pnpm@11
+pnpm.cmd install --frozen-lockfile
+pnpm.cmd desktop
+```
+
+### 编译提示找不到 link.exe 或 Windows SDK
+
+打开 Visual Studio Installer，确认安装了“使用 C++ 的桌面开发”、MSVC 工具和 Windows SDK。
+
+同时检查：
+
+```powershell
+rustup show active-toolchain
+```
+
+工具链应包含 `windows-msvc`。环境修复后重新打开终端再编译。
+
+### 安装依赖时提示 Node.js 版本不支持
+
+使用前文推荐的 Node.js 24.x。
+
+当前锁文件中的测试工具有更高的 Node.js 版本要求，仅满足 Vite 的最低版本并不足以覆盖整个项目的开发依赖。
+
+### 提示 esbuild 构建脚本被跳过
+
+确认使用 pnpm 11.x，并且项目根目录中的 `pnpm-workspace.yaml` 保留了：
+
+```yaml
+allowBuilds:
+  esbuild: true
+```
+
+检查完成后重新执行依赖安装；必要时执行：
+
+```powershell
+pnpm rebuild esbuild
+```
+
+### 提示 1420 端口被占用
+
+项目使用固定的 `1420` 端口。
+
+如果已经运行了 `pnpm dev`，请先在那个终端按 `Ctrl+C`，再执行 `pnpm desktop`。桌面开发命令会自行启动前端服务。
+
+### MSI 打包提示 failed to run light.exe
+
+Tauri 的 MSI 打包可能需要启用 Windows 的 VBSCRIPT 可选功能，参见 [Tauri MSI 环境说明](https://v2.tauri.app/start/prerequisites/#vbscript-for-msi-installers)。
+
+如果只是要生成可用程序或安装器，可以选择：
+
+```powershell
+# 只编译可执行程序
+pnpm tauri build --no-bundle
+
+# 只生成 NSIS 安装器
+pnpm tauri build --bundles nsis
+```
+
+### 为什么没有显示我添加的字体？
+
+请依次检查：
+
+- 使用的是桌面版，而不是浏览器 mock 预览。
+- 字体所在目录已添加，且已刷新索引。
+- 文件格式属于支持范围。
+- 当前搜索、分类或状态筛选没有将其隐藏。
+- 字体文件仍存在，并且当前用户可以读取。
+
+字体不包含样张中的某些字符时，这些字符可能由替代字体显示。
+
+### 启用后，其他软件里为什么还没出现？
+
+先确认 FontNest 显示安装成功。部分应用会缓存字体列表，需要重新打开字体选择界面或重启该应用。
+
+### 截图识别为什么不准确？
+
+优先使用背景干净、清晰、未变形的单行文字截图，并准确输入图中文字。
+
+候选字体必须已经被 FontNest 扫描到；本机没有对应字体时，只能返回本地字库中相似的结果。
+
+## 开发说明
+
+项目使用 React、TypeScript、Vite、Zustand 和 Tauri 2，核心字体逻辑使用 Rust 编写。
+
+```text
+src/                    React 界面、状态管理与 IPC 封装
+src-tauri/              Tauri 桌面壳、命令、快捷键与字体协议
+crates/fontnest-core/   字体扫描、解析、安装、分类与识别
+crates/fontnest-cli/    核心功能的命令行调试入口
+assets/screenshots/    README 使用的真实桌面截图
+```
+
+核心 Rust 库不依赖界面，可通过 CLI 或测试单独验证。
+
+在项目根目录执行：
+
+```powershell
+# TypeScript 类型检查
+pnpm typecheck
+
+# 前端测试
+pnpm test
+
+# 前端生产构建；不会生成桌面程序
+pnpm build
+
+# Rust 核心测试
 cargo test -p fontnest-core
+
+# 检查整个 Rust 工作区
 cargo check --workspace
 ```
 
-### 隔离沙箱
+这些是验证命令，不代表当前环境已运行通过。
 
-设置一个环境变量，整个后端就活在一个临时世界里（数据目录、字体目录、注册表全部隔离），
-端到端验证安装/卸载时**不会碰真实系统**：
+## 许可证
 
-```powershell
-$env:FONTNEST_SANDBOX_DIR = "$env:TEMP\fn-sandbox"
-```
+FontNest 采用 **MIT OR Apache-2.0** 双许可证，你可以选择其中之一，具体条款见：
 
----
+- [MIT License](LICENSE-MIT)
+- [Apache License 2.0](LICENSE-APACHE)
 
-## 文档
-
-| 文档 | 内容 |
-|---|---|
-| [PROJECT_PLAN.md](PROJECT_PLAN.md) | 产品计划、里程碑、决策记录 |
-| [docs/FRONTEND.md](docs/FRONTEND.md) | 前端架构、状态模型、设计语言 |
-| [docs/BACKEND.md](docs/BACKEND.md) | 后端结构、IPC 契约、实测数据、被否决的方案 |
-| [docs/ONBOARDING.md](docs/ONBOARDING.md) | 首次引导的分步设计稿 |
-| [docs/HANDOFF.md](docs/HANDOFF.md) | 交接说明：现状、踩过的坑、下一步 |
-
----
-
-## 许可
-
-代码以 **MIT 或 Apache-2.0 双许可**发布，你可以任选其一：
-
-- [LICENSE-MIT](LICENSE-MIT)
-- [LICENSE-APACHE](LICENSE-APACHE)
-
-这是 Rust 生态的惯例：Apache-2.0 含明确的专利授权条款，适合需要专利兜底的场景；
-MIT 只有一页，适合想要最简条款的场景。**使用者按自己的合规要求挑一个即可。**
-
-**字体不在其中。** 本仓库不包含任何字体文件——字体要么来自用户机器上已安装的，
-要么由用户从官方渠道获取。每款字体各自的许可，见应用内「推荐下载字体」面板里的标注。
-
----
-
-## 致谢
-
-字体解析与栅格化依赖 [swash](https://github.com/dfrg/swash)，
-界面基于 [Tauri](https://tauri.app) 与 [React](https://react.dev)，
-图标与视觉规范来自本项目自己的三个原型迭代（已从版本库移除，仅保留结论）。
+软件许可证不包含你自行导入字体的授权。字体的使用与分发请遵守对应字体的许可证。
