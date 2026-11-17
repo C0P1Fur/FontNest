@@ -283,10 +283,23 @@ impl Library {
         Ok(report)
     }
 
-    /// 全量扫描：系统目录 + 用户目录 + 自定义目录。
-    /// 自定义目录里的字体 `enabled = false` —— 它们在库里，但没装进系统。
+    /// 全量扫描：系统目录 + 用户目录 + 内置字体库 + 自定义目录。
+    /// 自定义目录（含内置字体库）里的字体 `enabled = false` —— 它们在库里，但没装进系统。
     pub fn scan(&mut self) -> ScanSummary {
         let mut dirs = platform_dirs();
+
+        // 从可选字体库下载下来的字体，等价于一个内置的自定义目录。
+        //
+        // 接入这里而不是另写一套流程，是因为「安装到系统」的整套语义
+        // （只认 Source::Custom、复制到用户字体目录、写清单、可卸载）
+        // 已经存在且验证过了。下载的字体走同一条路，就不需要第二套。
+        //
+        // 目录不存在时 scan_dirs 会自己跳过，不需要额外判断。
+        dirs.push(FontDir {
+            path: crate::catalog::library_root(),
+            source: Source::Custom,
+        });
+
         for path in &self.custom_dirs {
             dirs.push(FontDir {
                 path: path.clone(),
