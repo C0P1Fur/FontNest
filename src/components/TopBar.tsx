@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { modShortcut } from '../lib/platform'
 import { useApp } from '../state/store'
 import { KeyboardIcon, SearchIcon, SunIcon, FolderPlusIcon, ScanTextIcon } from './Icons'
 
@@ -89,7 +90,7 @@ export function TopBar() {
           spellCheck={false}
           onChange={(event) => setQuery(event.target.value)}
         />
-        <kbd>⌘K</kbd>
+        <kbd>{modShortcut('K')}</kbd>
       </div>
 
       <div className="top-actions">
@@ -141,7 +142,7 @@ export function TopBar() {
           <h3>键盘</h3>
           <dl>
             <dt>
-              <kbd>⌘K</kbd> / <kbd>/</kbd>
+              <kbd>{modShortcut('K')}</kbd> / <kbd>/</kbd>
             </dt>
             <dd>聚焦搜索</dd>
             <dt>
