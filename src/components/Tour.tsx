@@ -49,7 +49,7 @@ const STEPS: StepDef[] = [
     placement: 'right',
     blocking: true,
     title: '快速缩小范围',
-    body: '上面按状态分（已启用 / 未启用 / 可变），下面按字形分（衬线 / 等宽 / 手写…）。',
+    body: '上面按状态分（已安装 / 未安装 / 可变），下面按字形分（衬线 / 等宽 / 手写…）。',
   },
   {
     key: 'card',

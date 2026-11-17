@@ -265,7 +265,7 @@ export const useApp = create<AppState>()((set, get) => ({
         pendingId: null,
       }))
       get().showToast(
-        next ? `已启用 · ${font.family}` : `已停用 · ${font.family}`,
+        next ? `已安装 · ${font.family}` : `已卸载 · ${font.family}`,
         () => {
           void get().toggleEnabled(id)
         },

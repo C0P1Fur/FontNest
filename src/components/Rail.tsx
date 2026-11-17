@@ -15,8 +15,8 @@ import {
 
 const SCOPE_META: Record<LibraryScope, { label: string; icon: ReactNode }> = {
   all: { label: '全部字体', icon: <LayersIcon /> },
-  enabled: { label: '已启用', icon: <CircleCheckIcon /> },
-  disabled: { label: '未启用', icon: <CircleDashedIcon /> },
+  enabled: { label: '已安装', icon: <CircleCheckIcon /> },
+  disabled: { label: '未安装', icon: <CircleDashedIcon /> },
   variable: { label: '可变字体', icon: <VariableIcon /> },
   favorite: { label: '收藏', icon: <StarOutlineIcon /> },
 }

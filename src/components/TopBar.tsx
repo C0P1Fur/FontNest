@@ -152,7 +152,7 @@ export function TopBar() {
             <dt>
               <kbd>Space</kbd>
             </dt>
-            <dd>启用 / 停用当前字体</dd>
+            <dd>安装 / 卸载当前字体</dd>
             <dt>
               <kbd>F</kbd>
             </dt>

@@ -225,11 +225,11 @@ export function Inspector({ font }: { font: Font | null }) {
             <span className="btn-text">
               {pending
                 ? font.enabled
-                  ? '正在停用…'
-                  : '正在启用…'
+                  ? '正在卸载…'
+                  : '正在安装…'
                 : font.enabled
-                  ? '已启用'
-                  : '启用字体'}
+                  ? '已安装'
+                  : '安装字体'}
             </span>
           </button>
         ) : (

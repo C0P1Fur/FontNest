@@ -9,7 +9,7 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'name', label: '按名称' },
   { value: 'styles', label: '按字重数' },
   { value: 'year', label: '按年代' },
-  { value: 'state', label: '按启用状态' },
+  { value: 'state', label: '按安装状态' },
 ]
 
 const SIZE_OPTIONS = SIZES.map((size) => ({
