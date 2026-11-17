@@ -21,8 +21,20 @@ pub fn home_dir() -> Option<PathBuf> {
 
 /* ───────────── Windows ───────────── */
 
-#[cfg(target_os = "windows")]
+/// 沙箱模式下只扫沙箱自己的字体目录，形成一个彻底隔离的世界：
+/// 验证安装/卸载时既不会读到真实系统字体，也不会写进去。
 pub fn platform_dirs() -> Vec<FontDir> {
+    if let Some(root) = std::env::var_os("FONTNEST_SANDBOX_DIR") {
+        return vec![FontDir {
+            path: PathBuf::from(root).join("Fonts"),
+            source: Source::User,
+        }];
+    }
+    platform_dirs_impl()
+}
+
+#[cfg(target_os = "windows")]
+fn platform_dirs_impl() -> Vec<FontDir> {
     let mut dirs = Vec::new();
 
     let windir = std::env::var_os("SystemRoot")
@@ -49,7 +61,7 @@ pub fn platform_dirs() -> Vec<FontDir> {
 /* ───────────── macOS ───────────── */
 
 #[cfg(target_os = "macos")]
-pub fn platform_dirs() -> Vec<FontDir> {
+fn platform_dirs_impl() -> Vec<FontDir> {
     let mut dirs = vec![
         FontDir {
             path: PathBuf::from("/System/Library/Fonts"),
@@ -74,7 +86,7 @@ pub fn platform_dirs() -> Vec<FontDir> {
 /* ───────────── Linux ───────────── */
 
 #[cfg(all(unix, not(target_os = "macos")))]
-pub fn platform_dirs() -> Vec<FontDir> {
+fn platform_dirs_impl() -> Vec<FontDir> {
     let mut dirs = vec![
         FontDir {
             path: PathBuf::from("/usr/share/fonts"),

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import type { Font } from '../types/font'
-import { CATEGORY_LABEL, fontStack } from '../lib/filter'
+import { CATEGORY_LABEL } from '../lib/filter'
+import { faceFamily, ensureFace } from '../lib/fontFaces'
 import { formatBytes, formatCount } from '../lib/format'
 import { spawnSparks } from '../lib/motion'
 import { SIZES } from '../lib/samples'
@@ -39,6 +40,8 @@ export function Inspector({ font }: { font: Font | null }) {
       setAxes({})
       return
     }
+    // 自定义目录的字体要先把 @font-face 挂上去，否则详情区也是兜底字形
+    ensureFace(font)
     const next: Record<string, number> = {}
     for (const axis of font.axes) next[axis.tag] = axis.defaultValue
     setAxes(next)
@@ -48,7 +51,10 @@ export function Inspector({ font }: { font: Font | null }) {
 
   const { wrapRef, indicatorRef } = useIndicator<TabKey>(tab, 0)
 
-  const face = useMemo(() => (font ? { fontFamily: fontStack(font) } : undefined), [font])
+  const face = useMemo(
+    () => (font ? { fontFamily: faceFamily(font) } : undefined),
+    [font],
+  )
 
   if (!font) {
     return <aside className="inspector" aria-label="字体详情" />
@@ -185,23 +191,38 @@ export function Inspector({ font }: { font: Font | null }) {
       ) : null}
 
       <div className="insp-actions">
-        <button
-          type="button"
-          className={`btn-primary${font.enabled ? ' is-on' : ''}${pending ? ' is-pending' : ''}`}
-          aria-disabled={pending}
-          onClick={() => {
-            void toggleEnabled(font.id)
-          }}
-        >
-          <span className="btn-lede">
-            <PlusIcon className="ico ic-plus" />
-            <CheckIcon className="ico ic-check" />
-            <span className="spinner" />
-          </span>
-          <span className="btn-text">
-            {pending ? (font.enabled ? '正在停用…' : '正在启用…') : font.enabled ? '已启用' : '启用字体'}
-          </span>
-        </button>
+        {font.source === 'custom' ? (
+          <button
+            type="button"
+            className={`btn-primary${font.enabled ? ' is-on' : ''}${pending ? ' is-pending' : ''}`}
+            aria-disabled={pending}
+            onClick={() => {
+              void toggleEnabled(font.id)
+            }}
+          >
+            <span className="btn-lede">
+              <PlusIcon className="ico ic-plus" />
+              <CheckIcon className="ico ic-check" />
+              <span className="spinner" />
+            </span>
+            <span className="btn-text">
+              {pending
+                ? font.enabled
+                  ? '正在停用…'
+                  : '正在启用…'
+                : font.enabled
+                  ? '已启用'
+                  : '启用字体'}
+            </span>
+          </button>
+        ) : (
+          <div
+            className="btn-primary is-managed"
+            title="系统字体由操作系统管理，FontNest 不会改动它"
+          >
+            <span className="btn-text">系统字体 · 只读</span>
+          </div>
+        )}
 
         <button
           type="button"

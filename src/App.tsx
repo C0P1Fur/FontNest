@@ -7,6 +7,7 @@ import { FontGrid } from './components/FontGrid'
 import { Inspector } from './components/Inspector'
 import { StatusBar } from './components/StatusBar'
 import { Toast } from './components/Toast'
+import { SettingsPanel } from './components/SettingsPanel'
 import { applyQuery } from './lib/filter'
 import { RIPPLE_SELECTOR, rippleFrom, tactile } from './lib/motion'
 import { SAMPLES, SIZES } from './lib/samples'
@@ -85,6 +86,8 @@ export default function App() {
       }
 
       if (event.key === 'Escape') {
+        // 设置面板自己处理关闭，避免同时清空搜索
+        if (state.settingsOpen) return
         if (state.query) {
           state.setQuery('')
           return
@@ -195,6 +198,7 @@ export default function App() {
 
       <Inspector font={selected} />
       <StatusBar visible={visible.length} total={fonts.length} filters={filters} />
+      <SettingsPanel />
       <Toast />
     </div>
   )

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../state/store'
-import { KeyboardIcon, SearchIcon, SunIcon } from './Icons'
+import { KeyboardIcon, SearchIcon, SettingsIcon, SunIcon } from './Icons'
 
 export function TopBar() {
   const query = useApp((state) => state.query)
@@ -8,6 +8,7 @@ export function TopBar() {
   const theme = useApp((state) => state.theme)
   const toggleTheme = useApp((state) => state.toggleTheme)
   const scanPhase = useApp((state) => state.scanPhase)
+  const openSettings = useApp((state) => state.openSettings)
 
   const [keysOpen, setKeysOpen] = useState(false)
 
@@ -59,6 +60,16 @@ export function TopBar() {
           <span className="pulse" />
           <span>{scanPhase === 'scanning' ? '扫描中' : '已同步'}</span>
         </div>
+
+        <button
+          type="button"
+          className="icon-btn"
+          aria-label="扫描目录设置"
+          title="扫描目录"
+          onClick={openSettings}
+        >
+          <SettingsIcon />
+        </button>
 
         <button
           type="button"

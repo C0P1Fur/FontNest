@@ -23,6 +23,7 @@ export interface AppState {
   status: 'idle' | 'loading' | 'ready' | 'error'
   scanPhase: ScanPhase
   lastScanAt: number | null
+  customDirs: string[]
 
   /* 查询 */
   query: string
@@ -35,6 +36,7 @@ export interface AppState {
   size: number
   sample: string
   theme: Theme
+  settingsOpen: boolean
 
   /* 选中与瞬时态 */
   selectedId: string | null
@@ -56,6 +58,11 @@ export interface AppState {
   toggleFavorite: (id: string) => void
   reveal: (id: string) => void
   toggleTheme: () => void
+  openSettings: () => void
+  closeSettings: () => void
+  /** 返回 null 表示成功，否则返回给用户看的错误文案 */
+  addDir: (path: string) => Promise<string | null>
+  removeDir: (path: string) => Promise<string | null>
   showToast: (message: string, undo?: () => void) => void
   dismissToast: () => void
 }
@@ -87,6 +94,7 @@ export const useApp = create<AppState>()((set, get) => ({
   status: 'idle',
   scanPhase: 'idle',
   lastScanAt: null,
+  customDirs: [],
 
   query: '',
   scope: 'all',
@@ -97,6 +105,7 @@ export const useApp = create<AppState>()((set, get) => ({
   size: 24,
   sample: 'The quick brown fox 敏捷的棕色狐狸',
   theme: readTheme(),
+  settingsOpen: false,
 
   selectedId: null,
   pendingId: null,
@@ -106,9 +115,10 @@ export const useApp = create<AppState>()((set, get) => ({
     if (get().status !== 'idle') return
     set({ status: 'loading' })
     try {
-      const fonts = await api.listFonts()
+      const [fonts, dirs] = await Promise.all([api.listFonts(), api.getCustomDirs()])
       set((state) => ({
         fonts,
+        customDirs: dirs,
         status: 'ready',
         lastScanAt: Date.now(),
         selectedId: state.selectedId ?? fonts[0]?.id ?? null,
@@ -217,6 +227,43 @@ export const useApp = create<AppState>()((set, get) => ({
     const next: Theme = get().theme === 'light' ? 'dark' : 'light'
     writeTheme(next)
     set({ theme: next })
+  },
+
+  openSettings: () => set({ settingsOpen: true }),
+  closeSettings: () => set({ settingsOpen: false }),
+
+  addDir: async (path) => {
+    try {
+      const dirs = await api.addCustomDir(path)
+      const fonts = await api.listFonts()
+      set({
+        customDirs: dirs,
+        fonts,
+        status: 'ready',
+        selectedId: get().selectedId ?? fonts[0]?.id ?? null,
+      })
+      get().showToast('目录已添加，索引已刷新')
+      return null
+    } catch (error) {
+      return error instanceof Error ? error.message : String(error)
+    }
+  },
+
+  removeDir: async (path) => {
+    try {
+      const dirs = await api.removeCustomDir(path)
+      const fonts = await api.listFonts()
+      const stillThere = fonts.some((font) => font.id === get().selectedId)
+      set({
+        customDirs: dirs,
+        fonts,
+        selectedId: stillThere ? get().selectedId : (fonts[0]?.id ?? null),
+      })
+      get().showToast('目录已移除，索引已刷新')
+      return null
+    } catch (error) {
+      return error instanceof Error ? error.message : String(error)
+    }
   },
 
   showToast: (message, undo) => {

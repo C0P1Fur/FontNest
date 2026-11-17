@@ -17,6 +17,8 @@ fn main() -> ExitCode {
         "dirs" => run_dirs(),
         "favorite" | "fav" => run_favorite(&args, true),
         "unfavorite" | "unfav" => run_favorite(&args, false),
+        "install" | "enable" => run_set_enabled(&args, true),
+        "uninstall" | "disable" => run_set_enabled(&args, false),
         "help" | "--help" | "-h" => {
             print_help();
             ExitCode::SUCCESS
@@ -30,8 +32,7 @@ fn main() -> ExitCode {
 }
 
 /// 往真实偏好文件里写一条收藏，并回读验证 —— 端到端验证持久化路径。
-fn run_favorite(args: &[String], value: bool) -> ExitCode {
-    let id = match args.get(1) {
+fn run_favorite(args: &[String], value: bool) -> ExitCode {    let id = match args.get(1) {
         Some(value) => value,
         None => {
             eprintln!("用法：fontnest favorite <id>");
@@ -46,6 +47,32 @@ fn run_favorite(args: &[String], value: bool) -> ExitCode {
         Ok(()) => {
             println!("{id} -> favorite={value}");
             println!("存储位置：{}", library.store_path().display());
+            ExitCode::SUCCESS
+        }
+        Err(error) => {
+            eprintln!("失败：{error}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+/// 启用 / 停用：走完整的 install / uninstall 链路。
+/// 配合 `FONTNEST_SANDBOX_DIR` 使用即可在不碰真实系统的情况下验证。
+fn run_set_enabled(args: &[String], value: bool) -> ExitCode {
+    let id = match args.get(1) {
+        Some(value) => value,
+        None => {
+            eprintln!("用法：fontnest install|uninstall <font-id>");
+            return ExitCode::FAILURE;
+        }
+    };
+
+    let mut library = Library::new();
+    library.scan();
+
+    match library.set_enabled(id, value) {
+        Ok(()) => {
+            println!("{id} -> enabled={value}");
             ExitCode::SUCCESS
         }
         Err(error) => {

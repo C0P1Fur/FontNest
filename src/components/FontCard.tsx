@@ -1,6 +1,6 @@
-import { memo } from 'react'
+import { memo, useEffect } from 'react'
 import type { Font } from '../types/font'
-import { fontStack } from '../lib/filter'
+import { faceFamily, ensureFace } from '../lib/fontFaces'
 import { spawnSparks } from '../lib/motion'
 import { StarIcon } from './Icons'
 
@@ -16,7 +16,9 @@ interface FontCardProps {
 
 /**
  * 一张字体卡：名字和样张都用该字体自身渲染。
- * 未启用的字体整体降透明度，但保留可读性，避免"看不出是禁用还是加载中"。
+ *
+ * 已安装字体直接用系统字体栈；自定义目录的字体在这里注入 @font-face
+ * （走 font:// 协议读文件），否则会整屏退化成同一个兜底字体。
  */
 export const FontCard = memo(function FontCard({
   font,
@@ -27,14 +29,18 @@ export const FontCard = memo(function FontCard({
   onToggleFavorite,
   onToggleEnabled,
 }: FontCardProps) {
-  // 同一个 family 的 Regular / Bold / Italic 是不同记录，
+  useEffect(() => {
+    ensureFace(font)
+  }, [font])
+
+  // 同一 family 的 Regular / Bold / Italic 是不同记录，
   // 卡片必须把字重与倾斜也带上，否则四条 Arial 会长得一模一样。
   const face = {
-    fontFamily: fontStack(font),
+    fontFamily: faceFamily(font),
     fontWeight: font.weight,
     fontStyle: font.italic ? 'italic' : 'normal',
   }
-  // 首屏错开进场，避免 58 张卡同时闪一下
+  // 首屏错开进场，避免几十张卡同时闪一下
   const delay = { animationDelay: `${Math.min(index * 14, 220)}ms` }
 
   return (
@@ -80,7 +86,10 @@ export const FontCard = memo(function FontCard({
       </span>
 
       <span className="card-foot">
-        <span className="dot-state" title={font.enabled ? '已启用' : '未启用'} />
+        <span
+          className="dot-state"
+          title={font.enabled ? '已启用' : font.source === 'custom' ? '未安装' : '未启用'}
+        />
         <span>{font.instanceCount} styles</span>
         {font.variable ? (
           <>

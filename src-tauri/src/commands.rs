@@ -6,10 +6,14 @@ use crate::AppState;
 
 const BUSY: &str = "字体索引被占用，请重试";
 
+fn lock_error() -> String {
+    BUSY.to_string()
+}
+
 /// 首次调用时惰性扫描。前端启动即拉全量，所以这里要把"还没扫过"当成正常路径。
 #[tauri::command]
 pub fn list_fonts(state: State<'_, AppState>) -> Result<Vec<Font>, String> {
-    let mut library = state.library.lock().map_err(|_| BUSY.to_string())?;
+    let mut library = state.library.lock().map_err(|_| lock_error())?;
     if library.is_empty() {
         library.scan();
     }
@@ -18,41 +22,84 @@ pub fn list_fonts(state: State<'_, AppState>) -> Result<Vec<Font>, String> {
 
 #[tauri::command]
 pub fn scan_fonts(state: State<'_, AppState>) -> Result<ScanSummary, String> {
-    let mut library = state.library.lock().map_err(|_| BUSY.to_string())?;
+    let mut library = state.library.lock().map_err(|_| lock_error())?;
     Ok(library.scan())
 }
 
 #[tauri::command]
 pub fn set_favorite(state: State<'_, AppState>, id: String, favorite: bool) -> Result<(), String> {
-    let mut library = state.library.lock().map_err(|_| BUSY.to_string())?;
+    let mut library = state.library.lock().map_err(|_| lock_error())?;
     library
         .set_favorite(&id, favorite)
         .map_err(|error| error.to_string())
 }
 
-/// 启用 / 停用 —— 属于计划里的 M2。
-///
-/// 这里刻意返回错误而不是假装成功：它要写系统字体目录并登记注册表，
-/// 一旦实现不当就是"删掉用户花钱买的字库"级别的事故，必须配齐
-/// 归属清单 + 哈希校验 + 回收站之后才能开放。返回错误能让 UI 诚实地回滚。
-///
-/// 注意：参数名必须与前端传来的键名一致（`ids` / `enabled`），
-/// 不能加下划线前缀 —— Tauri 是按参数标识符做键映射的。
+/* ───────────── 自定义扫描目录 ───────────── */
+
+fn dir_strings(library: &fontnest_core::Library) -> Vec<String> {
+    library
+        .custom_dirs()
+        .iter()
+        .map(|path| path.to_string_lossy().to_string())
+        .collect()
+}
+
 #[tauri::command]
-pub fn set_enabled(ids: Vec<String>, enabled: bool) -> Result<(), String> {
-    let _ = (ids, enabled);
-    Err("启用/停用尚未实现：需要写系统字体目录并登记注册表，计划在 M2 交付".to_string())
+pub fn get_custom_dirs(state: State<'_, AppState>) -> Result<Vec<String>, String> {
+    let library = state.library.lock().map_err(|_| lock_error())?;
+    Ok(dir_strings(&library))
+}
+
+/// 添加目录后立即重扫，返回新的目录列表。
+/// 前端拿到列表后再 `list_fonts` 一次即可刷新整个网格。
+#[tauri::command]
+pub fn add_custom_dir(state: State<'_, AppState>, path: String) -> Result<Vec<String>, String> {
+    let mut library = state.library.lock().map_err(|_| lock_error())?;
+    library
+        .add_custom_dir(&path)
+        .map_err(|error| error.to_string())?;
+    library.scan();
+    Ok(dir_strings(&library))
+}
+
+#[tauri::command]
+pub fn remove_custom_dir(state: State<'_, AppState>, path: String) -> Result<Vec<String>, String> {
+    let mut library = state.library.lock().map_err(|_| lock_error())?;
+    library
+        .remove_custom_dir(&path)
+        .map_err(|error| error.to_string())?;
+    library.scan();
+    Ok(dir_strings(&library))
+}
+
+/// 启用 / 停用。
+///
+/// 只对来自自定义目录的字体有效：安装 = 复制到当前用户字体目录 + 写 HKCU 登记项；
+/// 卸载 = 校验哈希后删登记项、把文件移入回收站。系统字体一律拒绝改动。
+#[tauri::command]
+pub fn set_enabled(state: State<'_, AppState>, ids: Vec<String>, enabled: bool) -> Result<(), String> {
+    let mut library = state.library.lock().map_err(|_| lock_error())?;
+
+    for id in &ids {
+        library
+            .set_enabled(id, enabled)
+            .map_err(|error| error.to_string())?;
+    }
+
+    // 安装/卸载改变了磁盘布局，重扫一次让状态与事实一致
+    library.scan();
+    Ok(())
 }
 
 #[tauri::command]
 pub fn reveal_font(state: State<'_, AppState>, id: String) -> Result<(), String> {
     let path = {
-        let library = state.library.lock().map_err(|_| BUSY.to_string())?;
-        library.font_path(&id)
+        let library = state.library.lock().map_err(|_| lock_error())?;
+        library.font(&id).map(|font| font.file_path.clone())
     };
 
     let path = path.ok_or_else(|| "找不到该字体的文件".to_string())?;
-    reveal_in_file_manager(&path)
+    reveal_in_file_manager(std::path::Path::new(&path))
 }
 
 #[cfg(target_os = "windows")]

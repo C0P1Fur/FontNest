@@ -8,5 +8,11 @@ description = "字体扫描、解析与索引（不依赖 GUI，可单独测试�
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
+# 内容哈希：安装前后的完整性校验、卸载前的"文件没被换过"判定
+blake3 = "1"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+# 只为读写 HKCU 下的字体登记项
+winreg = "0.55"
 
 [dev-dependencies]

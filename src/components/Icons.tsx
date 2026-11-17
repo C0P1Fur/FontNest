@@ -185,3 +185,14 @@ export function VariableIcon({ className }: IconProps) {
 export function StarOutlineIcon({ className }: IconProps) {
   return <StarIcon className={className} />
 }
+
+export function SettingsIcon({ className }: IconProps) {
+  return (
+    <svg className={className ?? 'ico'} viewBox="0 0 20 20" aria-hidden="true">
+      <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="7" cy="6" r="2.1" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="13" cy="10" r="2.1" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="9" cy="14" r="2.1" fill="none" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  )
+}

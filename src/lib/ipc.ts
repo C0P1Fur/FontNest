@@ -28,8 +28,12 @@ async function invokeTauri<T>(cmd: string, args?: Record<string, unknown>): Prom
 
 export interface ScanResult {
   count: number
+  failed: number
   finishedAt: number
 }
+
+/** mock 下的自定义目录，仅用于浏览器里点得动 */
+const mockDirs: string[] = []
 
 /**
  * v0.1 一次性取回整个字体库，筛选在客户端做（10k 条实测 1–2ms）。
@@ -65,7 +69,7 @@ async function scan(): Promise<ScanResult> {
     return invokeTauri<ScanResult>('scan_fonts')
   }
   await delay(MOCK_LATENCY.scan)
-  return { count: mockFonts.length, finishedAt: Date.now() }
+  return { count: mockFonts.length, failed: 0, finishedAt: Date.now() }
 }
 
 async function revealInFolder(id: string): Promise<void> {
@@ -76,10 +80,44 @@ async function revealInFolder(id: string): Promise<void> {
   await delay(60)
 }
 
+/* ───────────── 自定义扫描目录 ───────────── */
+
+async function getCustomDirs(): Promise<string[]> {
+  if (isTauriRuntime) {
+    return invokeTauri<string[]>('get_custom_dirs')
+  }
+  return [...mockDirs]
+}
+
+async function addCustomDir(path: string): Promise<string[]> {
+  if (isTauriRuntime) {
+    return invokeTauri<string[]>('add_custom_dir', { path })
+  }
+  await delay(MOCK_LATENCY.quick)
+  const trimmed = path.trim()
+  if (!trimmed) throw new Error('目录路径不能为空')
+  if (mockDirs.includes(trimmed)) throw new Error('目录已添加')
+  mockDirs.push(trimmed)
+  return [...mockDirs]
+}
+
+async function removeCustomDir(path: string): Promise<string[]> {
+  if (isTauriRuntime) {
+    return invokeTauri<string[]>('remove_custom_dir', { path })
+  }
+  await delay(MOCK_LATENCY.quick)
+  const index = mockDirs.indexOf(path)
+  if (index >= 0) mockDirs.splice(index, 1)
+  return [...mockDirs]
+}
+
 export const api = {
   listFonts,
   setEnabled,
   setFavorite,
   scan,
   revealInFolder,
+  getCustomDirs,
+  addCustomDir,
+  removeCustomDir,
 }

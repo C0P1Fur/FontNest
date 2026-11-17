@@ -3,7 +3,7 @@
 //! 这一层只做"读"，不做任何系统写操作 —— 写字体目录属于 M2，
 //! 必须配归属清单与哈希校验，不放在这里。
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 use crate::model::{Category, Font, Format, Source};
@@ -189,7 +189,10 @@ fn build_font(path: &Path, dir: &FontDir, face: u32, info: &FontInfo, size_bytes
 }
 
 /// 扫描全部目录。返回 (字体列表, 解析失败数)。
-pub fn scan_dirs(dirs: &[FontDir]) -> (Vec<Font>, usize) {
+///
+/// `skip` 是本工具自己安装出来的副本路径：这些文件不该再进网格，
+/// 否则同一个字体会出现两次（库里一份、用户字体目录一份）。
+pub fn scan_dirs(dirs: &[FontDir], skip: &HashSet<String>) -> (Vec<Font>, usize) {
     let mut files: Vec<(PathBuf, Source)> = Vec::new();
 
     for dir in dirs {
@@ -208,6 +211,10 @@ pub fn scan_dirs(dirs: &[FontDir]) -> (Vec<Font>, usize) {
     let mut failed = 0usize;
 
     for (path, source) in &files {
+        if !skip.is_empty() && skip.contains(&path.to_string_lossy().to_string()) {
+            continue;
+        }
+
         let metadata = match std::fs::metadata(path) {
             Ok(value) => value,
             Err(_) => {
