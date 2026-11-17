@@ -1,9 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg"
      width="128" height="128" viewBox="0 0 128 128"
      fill="none" role="img">
-  <title>FontNest · 探头喵</title>
-  <rect x="4" y="4" width="120" height="120"
-        rx="30" fill="#F5F0E8"/>
+  <title>FontNest · 探头喵 · 透明背景</title>
 
   <!-- 猫咪从卡片后探头 -->
   <path d="M35 53V27Q35 22 40 25
@@ -30,6 +28,7 @@
   <rect x="75" y="54" width="14" height="15"
         rx="7" fill="#E9AD9D"/>
 
+  <!-- N 字形 -->
   <path d="M51 94V73H57L70 85V73
            H77V94H71L58 82V94Z"
         fill="#6654A4"/>
