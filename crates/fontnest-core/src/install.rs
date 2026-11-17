@@ -451,6 +451,60 @@ pub fn uninstall(
     Ok(())
 }
 
+/// 对账：清单说"装了这个"，磁盘和注册表未必还这么认为。
+///
+/// 三种漂移，处理策略不同：
+/// · 文件没了        → 从清单移除（用户手工删了，我们不该继续宣称装着）
+/// · 文件被改过      → **保留**清单并只计数，让 UI 去提示，绝不擅自删除
+/// · 注册表条目丢了  → 补登记（文件还在、哈希也对，这是可安全修复的）
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReconcileReport {
+    pub missing: usize,
+    pub drifted: usize,
+    pub repaired: usize,
+}
+
+pub fn reconcile(
+    registry: &dyn Registry,
+    manifest: &mut Manifest,
+) -> Result<ReconcileReport, CoreError> {
+    let mut report = ReconcileReport::default();
+    let mut dirty = false;
+
+    for record in manifest.records().to_vec() {
+        let target = PathBuf::from(&record.target);
+
+        if !target.exists() {
+            manifest.remove(&record.font_id);
+            report.missing += 1;
+            dirty = true;
+            continue;
+        }
+
+        if hash_file(&target)? != record.hash {
+            report.drifted += 1;
+            continue;
+        }
+
+        if !registry.exists(&record.registry_value) {
+            let file_name = target
+                .file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or("font")
+                .to_string();
+            if registry.set(&record.registry_value, &file_name).is_ok() {
+                report.repaired += 1;
+            }
+        }
+    }
+
+    if dirty {
+        manifest.save()?;
+    }
+    Ok(report)
+}
+
 /// 通知系统字体表变了。
 ///
 /// 用 `SendMessageTimeoutW` 而不是 `SendMessageW`：广播是同步的，

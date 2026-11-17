@@ -30,6 +30,9 @@ export function Inspector({ font }: { font: Font | null }) {
   const toggleEnabled = useApp((state) => state.toggleEnabled)
   const toggleFavorite = useApp((state) => state.toggleFavorite)
   const reveal = useApp((state) => state.reveal)
+  const collections = useApp((state) => state.collections)
+  const activeCollectionId = useApp((state) => state.activeCollectionId)
+  const toggleInCollection = useApp((state) => state.toggleInCollection)
 
   const [tab, setTab] = useState<TabKey>('meta')
   const [axes, setAxes] = useState<Record<string, number>>({})
@@ -61,6 +64,10 @@ export function Inspector({ font }: { font: Font | null }) {
   }
 
   const pending = pendingId === font.id
+  const activeCollection = activeCollectionId
+    ? collections.find((item) => item.id === activeCollectionId)
+    : undefined
+  const inCollection = activeCollection?.fontIds.includes(font.id) ?? false
   const weight = axes.wght ?? font.weight
   const variation = font.variable
     ? font.axes.map((axis) => `"${axis.tag}" ${axes[axis.tag] ?? axis.defaultValue}`).join(', ')
@@ -255,6 +262,22 @@ export function Inspector({ font }: { font: Font | null }) {
         >
           <FolderIcon />
         </button>
+
+        {/* 只有选中了某个分类时才出现：把当前字体加进去 / 拿出来 */}
+        {activeCollection ? (
+          <button
+            type="button"
+            className="btn-icon"
+            aria-pressed={inCollection}
+            aria-label={inCollection ? '移出分类' : '加入分类'}
+            title={`${inCollection ? '移出' : '加入'}「${activeCollection.name}」`}
+            onClick={() => {
+              void toggleInCollection(activeCollection.id, font.id)
+            }}
+          >
+            <span className="btn-glyph">{inCollection ? '−' : '+'}</span>
+          </button>
+        ) : null}
       </div>
     </aside>
   )

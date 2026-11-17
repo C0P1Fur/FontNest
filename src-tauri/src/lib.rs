@@ -33,6 +33,12 @@ pub fn run() {
             commands::get_custom_dirs,
             commands::add_custom_dir,
             commands::remove_custom_dir,
+            commands::reconcile_fonts,
+            commands::list_collections,
+            commands::create_collection,
+            commands::rename_collection,
+            commands::delete_collection,
+            commands::set_collection_fonts,
         ])
         .run(tauri::generate_context!())
         .expect("FontNest 启动失败");

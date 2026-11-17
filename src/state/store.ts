@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type {
+  Collection,
   Font,
   FontCategory,
   LibraryScope,
@@ -24,6 +25,9 @@ export interface AppState {
   scanPhase: ScanPhase
   lastScanAt: number | null
   customDirs: string[]
+  collections: Collection[]
+  /** 当前作为筛选条件的分类；null 表示不按分类过滤 */
+  activeCollectionId: string | null
 
   /* 查询 */
   query: string
@@ -63,6 +67,10 @@ export interface AppState {
   /** 返回 null 表示成功，否则返回给用户看的错误文案 */
   addDir: (path: string) => Promise<string | null>
   removeDir: (path: string) => Promise<string | null>
+  setActiveCollection: (id: string) => void
+  createCollection: (name: string) => Promise<string | null>
+  deleteCollection: (id: string) => Promise<string | null>
+  toggleInCollection: (collectionId: string, fontId: string) => Promise<void>
   showToast: (message: string, undo?: () => void) => void
   dismissToast: () => void
 }
@@ -95,6 +103,8 @@ export const useApp = create<AppState>()((set, get) => ({
   scanPhase: 'idle',
   lastScanAt: null,
   customDirs: [],
+  collections: [],
+  activeCollectionId: null,
 
   query: '',
   scope: 'all',
@@ -115,10 +125,15 @@ export const useApp = create<AppState>()((set, get) => ({
     if (get().status !== 'idle') return
     set({ status: 'loading' })
     try {
-      const [fonts, dirs] = await Promise.all([api.listFonts(), api.getCustomDirs()])
+      const [fonts, dirs, collections] = await Promise.all([
+        api.listFonts(),
+        api.getCustomDirs(),
+        api.listCollections(),
+      ])
       set((state) => ({
         fonts,
         customDirs: dirs,
+        collections,
         status: 'ready',
         lastScanAt: Date.now(),
         selectedId: state.selectedId ?? fonts[0]?.id ?? null,
@@ -263,6 +278,64 @@ export const useApp = create<AppState>()((set, get) => ({
       return null
     } catch (error) {
       return error instanceof Error ? error.message : String(error)
+    }
+  },
+
+  /* ───────────── 分类 ───────────── */
+
+  setActiveCollection: (id) =>
+    set((state) => ({ activeCollectionId: state.activeCollectionId === id ? null : id })),
+
+  createCollection: async (name) => {
+    try {
+      const created = await api.createCollection(name)
+      set((state) => ({
+        collections: [...state.collections, created],
+        activeCollectionId: created.id,
+      }))
+      get().showToast(`已新建集合 · ${created.name}`)
+      return null
+    } catch (error) {
+      return error instanceof Error ? error.message : String(error)
+    }
+  },
+
+  deleteCollection: async (id) => {
+    try {
+      await api.deleteCollection(id)
+      set((state) => ({
+        collections: state.collections.filter((item) => item.id !== id),
+        activeCollectionId:
+          state.activeCollectionId === id ? null : state.activeCollectionId,
+      }))
+      get().showToast('集合已删除')
+      return null
+    } catch (error) {
+      return error instanceof Error ? error.message : String(error)
+    }
+  },
+
+  toggleInCollection: async (collectionId, fontId) => {
+    const collection = get().collections.find((item) => item.id === collectionId)
+    if (!collection) return
+
+    const has = collection.fontIds.includes(fontId)
+    const next = has
+      ? collection.fontIds.filter((id) => id !== fontId)
+      : [...collection.fontIds, fontId]
+
+    // 先改本地：勾选要立刻有反馈
+    set((state) => ({
+      collections: state.collections.map((item) =>
+        item.id === collectionId ? { ...item, fontIds: next } : item,
+      ),
+    }))
+
+    try {
+      await api.setCollectionFonts(collectionId, next)
+    } catch (error) {
+      console.error('[fontnest] 更新集合失败', error)
+      get().showToast('集合保存失败')
     }
   },
 

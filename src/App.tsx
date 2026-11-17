@@ -38,11 +38,19 @@ export default function App() {
   const sample = useApp((state) => state.sample)
   const theme = useApp((state) => state.theme)
   const selectedId = useApp((state) => state.selectedId)
+  const collections = useApp((state) => state.collections)
+  const activeCollectionId = useApp((state) => state.activeCollectionId)
 
-  const visible = useMemo(
-    () => applyQuery(fonts, { query, scope, categories, sort }),
-    [fonts, query, scope, categories, sort],
-  )
+  const visible = useMemo(() => {
+    const base = applyQuery(fonts, { query, scope, categories, sort })
+    if (!activeCollectionId) return base
+
+    const collection = collections.find((item) => item.id === activeCollectionId)
+    if (!collection) return base
+
+    const members = new Set(collection.fontIds)
+    return base.filter((font) => members.has(font.id))
+  }, [fonts, query, scope, categories, sort, collections, activeCollectionId])
 
   const selected = useMemo(() => {
     const found = visible.find((font) => font.id === selectedId)

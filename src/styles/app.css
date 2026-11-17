@@ -482,6 +482,149 @@ kbd {
   border-color: var(--ok);
 }
 
+/* ═══════════ 激活集 ═══════════ */
+.coll-row {
+  display: flex;
+  align-items: center;
+  border-radius: var(--r-sm);
+  transition: background var(--t-2) var(--e-out);
+}
+
+.coll-row:hover {
+  background: var(--bg);
+}
+
+.coll-row.is-active {
+  background: var(--ink);
+}
+
+.coll-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: var(--r-sm);
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: left;
+  transition: color var(--t-2) var(--e-out);
+}
+
+.coll-main:hover {
+  color: var(--ink);
+}
+
+.coll-row.is-active .coll-main {
+  color: var(--surface);
+  font-weight: 600;
+}
+
+.coll-row.is-active .coll-main .count {
+  color: var(--surface);
+  opacity: 0.55;
+}
+
+/* 批量操作只在悬停/聚焦时出现，避免侧栏常态过噪 */
+.coll-actions {
+  display: none;
+  gap: 2px;
+  padding-right: 4px;
+}
+
+.coll-row:hover .coll-actions,
+.coll-row:focus-within .coll-actions {
+  display: flex;
+}
+
+.coll-actions button {
+  font-size: 10px;
+  color: var(--muted);
+  padding: 2px 5px;
+  border-radius: 4px;
+  border: 1px solid var(--line-2);
+  background: var(--surface);
+  transition: color var(--t-2) var(--e-out), border-color var(--t-2) var(--e-out);
+}
+
+.coll-actions button:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.coll-actions .coll-remove:hover {
+  color: var(--err);
+  border-color: var(--err);
+}
+
+.coll-row.is-active .coll-actions button {
+  background: transparent;
+  color: var(--surface);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.coll-empty {
+  font-size: 11px;
+  color: var(--faint);
+  padding: 4px 8px;
+}
+
+.coll-form {
+  display: flex;
+  gap: 4px;
+  padding: 4px 2px 0;
+}
+
+.coll-form input {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font-size: 11.5px;
+  outline: none;
+  transition: border-color var(--t-2) var(--e-out);
+}
+
+.coll-form input:focus {
+  border-color: var(--ink);
+}
+
+.coll-form button {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-2);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.coll-form button:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.coll-form button:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.coll-error {
+  font-size: 10.5px;
+  color: var(--err);
+  padding: 4px 8px 0;
+}
+
+.btn-glyph {
+  font-size: 15px;
+  line-height: 1;
+}
+
 /* ═══════════ 工作区 ═══════════ */
 .workspace {
   grid-area: main;

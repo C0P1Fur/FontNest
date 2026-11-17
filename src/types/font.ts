@@ -83,3 +83,18 @@ export interface ScanStatus {
   total: number
   finishedAt: number | null
 }
+
+/** 用户自定义的字体分类：只是把字体圈在一起，用于筛选，不改变任何字体状态 */
+export interface Collection {
+  id: string
+  name: string
+  fontIds: string[]
+  createdAt: number
+}
+
+/** 启动对账的结果 */
+export interface ReconcileReport {
+  missing: number
+  drifted: number
+  repaired: number
+}

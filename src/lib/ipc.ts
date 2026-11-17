@@ -1,4 +1,4 @@
-import type { Font, FontQuery } from '../types/font'
+import type { Collection, Font, FontQuery, ReconcileReport } from '../types/font'
 import { mockFonts } from '../data/mockFonts'
 
 /**
@@ -111,6 +111,67 @@ async function removeCustomDir(path: string): Promise<string[]> {
   return [...mockDirs]
 }
 
+/* ───────────── 分类 ───────────── */
+
+const mockCollections: Collection[] = []
+
+async function listCollections(): Promise<Collection[]> {
+  if (isTauriRuntime) {
+    return invokeTauri<Collection[]>('list_collections')
+  }
+  return mockCollections.map((item) => ({ ...item, fontIds: [...item.fontIds] }))
+}
+
+async function createCollection(name: string): Promise<Collection> {
+  if (isTauriRuntime) {
+    return invokeTauri<Collection>('create_collection', { name })
+  }
+  await delay(MOCK_LATENCY.quick)
+  const trimmed = name.trim()
+  if (!trimmed) throw new Error('集合名称不能为空')
+  if (mockCollections.some((item) => item.name === trimmed)) {
+    throw new Error(`已存在同名集合：${trimmed}`)
+  }
+  const created: Collection = {
+    id: `c${Date.now()}`,
+    name: trimmed,
+    fontIds: [],
+    createdAt: Date.now(),
+  }
+  mockCollections.push(created)
+  return created
+}
+
+async function deleteCollection(id: string): Promise<void> {
+  if (isTauriRuntime) {
+    await invokeTauri<void>('delete_collection', { id })
+    return
+  }
+  await delay(MOCK_LATENCY.quick)
+  const index = mockCollections.findIndex((item) => item.id === id)
+  if (index >= 0) mockCollections.splice(index, 1)
+}
+
+async function setCollectionFonts(id: string, fonts: string[]): Promise<void> {
+  if (isTauriRuntime) {
+    await invokeTauri<void>('set_collection_fonts', { id, fonts })
+    return
+  }
+  await delay(MOCK_LATENCY.quick)
+  const target = mockCollections.find((item) => item.id === id)
+  if (target) target.fontIds = [...new Set(fonts)]
+}
+
+
+/* ───────────── 启动对账 ───────────── */
+
+async function reconcileFonts(): Promise<ReconcileReport> {
+  if (isTauriRuntime) {
+    return invokeTauri<ReconcileReport>('reconcile_fonts')
+  }
+  return { missing: 0, drifted: 0, repaired: 0 }
+}
+
 export const api = {
   listFonts,
   setEnabled,
@@ -120,4 +181,9 @@ export const api = {
   getCustomDirs,
   addCustomDir,
   removeCustomDir,
+  listCollections,
+  createCollection,
+  deleteCollection,
+  setCollectionFonts,
+  reconcileFonts,
 }

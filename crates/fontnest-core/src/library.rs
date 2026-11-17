@@ -12,7 +12,10 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use crate::install::{install, uninstall, FontHome, Manifest, WindowsRegistry};
+use crate::collection::{Collection, CollectionStore};
+use crate::install::{
+    install, reconcile, uninstall, FontHome, Manifest, ReconcileReport, Registry, WindowsRegistry,
+};
 use crate::model::{Font, ScanSummary, Source};
 use crate::paths::{data_dir, platform_dirs, FontDir};
 use crate::scan::scan_dirs;
@@ -124,6 +127,7 @@ pub struct Library {
     favorites: HashSet<String>,
     custom_dirs: Vec<PathBuf>,
     manifest: Manifest,
+    collections: CollectionStore,
     home: FontHome,
     store_path: PathBuf,
     dirs_path: PathBuf,
@@ -148,12 +152,17 @@ impl Library {
             .parent()
             .map(|dir| dir.join("installed.json"))
             .unwrap_or_else(|| PathBuf::from("installed.json"));
+        let collections_path = store_path
+            .parent()
+            .map(|dir| dir.join("collections.json"))
+            .unwrap_or_else(|| PathBuf::from("collections.json"));
 
         Self {
             fonts: Vec::new(),
             favorites,
             custom_dirs,
             manifest: Manifest::load(manifest_path),
+            collections: CollectionStore::load(collections_path),
             home: FontHome::from_env(),
             store_path,
             dirs_path,
@@ -189,29 +198,89 @@ impl Library {
     /// 系统字体不在这条路径上 —— `install` 会拒绝非 `Custom` 来源的字体，
     /// 所以调用方不需要（也没办法）传错。
     pub fn set_enabled(&mut self, id: &str, enabled: bool) -> Result<(), CoreError> {
+        // 先克隆路径：registry 若借用 self.home，就没法再 &mut self 了
+        let registry_path = self.home.registry_path.clone();
+        let registry = WindowsRegistry {
+            path: &registry_path,
+        };
+        self.set_enabled_with(id, enabled, &registry).map(|_| ())
+    }
+
+    /// 返回是否真的发生了改变（已经是目标状态时返回 false）
+    fn set_enabled_with(
+        &mut self,
+        id: &str,
+        enabled: bool,
+        registry: &dyn Registry,
+    ) -> Result<bool, CoreError> {
         let font = self
             .font(id)
             .cloned()
             .ok_or_else(|| CoreError::NotFound(id.to_string()))?;
 
         if enabled == font.enabled {
-            return Ok(());
+            return Ok(false);
         }
 
-        let registry = WindowsRegistry {
-            path: &self.home.registry_path,
-        };
-
         if enabled {
-            install(&font, &self.home, &registry, &mut self.manifest)?;
+            install(&font, &self.home, registry, &mut self.manifest)?;
         } else {
-            uninstall(id, &self.home, &registry, &mut self.manifest)?;
+            uninstall(id, &self.home, registry, &mut self.manifest)?;
         }
 
         if let Some(item) = self.fonts.iter_mut().find(|item| item.id == id) {
             item.enabled = enabled;
         }
-        Ok(())
+        Ok(true)
+    }
+
+    /* ───────────── 分类 ───────────── */
+
+    pub fn collections(&self) -> &[Collection] {
+        self.collections.items()
+    }
+
+    pub fn create_collection(&mut self, name: &str) -> Result<Collection, CoreError> {
+        self.collections.create(name)
+    }
+
+    pub fn rename_collection(&mut self, id: &str, name: &str) -> Result<(), CoreError> {
+        self.collections.rename(id, name)
+    }
+
+    pub fn delete_collection(&mut self, id: &str) -> Result<(), CoreError> {
+        self.collections.delete(id)
+    }
+
+    pub fn set_collection_fonts(
+        &mut self,
+        id: &str,
+        font_ids: Vec<String>,
+    ) -> Result<(), CoreError> {
+        self.collections.set_fonts(id, font_ids)
+    }
+
+    /* ───────────── 对账 ───────────── */
+
+    /// 启动时对账：让清单与磁盘/注册表的实际状态对齐。
+    pub fn reconcile(&mut self) -> Result<ReconcileReport, CoreError> {
+        let registry_path = self.home.registry_path.clone();
+        let registry = WindowsRegistry {
+            path: &registry_path,
+        };
+
+        let report = reconcile(&registry, &mut self.manifest)?;
+
+        if report.missing > 0 {
+            // 被移出清单的条目，内存里的 enabled 也要跟着改
+            for font in self.fonts.iter_mut() {
+                if font.source == Source::Custom {
+                    font.enabled = self.manifest.owns(&font.id);
+                }
+            }
+        }
+
+        Ok(report)
     }
 
     /// 全量扫描：系统目录 + 用户目录 + 自定义目录。

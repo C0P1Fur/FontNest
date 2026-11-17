@@ -1,6 +1,6 @@
 use tauri::State;
 
-use fontnest_core::{Font, ScanSummary};
+use fontnest_core::{Collection, Font, ReconcileReport, ScanSummary};
 
 use crate::AppState;
 
@@ -11,10 +11,16 @@ fn lock_error() -> String {
 }
 
 /// 首次调用时惰性扫描。前端启动即拉全量，所以这里要把"还没扫过"当成正常路径。
+///
+/// 顺序很重要：**先对账再扫描**。对账会把"清单里有、磁盘上已经没了"的条目
+/// 清掉，扫描才据此算出正确的 enabled 状态。反过来就会先展示一批幽灵字体。
 #[tauri::command]
 pub fn list_fonts(state: State<'_, AppState>) -> Result<Vec<Font>, String> {
     let mut library = state.library.lock().map_err(|_| lock_error())?;
     if library.is_empty() {
+        if let Err(error) = library.reconcile() {
+            eprintln!("[fontnest] 启动对账失败：{error}");
+        }
         library.scan();
     }
     Ok(library.fonts().to_vec())
@@ -70,6 +76,65 @@ pub fn remove_custom_dir(state: State<'_, AppState>, path: String) -> Result<Vec
         .map_err(|error| error.to_string())?;
     library.scan();
     Ok(dir_strings(&library))
+}
+
+/* ───────────── 启动对账 ───────────── */
+
+#[tauri::command]
+pub fn reconcile_fonts(state: State<'_, AppState>) -> Result<ReconcileReport, String> {
+    let mut library = state.library.lock().map_err(|_| lock_error())?;
+    let report = library.reconcile().map_err(|error| error.to_string())?;
+    library.scan();
+    Ok(report)
+}
+
+/* ───────────── 分类 ───────────── */
+
+#[tauri::command]
+pub fn list_collections(state: State<'_, AppState>) -> Result<Vec<Collection>, String> {
+    let library = state.library.lock().map_err(|_| lock_error())?;
+    Ok(library.collections().to_vec())
+}
+
+#[tauri::command]
+pub fn create_collection(state: State<'_, AppState>, name: String) -> Result<Collection, String> {
+    let mut library = state.library.lock().map_err(|_| lock_error())?;
+    library
+        .create_collection(&name)
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub fn rename_collection(
+    state: State<'_, AppState>,
+    id: String,
+    name: String,
+) -> Result<(), String> {
+    let mut library = state.library.lock().map_err(|_| lock_error())?;
+    library
+        .rename_collection(&id, &name)
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub fn delete_collection(state: State<'_, AppState>, id: String) -> Result<(), String> {
+    let mut library = state.library.lock().map_err(|_| lock_error())?;
+    library
+        .delete_collection(&id)
+        .map_err(|error| error.to_string())
+}
+
+/// 参数故意叫 `fonts` 而不是 `font_ids`：单词参数不存在蛇形/驼峰转换歧义。
+#[tauri::command]
+pub fn set_collection_fonts(
+    state: State<'_, AppState>,
+    id: String,
+    fonts: Vec<String>,
+) -> Result<(), String> {
+    let mut library = state.library.lock().map_err(|_| lock_error())?;
+    library
+        .set_collection_fonts(&id, fonts)
+        .map_err(|error| error.to_string())
 }
 
 /// 启用 / 停用。
