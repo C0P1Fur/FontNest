@@ -117,3 +117,23 @@ export interface RecognizeReport {
   failed: number
   elapsedMs: number
 }
+
+/**
+ * 热键抓到的剪贴板截图。
+ *
+ * 只带元信息和一张缩略图：像素本体留在 Rust 侧，识别时直接取用。
+ * 让几百 KB 的位图往返 IPC 既慢又要多编两遍 base64。
+ */
+export interface ClipboardCapture {
+  hasImage: boolean
+  width: number
+  height: number
+  /** data URL；生成失败时是空串，此时只显示尺寸 */
+  preview: string
+}
+
+/** 启动信息：快捷键是否真的注册上了 */
+export interface AppStatus {
+  hotkey: string
+  hotkeyReady: boolean
+}

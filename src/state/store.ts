@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import type {
+  AppStatus,
+  ClipboardCapture,
   Collection,
   Font,
   FontCategory,
@@ -42,6 +44,10 @@ export interface AppState {
   theme: Theme
   settingsOpen: boolean
   recognizeOpen: boolean
+  /** 热键抓到的截图；null 表示这次识别要从文件里选图 */
+  capture: ClipboardCapture | null
+  /** 启动时问到的快捷键状态，用来决定要不要劝用户按热键 */
+  appStatus: AppStatus | null
 
   /* 选中与瞬时态 */
   selectedId: string | null
@@ -69,6 +75,10 @@ export interface AppState {
   closeSettings: () => void
   openRecognize: () => void
   closeRecognize: () => void
+  /** 热键抓到了图：直接带着它打开面板 */
+  showCapture: (capture: ClipboardCapture) => void
+  /** 改用文件时要清掉它，否则两路输入会打架，识别的还是剪贴板那张 */
+  clearCapture: () => void
   /** 返回 null 表示成功，否则返回给用户看的错误文案 */
   addDir: (path: string) => Promise<string | null>
   removeDir: (path: string) => Promise<string | null>
@@ -122,6 +132,8 @@ export const useApp = create<AppState>()((set, get) => ({
   theme: readTheme(),
   settingsOpen: false,
   recognizeOpen: false,
+  capture: null,
+  appStatus: null,
 
   selectedId: null,
   pendingId: null,
@@ -131,15 +143,17 @@ export const useApp = create<AppState>()((set, get) => ({
     if (get().status !== 'idle') return
     set({ status: 'loading' })
     try {
-      const [fonts, dirs, collections] = await Promise.all([
+      const [fonts, dirs, collections, appStatus] = await Promise.all([
         api.listFonts(),
         api.getCustomDirs(),
         api.listCollections(),
+        api.getAppStatus(),
       ])
       set((state) => ({
         fonts,
         customDirs: dirs,
         collections,
+        appStatus,
         status: 'ready',
         lastScanAt: Date.now(),
         selectedId: state.selectedId ?? fonts[0]?.id ?? null,
@@ -260,8 +274,12 @@ export const useApp = create<AppState>()((set, get) => ({
 
   openSettings: () => set({ settingsOpen: true }),
   closeSettings: () => set({ settingsOpen: false }),
-  openRecognize: () => set({ recognizeOpen: true }),
-  closeRecognize: () => set({ recognizeOpen: false }),
+  // 从顶栏进来是"重新开始"：上一次抓的图必须丢掉，
+  // 否则用户会对着旧截图输新文字。
+  openRecognize: () => set({ recognizeOpen: true, capture: null }),
+  closeRecognize: () => set({ recognizeOpen: false, capture: null }),
+  showCapture: (capture) => set({ recognizeOpen: true, capture }),
+  clearCapture: () => set({ capture: null }),
 
   focusFont: (id) =>
     set({ query: '', scope: 'all', categories: [], selectedId: id }),

@@ -10,6 +10,7 @@ import { Toast } from './components/Toast'
 import { SettingsPanel } from './components/SettingsPanel'
 import { RecognizePanel } from './components/RecognizePanel'
 import { applyQuery } from './lib/filter'
+import { api } from './lib/ipc'
 import { RIPPLE_SELECTOR, rippleFrom, tactile } from './lib/motion'
 import { SAMPLES, SIZES } from './lib/samples'
 import { useApp } from './state/store'
@@ -61,6 +62,21 @@ export default function App() {
   /* 首次加载 */
   useEffect(() => {
     void useApp.getState().bootstrap()
+  }, [])
+
+  /* 全局热键抓到图：带着它打开识别面板 */
+  useEffect(() => {
+    return api.onClipboardCapture((capture) => {
+      const state = useApp.getState()
+      if (capture.hasImage) {
+        state.showCapture(capture)
+        return
+      }
+      // 剪贴板里没有图是常见路径（按热键前忘了截图）。
+      // 提示一句并把面板打开，比什么都不发生更容易自诊。
+      state.openRecognize()
+      state.showToast('剪贴板里没有图片：先截图，再按快捷键')
+    })
   }, [])
 
   /* 主题写到 <html data-theme>，由 CSS 变量接管 */

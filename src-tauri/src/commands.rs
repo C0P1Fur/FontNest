@@ -2,7 +2,7 @@ use tauri::State;
 
 use fontnest_core::{Collection, Font, ReconcileReport, RecognizeReport, ScanSummary};
 
-use crate::AppState;
+use crate::{AppState, ClipFrame};
 
 const BUSY: &str = "字体索引被占用，请重试";
 
@@ -107,6 +107,91 @@ pub async fn recognize_fonts(
     .await
     .map_err(|error| error.to_string())?
     .map_err(|error| error.to_string())
+}
+
+/* ───────────── 热键抓剪贴板 ───────────── */
+
+/// 从剪贴板读一张图。
+///
+/// 返回 `None` 是**正常路径**而不是错误：用户很可能按热键之前忘了先截图。
+/// 把它当错误会让热键看起来"坏了"。
+pub fn capture_clipboard() -> Option<ClipFrame> {
+    let mut clipboard = arboard::Clipboard::new().ok()?;
+    let image = clipboard.get_image().ok()?;
+
+    // arboard 给的是 RGBA8。尺寸和字节数先对一遍，坏数据别往下游传。
+    if image.width == 0 || image.height == 0 {
+        return None;
+    }
+    let expected = image.width.checked_mul(image.height)?.checked_mul(4)?;
+    if image.bytes.len() < expected {
+        return None;
+    }
+
+    Some(ClipFrame {
+        width: image.width as u32,
+        height: image.height as u32,
+        rgba: image.bytes.to_vec(),
+    })
+}
+
+/// 用上一次热键抓到的截图识别。
+///
+/// 像素始终留在 Rust 侧，前端只发文字 —— 一张截图几百 KB，
+/// 让它往返一趟 IPC 既慢又要多写两遍 base64。
+#[tauri::command]
+pub async fn recognize_fonts_from_clipboard(
+    state: State<'_, AppState>,
+    text: String,
+    limit: usize,
+) -> Result<RecognizeReport, String> {
+    let (width, height, rgba, fonts) = {
+        let library = state.library.lock().map_err(|_| lock_error())?;
+        let frame = state
+            .clip_frame
+            .lock()
+            .map_err(|_| "剪贴板截图被占用".to_string())?;
+        let frame = frame
+            .as_ref()
+            .ok_or_else(|| format!("还没有抓到截图：先截图，再按 {}", crate::HOTKEY_ACCELERATOR))?;
+
+        (
+            frame.width,
+            frame.height,
+            frame.rgba.clone(),
+            library.fonts().to_vec(),
+        )
+    };
+
+    tauri::async_runtime::spawn_blocking(move || {
+        fontnest_core::recognize_rgba(width, height, &rgba, &text, &fonts, limit)
+    })
+    .await
+    .map_err(|error| error.to_string())?
+    .map_err(|error| error.to_string())
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AppStatus {
+    /// 给 UI 显示用的快捷键文案
+    pub hotkey: String,
+    /// 真的注册上了没有。false 时 UI 不该再劝用户按它。
+    pub hotkey_ready: bool,
+}
+
+/// 启动信息：热键到底注册上了没有。
+///
+/// 单独一个命令而不是塞进 `list_fonts`：热键状态与字体库无关。
+/// 混在一起，"字体加载慢"会连带这个提示一起迟到。
+#[tauri::command]
+pub fn app_status(state: State<'_, AppState>) -> AppStatus {
+    AppStatus {
+        hotkey: crate::HOTKEY_ACCELERATOR.to_string(),
+        hotkey_ready: state
+            .hotkey_ready
+            .load(std::sync::atomic::Ordering::Relaxed),
+    }
 }
 
 #[tauri::command]

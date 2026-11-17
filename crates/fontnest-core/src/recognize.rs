@@ -82,8 +82,34 @@ pub fn recognize(
     limit: usize,
 ) -> Result<RecognizeReport, CoreError> {
     let started = Instant::now();
-
     let query = load_image_ink(image_path)?;
+    recognize_ink(&query, text, fonts, limit, started)
+}
+
+/// 与 [`recognize`] 相同，但图片来源是**内存里的裸像素**。
+///
+/// 热键抓剪贴板拿到的是 RGBA 字节（`arboard::ImageData`），走这条入口
+/// 可以不落任何临时文件 —— 截图里可能是用户屏幕上的任何内容，不该留盘。
+pub fn recognize_rgba(
+    width: u32,
+    height: u32,
+    rgba: &[u8],
+    text: &str,
+    fonts: &[Font],
+    limit: usize,
+) -> Result<RecognizeReport, CoreError> {
+    let started = Instant::now();
+    let query = load_image_ink_rgba(width, height, rgba)?;
+    recognize_ink(&query, text, fonts, limit, started)
+}
+
+fn recognize_ink(
+    query: &Ink,
+    text: &str,
+    fonts: &[Font],
+    limit: usize,
+    started: Instant,
+) -> Result<RecognizeReport, CoreError> {
 
     // 诊断开关：FONTNEST_DEBUG_INK=1 时打印查询图归一化后的指纹
     if std::env::var_os("FONTNEST_DEBUG_INK").is_some() {
@@ -128,7 +154,7 @@ pub fn recognize(
 
             match render_ink(face, text) {
                 Some(ink) => {
-                    let (iou, aspect_delta) = compare(&query, &ink);
+                    let (iou, aspect_delta) = compare(query, &ink);
                     Some(MatchCandidate {
                         font_id: font.id.clone(),
                         score: (iou - 0.2 * aspect_delta.min(1.0)).max(0.0),
@@ -192,14 +218,53 @@ fn load_image_ink(path: &Path) -> Result<Ink, CoreError> {
     let image = image::open(path)
         .map_err(|error| CoreError::Io(format!("打不开图片 {}：{error}", path.display())))?
         .to_luma8();
+    ink_from_luma(image)
+}
 
+fn load_image_ink_rgba(width: u32, height: u32, rgba: &[u8]) -> Result<Ink, CoreError> {
+    let buffer = image::RgbaImage::from_raw(width, height, rgba.to_vec())
+        .ok_or_else(|| CoreError::Invalid("像素数据与尺寸不匹配".to_string()))?;
+    ink_from_luma(image::DynamicImage::ImageRgba8(buffer).to_luma8())
+}
+
+/// 两种来源（文件 / 剪贴板裸像素）最后都汇到这里，保证归一化只有一条路径。
+fn ink_from_luma(image: image::GrayImage) -> Result<Ink, CoreError> {
     let (width, height) = image.dimensions();
-    let raw = image.as_raw();
-    let mask = binarize(raw, width as usize, height as usize)
+    let mask = binarize(image.as_raw(), width as usize, height as usize)
         .ok_or_else(|| CoreError::Invalid("图里没有找到文字".to_string()))?;
 
     normalize(&mask, width as usize, height as usize)
         .ok_or_else(|| CoreError::Invalid("图里没有找到文字".to_string()))
+}
+
+/// 把剪贴板里的裸像素缩成一张小预览图（PNG 字节）。
+///
+/// 让它存在的原因是"确认"：用户按完热键要一眼看到抓到的是哪一块，
+/// 出问题时这也是第一眼要看的东西。缩到 `max_width` 以内 ——
+/// 原图可能两三千像素宽，不缩会让 IPC 白背几百 KB。
+pub fn preview_png(
+    width: u32,
+    height: u32,
+    rgba: &[u8],
+    max_width: u32,
+) -> Result<Vec<u8>, CoreError> {
+    let buffer = image::RgbaImage::from_raw(width, height, rgba.to_vec())
+        .ok_or_else(|| CoreError::Invalid("像素数据与尺寸不匹配".to_string()))?;
+    let full = image::DynamicImage::ImageRgba8(buffer);
+
+    // thumbnail 只缩不放，且保持宽高比
+    let preview = if max_width > 0 && width > max_width {
+        full.thumbnail(max_width, u32::MAX)
+    } else {
+        full
+    };
+
+    let mut out = Vec::new();
+    preview
+        .write_to(&mut std::io::Cursor::new(&mut out), image::ImageFormat::Png)
+        .map_err(|error| CoreError::Io(format!("预览编码失败：{error}")))?;
+
+    Ok(out)
 }
 
 /// Otsu 阈值 + 极性判断。
@@ -591,5 +656,25 @@ mod tests {
         pixels.extend(vec![230u8; 100]);
         let threshold = otsu(&pixels);
         assert!(threshold > 20 && threshold < 230, "阈值 {threshold} 应落在两峰之间");
+    }
+
+    /// 剪贴板给的是裸 RGBA，这里验证「编码成预览 PNG」这一段没有断。
+    /// 预览挂了不会让识别失败，但用户就失去"抓对了没有"的确认手段。
+    #[test]
+    fn preview_png_encodes_rgba() {
+        // 3×2 纯红块 = 6 个像素 × 4 通道
+        let rgba = vec![255u8, 0, 0, 255].repeat(6);
+        let png = preview_png(3, 2, &rgba, 480).expect("编码应成功");
+        assert!(png.starts_with(&[0x89, b'P', b'N', b'G']), "必须是 PNG 头");
+
+        let decoded = image::load_from_memory(&png).expect("应能解码");
+        assert_eq!((decoded.width(), decoded.height()), (3, 2));
+    }
+
+    /// 尺寸和字节数对不上时必须报错，而不是 panic 或产出花屏。
+    #[test]
+    fn preview_rejects_mismatched_pixels() {
+        let rgba = vec![0u8; 16];
+        assert!(preview_png(100, 100, &rgba, 480).is_err());
     }
 }

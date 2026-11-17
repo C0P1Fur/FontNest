@@ -1,4 +1,6 @@
 import type {
+  AppStatus,
+  ClipboardCapture,
   Collection,
   Font,
   FontQuery,
@@ -185,6 +187,59 @@ async function recognizeFonts(
   return { candidates: [], considered: 0, skipped: 0, unsupported: 0, failed: 0, elapsedMs: 0 }
 }
 
+/* ───────────── 热键 + 剪贴板截图 ───────────── */
+
+async function getAppStatus(): Promise<AppStatus> {
+  if (isTauriRuntime) {
+    return invokeTauri<AppStatus>('app_status')
+  }
+  await delay(MOCK_LATENCY.quick)
+  return { hotkey: '', hotkeyReady: false }
+}
+
+/** 用热键抓到的那张图识别。像素留在 Rust 侧，这里只发文字。 */
+async function recognizeFontsFromClipboard(
+  text: string,
+  limit: number,
+): Promise<RecognizeReport> {
+  if (isTauriRuntime) {
+    return invokeTauri<RecognizeReport>('recognize_fonts_from_clipboard', { text, limit })
+  }
+  await delay(MOCK_LATENCY.install)
+  return { candidates: [], considered: 0, skipped: 0, unsupported: 0, failed: 0, elapsedMs: 0 }
+}
+
+/**
+ * 订阅"热键抓到了图"。返回取消订阅的函数。
+ *
+ * 浏览器里没有全局热键，直接返回空操作 —— 组件里的 effect 就不用再判一遍
+ * 运行环境，也就不会因为条件分支写错而在 Tauri 里漏掉订阅。
+ */
+function onClipboardCapture(handler: (capture: ClipboardCapture) => void): () => void {
+  if (!isTauriRuntime) {
+    return () => {}
+  }
+
+  let unlisten: (() => void) | null = null
+  let cancelled = false
+
+  // listen 是异步的。组件若在注册完成前就卸载了，这里必须能收尾，
+  // 否则每次打开/关闭面板都会漏一个监听器。
+  void import('@tauri-apps/api/event').then(({ listen }) =>
+    listen<ClipboardCapture>('recognize-capture', (event) => {
+      handler(event.payload)
+    }).then((off) => {
+      if (cancelled) off()
+      else unlisten = off
+    }),
+  )
+
+  return () => {
+    cancelled = true
+    unlisten?.()
+  }
+}
+
 /* ───────────── 启动对账 ───────────── */
 
 async function reconcileFonts(): Promise<ReconcileReport> {
@@ -208,5 +263,8 @@ export const api = {
   deleteCollection,
   setCollectionFonts,
   recognizeFonts,
+  recognizeFontsFromClipboard,
+  getAppStatus,
+  onClipboardCapture,
   reconcileFonts,
 }

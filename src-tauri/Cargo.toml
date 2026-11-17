@@ -16,6 +16,13 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 # 原生文件夹选择器。只申请 allow-open 权限，不用 save/message 那一套。
 tauri-plugin-dialog = "2"
+# 全局热键：识别入口不再依赖"先点按钮"。插件只在 Rust 侧调用 register，
+# 不暴露给前端，所以 capabilities 里不需要加权限。
+tauri-plugin-global-shortcut = "2"
+# 读剪贴板里的截图。只用 get_image，不读也不写文本。
+arboard = "3"
+# 预览图编码成 data URL。预览必须缩到几百像素宽，不能再走一次文件往返。
+base64 = "0.22"
 serde = { workspace = true }
 serde_json = { workspace = true }
 fontnest-core = { path = "../crates/fontnest-core" }

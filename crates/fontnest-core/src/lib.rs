@@ -20,5 +20,7 @@ pub use install::{FontHome, Manifest, ReconcileReport, Registry, WindowsRegistry
 pub use library::{CoreError, Library};
 pub use model::{Axis, Category, Font, Format, ScanSummary, Source, UnsupportedExt};
 pub use paths::{data_dir, platform_dirs, FontDir};
-pub use recognize::{recognize, render_png, MatchCandidate, RecognizeReport};
+pub use recognize::{
+    preview_png, recognize, recognize_rgba, render_png, MatchCandidate, RecognizeReport,
+};
 pub use scan::{scan_dirs, ScanResult};
