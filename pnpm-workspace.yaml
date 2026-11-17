@@ -1,0 +1,12 @@
+# pnpm 11 把「依赖构建脚本」改成逐包显式授权：默认不执行任何 postinstall，
+# 必须在 allowBuilds 里写清谁可以跑。
+#
+# esbuild 的 postinstall 要落地平台二进制（Windows 上是 esbuild.exe），
+# 跳过会让 vite 直接起不来。
+#
+# 注意：值必须是布尔 true / false。pnpm 首次生成这个文件时会写入占位符字符串
+# "set this to true or false"，那个字符串不等于 true，等于没开。
+#
+# 新增带 postinstall 的依赖时在这里追加 —— 这份清单本身就是审计记录。
+allowBuilds:
+  esbuild: true

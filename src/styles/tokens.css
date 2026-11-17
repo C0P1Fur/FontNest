@@ -1,0 +1,75 @@
+/* ═══════════════════════════════════════════════════════════
+   设计令牌 —— 唯一可以出现原始色值的地方。
+   组件样式只允许引用变量，不允许写死颜色/时长/圆角。
+
+   配色纪律：一个颜色全局只有一个含义。
+     黑  = 你在操作（主按钮 / 选中 / 滑块 / 下划线）
+     绿  = 系统状态已生效（已启用 / 成功 / 撤销）
+     琥珀 = 你的私人标记（收藏）
+     红  = 仅错误
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* 表面 */
+  --bg: #f6f6f8;
+  --surface: #ffffff;
+  --raise: #fbfbfc;
+  --line: #e5e5eb;
+  --line-2: #d4d4de;
+
+  /* 文字 */
+  --ink: #17171d;
+  --muted: #5f5f6c;
+  --faint: #9394a1;
+
+  /* 功能色 */
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --err: #ef4444;
+  --ok-soft: #e9f8ef;
+  --warn-soft: #fef4e4;
+  --err-soft: #fdecec;
+
+  /* 字体 */
+  --ui: "Segoe UI Variable Text", "Segoe UI", ui-sans-serif, system-ui, -apple-system,
+    "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono: "Cascadia Mono", Consolas, ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* 圆角 */
+  --r: 10px;
+  --r-sm: 7px;
+  --r-pill: 999px;
+
+  /* 时长：80–140 即时 · 200–320 迁移 · 600–900 等待 */
+  --t-1: 80ms;
+  --t-2: 140ms;
+  --t-3: 200ms;
+  --t-4: 320ms;
+
+  /* 曲线：第二个控制点 1.56 才会过冲 */
+  --e-out: cubic-bezier(0.2, 0.8, 0.25, 1);
+  --e-in: cubic-bezier(0.4, 0, 0.7, 0.2);
+  --e-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* 由 React 写入，控制卡片样张字号 */
+  --sample-size: 24px;
+}
+
+[data-theme="dark"] {
+  --bg: #0e0e11;
+  --surface: #16161a;
+  --raise: #1c1c21;
+  --line: #26262c;
+  --line-2: #34343c;
+
+  --ink: #efeff3;
+  --muted: #a2a2b0;
+  --faint: #6c6c7a;
+
+  --ok: #3ddc84;
+  --warn: #fbbf24;
+  --err: #f87171;
+  --ok-soft: #12301f;
+  --warn-soft: #2e2410;
+  --err-soft: #2e1516;
+}
