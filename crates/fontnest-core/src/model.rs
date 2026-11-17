@@ -87,11 +87,23 @@ pub struct Font {
     pub collection_index: u32,
 }
 
+/// 看起来是字体、但当前格式不受支持的文件（按扩展名汇总）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UnsupportedExt {
+    /// 小写扩展名，如 "woff"
+    pub ext: String,
+    pub count: usize,
+}
+
 /// 一次扫描的结果摘要，给 UI 的进度提示用
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ScanSummary {
     pub count: usize,
     pub failed: usize,
+    /// 被格式挡在门外的文件。以前这些是**静默丢弃**的：
+    /// 用户把含 woff 的文件夹加进来，列表里什么都不出现，也没有任何提示。
+    pub unsupported: Vec<UnsupportedExt>,
     pub finished_at: u64,
 }

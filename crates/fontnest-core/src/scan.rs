@@ -6,7 +6,7 @@
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
-use crate::model::{Category, Font, Format, Source};
+use crate::model::{Category, Font, Format, Source, UnsupportedExt};
 use crate::paths::FontDir;
 use crate::sfnt::{self, FontInfo};
 
@@ -22,7 +22,27 @@ fn is_font_file(path: &Path) -> bool {
     }
 }
 
-fn walk(dir: &Path, depth: usize, out: &mut Vec<PathBuf>) {
+/// 看起来是字体、但当前不支持的扩展名。
+///
+/// 存在的理由：这类文件以前被**静默丢弃** —— 用户把含 woff 的文件夹加进来，
+/// 列表里什么都不出现、也不计入 failed，完全没有线索。现在会被计数并报告。
+const UNSUPPORTED_FONT_EXTENSIONS: &[&str] = &["woff", "woff2", "eot", "pfb", "pfm", "dfont"];
+
+fn unsupported_extension(path: &Path) -> Option<String> {
+    let ext = path.extension().and_then(|ext| ext.to_str())?.to_lowercase();
+    if UNSUPPORTED_FONT_EXTENSIONS.contains(&ext.as_str()) {
+        Some(ext)
+    } else {
+        None
+    }
+}
+
+fn walk(
+    dir: &Path,
+    depth: usize,
+    out: &mut Vec<PathBuf>,
+    unsupported: &mut HashMap<String, usize>,
+) {
     if depth > MAX_DEPTH {
         return;
     }
@@ -44,9 +64,13 @@ fn walk(dir: &Path, depth: usize, out: &mut Vec<PathBuf>) {
         }
 
         if file_type.is_dir() {
-            walk(&path, depth + 1, out);
-        } else if file_type.is_file() && is_font_file(&path) {
-            out.push(path);
+            walk(&path, depth + 1, out, unsupported);
+        } else if file_type.is_file() {
+            if is_font_file(&path) {
+                out.push(path);
+            } else if let Some(ext) = unsupported_extension(&path) {
+                *unsupported.entry(ext).or_insert(0) += 1;
+            }
         }
     }
 }
@@ -188,19 +212,39 @@ fn build_font(path: &Path, dir: &FontDir, face: u32, info: &FontInfo, size_bytes
     }
 }
 
-/// 扫描全部目录。返回 (字体列表, 解析失败数)。
+/// 一次扫描的完整结果
+pub struct ScanResult {
+    pub fonts: Vec<Font>,
+    /// 解析失败的文件数
+    pub failed: usize,
+    /// 看起来是字体但格式不受支持的文件，按扩展名汇总
+    pub unsupported: Vec<UnsupportedExt>,
+}
+
+/// 扫描全部目录。
 ///
 /// `skip` 是本工具自己安装出来的副本路径：这些文件不该再进网格，
 /// 否则同一个字体会出现两次（库里一份、用户字体目录一份）。
-pub fn scan_dirs(dirs: &[FontDir], skip: &HashSet<String>) -> (Vec<Font>, usize) {
+pub fn scan_dirs(dirs: &[FontDir], skip: &HashSet<String>) -> ScanResult {
     let mut files: Vec<(PathBuf, Source)> = Vec::new();
+    let mut unsupported: HashMap<String, usize> = HashMap::new();
+    let mut seen_dirs: HashSet<PathBuf> = HashSet::new();
 
     for dir in dirs {
         if !dir.path.exists() {
             continue;
         }
+
+        // 目录可能重叠：用户完全可能把 `Fonts\sub` 和 `Fonts` 都加进来，
+        // Windows 路径还不区分大小写。不去重的后果是同一款字体在网格里出现两次
+        // （id 由路径派生，所以是两条 id 相同但重复的条目）。
+        let canonical = std::fs::canonicalize(&dir.path).unwrap_or_else(|_| dir.path.clone());
+        if !seen_dirs.insert(canonical) {
+            continue;
+        }
+
         let mut found = Vec::new();
-        walk(&dir.path, 0, &mut found);
+        walk(&dir.path, 0, &mut found, &mut unsupported);
         found.sort();
         for path in found {
             files.push((path, dir.source));
@@ -258,7 +302,18 @@ pub fn scan_dirs(dirs: &[FontDir], skip: &HashSet<String>) -> (Vec<Font>, usize)
     }
 
     annotate_instance_counts(&mut fonts);
-    (fonts, failed)
+
+    let mut unsupported: Vec<UnsupportedExt> = unsupported
+        .into_iter()
+        .map(|(ext, count)| UnsupportedExt { ext, count })
+        .collect();
+    unsupported.sort_by(|a, b| b.count.cmp(&a.count).then(a.ext.cmp(&b.ext)));
+
+    ScanResult {
+        fonts,
+        failed,
+        unsupported,
+    }
 }
 
 /// 同族样式数：字体管理器里"18 styles"的来源，必须在全量扫描后回填

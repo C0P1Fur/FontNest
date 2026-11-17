@@ -9,6 +9,7 @@ use std::process::ExitCode;
 use fontnest_core::{platform_dirs, Library};
 
 mod bench;
+mod selftest;
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -23,6 +24,8 @@ fn main() -> ExitCode {
         "install" | "enable" => run_set_enabled(&args, true),
         "uninstall" | "disable" => run_set_enabled(&args, false),
         "render" => run_render(&args),
+        "diag" => run_diag(),
+        "selftest" => selftest::run(&args),
         "bench-parse" | "bench" => bench::run_bench(),
         "recognize" | "recognise" => run_recognize(&args),
         "help" | "--help" | "-h" => {
@@ -108,9 +111,21 @@ fn run_scan() -> ExitCode {
     let mut library = Library::new();
     let summary = library.scan();
     println!(
-        "扫描完成：{} 个字体，{} 个失败，耗时到 {}",
-        summary.count, summary.failed, summary.finished_at
+        "扫描完成：{} 个字体，{} 个解析失败",
+        summary.count, summary.failed
     );
+
+    // 被格式挡在门外的文件必须被点名，否则用户只会觉得"加了文件夹没反应"
+    if summary.unsupported.is_empty() {
+        println!("没有因格式被跳过的文件。");
+    } else {
+        let total: usize = summary.unsupported.iter().map(|item| item.count).sum();
+        println!("另有 {total} 个文件格式不受支持（未计入字体数）：");
+        for item in &summary.unsupported {
+            println!("  .{} × {}", item.ext, item.count);
+        }
+    }
+
     ExitCode::SUCCESS
 }
 
@@ -118,6 +133,51 @@ fn run_dirs() -> ExitCode {
     for dir in platform_dirs() {
         println!("{:<8} {}", format!("{:?}", dir.source), dir.path.display());
     }
+    ExitCode::SUCCESS
+}
+
+/// 体检：把"读不懂"的字体点名列出。
+///
+/// 存在理由：识别流程会对读不懂的字体**静默跳过**，
+/// 如果只看一个总数，没人能发现是哪几个、为什么。
+fn run_diag() -> ExitCode {
+    let mut library = Library::new();
+    library.scan();
+    let fonts = library.fonts();
+
+    let mut unreadable: Vec<(String, String)> = Vec::new();
+    let mut unreadable_bytes = 0u64;
+
+    for font in fonts {
+        let path = Path::new(&font.file_path);
+        let Ok(bytes) = std::fs::read(path) else {
+            unreadable.push((format!("{} (读不到文件)", font.family), font.file_path.clone()));
+            continue;
+        };
+        // 空文本 = 只问"这个 face 能不能建立"，不问有没有某个字
+        let readable = matches!(
+            fontnest_core::assess(&bytes, font.collection_index, ""),
+            fontnest_core::Assessment::Ready(_)
+        );
+        if !readable {
+            unreadable_bytes += bytes.len() as u64;
+            unreadable.push((
+                format!("{} [{:?} idx={}]", font.family, font.format, font.collection_index),
+                font.file_path.clone(),
+            ));
+        }
+    }
+
+    println!("字体总数：{}", fonts.len());
+    println!("cmap 读不懂：{}（共 {:.1} MB）", unreadable.len(), unreadable_bytes as f64 / 1_048_576.0);
+    for (label, path) in &unreadable {
+        println!("  {label}\n      {path}");
+    }
+
+    if unreadable.is_empty() {
+        println!("全部字体都能被识别流程读取。");
+    }
+
     ExitCode::SUCCESS
 }
 
@@ -205,8 +265,12 @@ fn run_recognize(args: &[String]) -> ExitCode {
     };
 
     println!(
-        "比对 {} 个字体（跳过 {} 个无此字形，失败 {}），耗时 {}ms\n",
-        report.considered, report.skipped, report.failed, report.elapsed_ms
+        "比对 {} 个字体（无此字形 {}，读不懂 {}，失败 {}），耗时 {}ms\n",
+        report.considered,
+        report.skipped,
+        report.unsupported,
+        report.failed,
+        report.elapsed_ms
     );
     for (rank, candidate) in report.candidates.iter().enumerate() {
         let family = library

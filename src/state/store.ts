@@ -162,7 +162,15 @@ export const useApp = create<AppState>()((set, get) => ({
         lastScanAt: result.finishedAt,
         selectedId: get().selectedId ?? fonts[0]?.id ?? null,
       })
-      get().showToast(`索引已刷新 · ${fonts.length} 个字体`)
+      // 格式不受支持的文件必须说出来。否则用户加了含 woff 的文件夹，
+      // 只会看到"字体数没怎么变"，没有任何线索。
+      const skipped = result.unsupported.reduce((sum, item) => sum + item.count, 0)
+      if (skipped > 0) {
+        const detail = result.unsupported.map((item) => `.${item.ext} × ${item.count}`).join('、')
+        get().showToast(`已刷新 · ${fonts.length} 个字体（${skipped} 个文件格式不支持：${detail}）`)
+      } else {
+        get().showToast(`索引已刷新 · ${fonts.length} 个字体`)
+      }
       window.setTimeout(() => set({ scanPhase: 'idle' }), 1500)
     } catch (error) {
       console.error('[fontnest] 扫描失败', error)

@@ -110,8 +110,10 @@ export interface MatchCandidate {
 export interface RecognizeReport {
   candidates: MatchCandidate[]
   considered: number
-  /** 因不含所需字形被跳过的字体数 */
+  /** 因不含所需字形被跳过 */
   skipped: number
+  /** 读不懂 cmap（不支持的子表格式/表目录损坏）—— 与 skipped 分开，避免掩盖解析失败 */
+  unsupported: number
   failed: number
   elapsedMs: number
 }

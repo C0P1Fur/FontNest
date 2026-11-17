@@ -294,7 +294,8 @@ impl Library {
             });
         }
 
-        let (mut fonts, failed) = scan_dirs(&dirs, &self.manifest.target_paths());
+        let scanned = scan_dirs(&dirs, &self.manifest.target_paths());
+        let mut fonts = scanned.fonts;
 
         for font in fonts.iter_mut() {
             font.favorite = self.favorites.contains(&font.id);
@@ -312,7 +313,8 @@ impl Library {
 
         ScanSummary {
             count,
-            failed,
+            failed: scanned.failed,
+            unsupported: scanned.unsupported,
             finished_at: now_millis(),
         }
     }

@@ -35,6 +35,8 @@ async function invokeTauri<T>(cmd: string, args?: Record<string, unknown>): Prom
 export interface ScanResult {
   count: number
   failed: number
+  /** 看起来是字体但格式不受支持的文件，按扩展名汇总 */
+  unsupported: { ext: string; count: number }[]
   finishedAt: number
 }
 
@@ -75,7 +77,7 @@ async function scan(): Promise<ScanResult> {
     return invokeTauri<ScanResult>('scan_fonts')
   }
   await delay(MOCK_LATENCY.scan)
-  return { count: mockFonts.length, failed: 0, finishedAt: Date.now() }
+  return { count: mockFonts.length, failed: 0, unsupported: [], finishedAt: Date.now() }
 }
 
 async function revealInFolder(id: string): Promise<void> {
@@ -180,7 +182,7 @@ async function recognizeFonts(
     return invokeTauri<RecognizeReport>('recognize_fonts', { image, text, limit })
   }
   await delay(MOCK_LATENCY.install)
-  return { candidates: [], considered: 0, skipped: 0, failed: 0, elapsedMs: 0 }
+  return { candidates: [], considered: 0, skipped: 0, unsupported: 0, failed: 0, elapsedMs: 0 }
 }
 
 /* ───────────── 启动对账 ───────────── */

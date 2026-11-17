@@ -16,6 +16,7 @@ use std::time::Instant;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::assess::{Assessment, Reason};
 use crate::library::CoreError;
 use crate::model::Font;
 
@@ -44,8 +45,11 @@ pub struct RecognizeReport {
     pub candidates: Vec<MatchCandidate>,
     /// 参与比对的字体数
     pub considered: usize,
-    /// 因不含所需字形而跳过的字体数（cmap 闸门挡掉的）
+    /// 因不含所需字形而跳过的字体数
     pub skipped: usize,
+    /// **读不懂**该字体的 cmap（不支持的子表格式、表目录损坏）。
+    /// 与 `skipped` 分开计数：解析失败不该伪装成"这个字体没有这个字"。
+    pub unsupported: usize,
     /// 解析或渲染失败的字体数（损坏文件等）
     pub failed: usize,
     pub elapsed_ms: u128,
@@ -80,10 +84,20 @@ pub fn recognize(
     let started = Instant::now();
 
     let query = load_image_ink(image_path)?;
-    let chars: Vec<char> = text.chars().collect();
-    let latin_query = !text.is_empty() && text.chars().all(|ch| ch.is_ascii());
+
+    // 诊断开关：FONTNEST_DEBUG_INK=1 时打印查询图归一化后的指纹
+    if std::env::var_os("FONTNEST_DEBUG_INK").is_some() {
+        let ink: usize = query.mask.iter().filter(|&&value| value == 1).count();
+        eprintln!(
+            "[debug] 查询图：墨迹 {ink}/{} 格，宽高比 {:.3}",
+            NORM * NORM,
+            query.aspect
+        );
+    }
+
 
     let skipped = AtomicUsize::new(0);
+    let unsupported = AtomicUsize::new(0);
     let failed = AtomicUsize::new(0);
 
     let mut candidates: Vec<MatchCandidate> = fonts
@@ -94,23 +108,23 @@ pub fn recognize(
                 return None;
             };
 
-            // 脚本闸门：拉丁查询不去碰中文字体。它们确实含 ASCII，但那是附带的
-            // 西文字形，几乎不会是目标；而解析一个 20–36MB 的中文字体要好几秒。
-            if latin_query && crate::cmap::is_cjk_font(&bytes, font.collection_index) {
-                skipped.fetch_add(1, Ordering::Relaxed);
-                return None;
-            }
-
-            // 字形闸门：字体里没有这几个字，就不必花几百毫秒去解析它
-            if crate::cmap::coverage(&bytes, font.collection_index, &chars) < chars.len() {
-                skipped.fetch_add(1, Ordering::Relaxed);
-                return None;
-            }
-
-            let Some(face) = parse_face(&bytes, font.collection_index) else {
-                failed.fetch_add(1, Ordering::Relaxed);
-                return None;
+            // 唯一的判断入口。成功时把 face 一并拿回来，判断和渲染共用同一个解析器。
+            let face = match crate::assess::assess(&bytes, font.collection_index, text) {
+                Assessment::Ready(face) => face,
+                Assessment::Rejected(reason) => {
+                    match reason {
+                        Reason::NoFace => unsupported.fetch_add(1, Ordering::Relaxed),
+                        Reason::MissingGlyphs { .. } => skipped.fetch_add(1, Ordering::Relaxed),
+                    };
+                    return None;
+                }
             };
+
+            // 注：这里曾经有一条"拉丁查询跳过中日韩字体"的闸门。
+            // 它在 fontdue 时代是为了省解析时间（一个中文字体 3.5 秒），
+            // 但换成 swash 惰性解析后这个理由消失了，而它带来一个真实缺陷：
+            // 用日文/中文字体排版的**拉丁文字**永远匹配不到它自己
+            // （自测里 Yu Gothic 名次 0 就是这个原因）。现已移除。
 
             match render_ink(face, text) {
                 Some(ink) => {
@@ -141,6 +155,7 @@ pub fn recognize(
         candidates,
         considered: fonts.len(),
         skipped: skipped.load(Ordering::Relaxed),
+        unsupported: unsupported.load(Ordering::Relaxed),
         failed: failed.load(Ordering::Relaxed),
         elapsed_ms: started.elapsed().as_millis(),
     })
@@ -156,8 +171,12 @@ pub fn render_png(
     let bytes = read_font(font_path)
         .ok_or_else(|| CoreError::Io(format!("读不到字体文件：{}", font_path.display())))?;
 
-    let face = parse_face(&bytes, collection_index)
-        .ok_or_else(|| CoreError::Invalid("字体解析失败".to_string()))?;
+    let face = match crate::assess::assess(&bytes, collection_index, text) {
+        Assessment::Ready(face) => face,
+        Assessment::Rejected(reason) => {
+            return Err(CoreError::Invalid(format!("字体不可用于渲染：{}", reason.label())))
+        }
+    };
     let canvas = rasterize(face, text);
 
     let image = image::GrayImage::from_raw(CANVAS_W as u32, CANVAS_H as u32, canvas)
@@ -283,14 +302,6 @@ fn read_font(path: &Path) -> Option<Vec<u8>> {
     std::fs::read(path).ok()
 }
 
-/// 用惰性解析器取一个 face。
-///
-/// 换成 swash 的理由见 Cargo.toml：它的加载是 O(1)（只校验表目录），
-/// 取字形时才去读那一段字节。对照实验：fontdue 加载 46ms/字体，swash 0.005ms。
-fn parse_face(bytes: &[u8], collection_index: u32) -> Option<swash::FontRef<'_>> {
-    swash::FontRef::from_index(bytes, collection_index as usize)
-}
-
 fn render_ink(face: swash::FontRef<'_>, text: &str) -> Option<Ink> {
     let canvas = rasterize(face, text);
     // 必须和截图侧走**同一条**二值化规则（Otsu + 边框极性判断）。
@@ -389,13 +400,19 @@ fn normalize(mask: &[u8], width: usize, height: usize) -> Option<Ink> {
 
     let mut out = vec![0u8; NORM * NORM];
     for ty in 0..NORM {
-        // 目标格子对应的源行区间
-        let sy0 = min_y + ty * box_h / NORM;
-        let sy1 = min_y + ((ty + 1) * box_h / NORM).max(sy0 + 1);
+        // 相对偏移先算清楚，再加 min_y。
+        // 曾经写成 `.max(sy0 + 1)` —— sy0 已经是绝对坐标，与相对偏移相加
+        // 等于把包围盒起点算了两遍；起点越大，格子被撑得越离谱。
+        let top = ty * box_h / NORM;
+        let bottom = ((ty + 1) * box_h / NORM).max(top + 1);
+        let sy0 = min_y + top;
+        let sy1 = (min_y + bottom).min(height);
 
         for tx in 0..NORM {
-            let sx0 = min_x + tx * box_w / NORM;
-            let sx1 = min_x + ((tx + 1) * box_w / NORM).max(sx0 + 1);
+            let left = tx * box_w / NORM;
+            let right = ((tx + 1) * box_w / NORM).max(left + 1);
+            let sx0 = min_x + left;
+            let sx1 = (min_x + right).min(width);
 
             let mut ink = 0u32;
             let mut total = 0u32;
@@ -407,11 +424,23 @@ fn normalize(mask: &[u8], width: usize, height: usize) -> Option<Ink> {
                     }
                 }
             }
-            // 覆盖过半即认为该格有墨
-            if total > 0 && ink * 2 >= total {
+            // 覆盖率达到 1/4 即认为该格有墨。
+            //
+            // 曾经用"过半"（ink*2 >= total），那在**宽高比很大**的文本上是灾难：
+            // 隶书「永和九年」的墨迹框是 284×47，缩到 48×48 后每个格子只覆盖
+            // 约 5.9×1 个像素，2px 宽的竖笔画占比 1/3 永远过不了半 —— 整张图被
+            // 压成空白（实测 0/2304 格），于是与所有候选的 IoU 都是 0。
+            if total > 0 && ink * 4 >= total {
                 out[ty * NORM + tx] = 1;
             }
         }
+    }
+
+    // 源图有墨、但缩放后一格都不剩 —— 说明归一化把信息全丢了。
+    // 这时必须返回 None，而不是交出一张空掩膜：空掩膜会让 IoU 恒为 0，
+    // 表现为"所有候选都是 0 分"，看起来像识别算法不行，实际是预处理坏了。
+    if out.iter().all(|&cell| cell == 0) {
+        return None;
     }
 
     Some(Ink {
@@ -498,7 +527,10 @@ mod tests {
         let a = std::fs::read(&first).unwrap();
         let b = std::fs::read(&second).unwrap();
 
-        let (Some(face_a), Some(face_b)) = (parse_face(&a, 0), parse_face(&b, 0)) else {
+        let (Some(face_a), Some(face_b)) = (
+            swash::FontRef::from_index(&a, 0),
+            swash::FontRef::from_index(&b, 0),
+        ) else {
             return;
         };
 
@@ -519,9 +551,43 @@ mod tests {
         );
     }
 
+    /// 宽高比很大的文本不能被归一化压成空白。
+    ///
+    /// 真实案例：隶书「永和九年」的墨迹框是 284×47（宽高比 6.04），
+    /// 缩到 48×48 后每格只覆盖约 5.9×1 个像素，细竖笔画占比不到一半，
+    /// 旧的"过半"规则把整张图抹成 0/2304 格 —— 于是所有候选都是 0 分。
     #[test]
-    fn otsu_splits_two_clusters() {
-        let mut pixels = vec![20u8; 100];
+    fn wide_ink_survives_normalization() {
+        let (width, height) = (300usize, 50usize);
+        let mut mask = vec![0u8; width * height];
+        for x in [10usize, 80, 150, 220] {
+            for y in 10..40 {
+                mask[y * width + x] = 1;
+                mask[y * width + x + 1] = 1;
+            }
+        }
+
+        let ink = normalize(&mask, width, height).expect("宽文本不该被归一化丢光");
+        let cells = ink.mask.iter().filter(|&&value| value == 1).count();
+        assert!(cells > 0, "归一化后仍有墨迹，实际 {cells} 格");
+        assert!(ink.aspect > 5.0, "宽高比应保留，实际 {}", ink.aspect);
+    }
+
+    /// 缩放后一格不剩时必须返回 None —— 交出空掩膜会让 IoU 恒为 0，
+    /// 表现为"所有候选都 0 分"，但真凶是预处理。
+    #[test]
+    fn wiped_mask_is_reported_not_returned() {
+        let (width, height) = (2000usize, 2usize);
+        let mut mask = vec![0u8; width * height];
+        // 极稀疏：只有孤立的单个像素
+        for x in (0..width).step_by(97) {
+            mask[x] = 1;
+        }
+        assert!(normalize(&mask, width, height).is_none());
+    }
+
+    #[test]
+    fn otsu_splits_two_clusters() {        let mut pixels = vec![20u8; 100];
         pixels.extend(vec![230u8; 100]);
         let threshold = otsu(&pixels);
         assert!(threshold > 20 && threshold < 230, "阈值 {threshold} 应落在两峰之间");
