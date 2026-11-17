@@ -1,6 +1,6 @@
 use tauri::State;
 
-use fontnest_core::{Collection, Font, ReconcileReport, ScanSummary};
+use fontnest_core::{Collection, Font, ReconcileReport, RecognizeReport, ScanSummary};
 
 use crate::AppState;
 
@@ -79,6 +79,35 @@ pub fn remove_custom_dir(state: State<'_, AppState>, path: String) -> Result<Vec
 }
 
 /* ───────────── 启动对账 ───────────── */
+
+/* ───────────── 字体识别 ───────────── */
+
+/// 用已知文本在本地全部字体里做视觉比对。
+///
+/// 几个必须注意的点：
+/// · 复制字体列表后**立刻释放锁**。识别要好几秒，占着锁会把"刷新索引"之类的
+///   操作一起卡死。
+/// · 走 `spawn_blocking`，绝不阻塞 IPC 线程。
+/// · 只读，不改任何文件 —— 识别是纯查询。
+#[tauri::command]
+pub async fn recognize_fonts(
+    state: State<'_, AppState>,
+    image: String,
+    text: String,
+    limit: usize,
+) -> Result<RecognizeReport, String> {
+    let fonts = {
+        let library = state.library.lock().map_err(|_| lock_error())?;
+        library.fonts().to_vec()
+    };
+
+    tauri::async_runtime::spawn_blocking(move || {
+        fontnest_core::recognize(std::path::Path::new(&image), &text, &fonts, limit)
+    })
+    .await
+    .map_err(|error| error.to_string())?
+    .map_err(|error| error.to_string())
+}
 
 #[tauri::command]
 pub fn reconcile_fonts(state: State<'_, AppState>) -> Result<ReconcileReport, String> {

@@ -41,6 +41,7 @@ export interface AppState {
   sample: string
   theme: Theme
   settingsOpen: boolean
+  recognizeOpen: boolean
 
   /* 选中与瞬时态 */
   selectedId: string | null
@@ -58,12 +59,16 @@ export interface AppState {
   setSize: (size: number) => void
   setSample: (sample: string) => void
   select: (id: string) => void
+  /** 清掉所有筛选并选中某个字体 —— 保证它在网格和详情里都看得见 */
+  focusFont: (id: string) => void
   toggleEnabled: (id: string) => Promise<void>
   toggleFavorite: (id: string) => void
   reveal: (id: string) => void
   toggleTheme: () => void
   openSettings: () => void
   closeSettings: () => void
+  openRecognize: () => void
+  closeRecognize: () => void
   /** 返回 null 表示成功，否则返回给用户看的错误文案 */
   addDir: (path: string) => Promise<string | null>
   removeDir: (path: string) => Promise<string | null>
@@ -116,6 +121,7 @@ export const useApp = create<AppState>()((set, get) => ({
   sample: 'The quick brown fox 敏捷的棕色狐狸',
   theme: readTheme(),
   settingsOpen: false,
+  recognizeOpen: false,
 
   selectedId: null,
   pendingId: null,
@@ -246,6 +252,11 @@ export const useApp = create<AppState>()((set, get) => ({
 
   openSettings: () => set({ settingsOpen: true }),
   closeSettings: () => set({ settingsOpen: false }),
+  openRecognize: () => set({ recognizeOpen: true }),
+  closeRecognize: () => set({ recognizeOpen: false }),
+
+  focusFont: (id) =>
+    set({ query: '', scope: 'all', categories: [], selectedId: id }),
 
   addDir: async (path) => {
     try {

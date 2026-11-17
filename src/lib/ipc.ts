@@ -1,4 +1,10 @@
-import type { Collection, Font, FontQuery, ReconcileReport } from '../types/font'
+import type {
+  Collection,
+  Font,
+  FontQuery,
+  ReconcileReport,
+  RecognizeReport,
+} from '../types/font'
 import { mockFonts } from '../data/mockFonts'
 
 /**
@@ -163,6 +169,20 @@ async function setCollectionFonts(id: string, fonts: string[]): Promise<void> {
 }
 
 
+/* ───────────── 字体识别 ───────────── */
+
+async function recognizeFonts(
+  image: string,
+  text: string,
+  limit: number,
+): Promise<RecognizeReport> {
+  if (isTauriRuntime) {
+    return invokeTauri<RecognizeReport>('recognize_fonts', { image, text, limit })
+  }
+  await delay(MOCK_LATENCY.install)
+  return { candidates: [], considered: 0, skipped: 0, failed: 0, elapsedMs: 0 }
+}
+
 /* ───────────── 启动对账 ───────────── */
 
 async function reconcileFonts(): Promise<ReconcileReport> {
@@ -185,5 +205,6 @@ export const api = {
   createCollection,
   deleteCollection,
   setCollectionFonts,
+  recognizeFonts,
   reconcileFonts,
 }

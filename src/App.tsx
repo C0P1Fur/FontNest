@@ -8,6 +8,7 @@ import { Inspector } from './components/Inspector'
 import { StatusBar } from './components/StatusBar'
 import { Toast } from './components/Toast'
 import { SettingsPanel } from './components/SettingsPanel'
+import { RecognizePanel } from './components/RecognizePanel'
 import { applyQuery } from './lib/filter'
 import { RIPPLE_SELECTOR, rippleFrom, tactile } from './lib/motion'
 import { SAMPLES, SIZES } from './lib/samples'
@@ -215,6 +216,7 @@ export default function App() {
       <Inspector font={selected} />
       <StatusBar visible={visible.length} total={fonts.length} />
       <SettingsPanel />
+      <RecognizePanel />
       <Toast />
     </div>
   )

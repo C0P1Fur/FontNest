@@ -625,6 +625,104 @@ kbd {
   line-height: 1;
 }
 
+/* ═══════════ 字体识别 ═══════════ */
+.modal-wide {
+  width: 660px;
+  max-width: 92vw;
+}
+
+.pick-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 6px;
+}
+
+.pick-path {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.match-hint {
+  font-size: 11px;
+  color: var(--faint);
+  padding: 8px 0 0;
+}
+
+.match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+
+.match-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: var(--r-sm);
+  transition: background var(--t-2) var(--e-out);
+}
+
+.match-row:hover {
+  background: var(--bg);
+}
+
+.match-rank {
+  width: 18px;
+  font-size: 11px;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.match-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 17px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.match-score {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.match-bar {
+  width: 72px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.match-bar i {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  border-radius: 2px;
+  transition: width var(--t-3) var(--e-out);
+}
+
+.match-score b {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 24px;
+  text-align: right;
+}
+
 /* ═══════════ 工作区 ═══════════ */
 .workspace {
   grid-area: main;

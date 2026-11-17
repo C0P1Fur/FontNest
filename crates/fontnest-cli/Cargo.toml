@@ -15,3 +15,6 @@ path = "src/main.rs"
 [dependencies]
 fontnest-core = { path = "../fontnest-core" }
 serde_json = { workspace = true }
+# 只用于对照实验：验证"惰性解析器"能否替代 fontdue 的全量解析
+swash = "0.2"
+fontdue = "0.9"

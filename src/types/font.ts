@@ -98,3 +98,20 @@ export interface ReconcileReport {
   drifted: number
   repaired: number
 }
+
+/** 识别候选：score = IoU 扣除宽高比惩罚 */
+export interface MatchCandidate {
+  fontId: string
+  score: number
+  iou: number
+  aspectDelta: number
+}
+
+export interface RecognizeReport {
+  candidates: MatchCandidate[]
+  considered: number
+  /** 因不含所需字形被跳过的字体数 */
+  skipped: number
+  failed: number
+  elapsedMs: number
+}

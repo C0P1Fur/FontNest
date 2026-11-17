@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../state/store'
-import { KeyboardIcon, SearchIcon, SunIcon, FolderPlusIcon } from './Icons'
+import { KeyboardIcon, SearchIcon, SunIcon, FolderPlusIcon, ScanTextIcon } from './Icons'
 
 export function TopBar() {
   const query = useApp((state) => state.query)
@@ -9,6 +9,7 @@ export function TopBar() {
   const toggleTheme = useApp((state) => state.toggleTheme)
   const scanPhase = useApp((state) => state.scanPhase)
   const openSettings = useApp((state) => state.openSettings)
+  const openRecognize = useApp((state) => state.openRecognize)
 
   const [keysOpen, setKeysOpen] = useState(false)
 
@@ -60,6 +61,16 @@ export function TopBar() {
           <span className="pulse" />
           <span>{scanPhase === 'scanning' ? '扫描中' : '已同步'}</span>
         </div>
+
+        <button
+          type="button"
+          className="icon-btn"
+          aria-label="字体识别"
+          title="字体识别（用截图找字体）"
+          onClick={openRecognize}
+        >
+          <ScanTextIcon />
+        </button>
 
         <button
           type="button"

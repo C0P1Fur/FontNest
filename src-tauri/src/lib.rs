@@ -39,6 +39,7 @@ pub fn run() {
             commands::rename_collection,
             commands::delete_collection,
             commands::set_collection_fonts,
+            commands::recognize_fonts,
         ])
         .run(tauri::generate_context!())
         .expect("FontNest 启动失败");

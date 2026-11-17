@@ -4,6 +4,27 @@ interface IconProps {
   className?: string
 }
 
+/**
+ * 字体识别：四个扫描角 + 一条基线。
+ *
+ * 不用"放大镜找文字"那种组合 —— 16px 下笔画会糊成一团。
+ * 四个角在视觉上就是"框选一块区域"，中间那条线表示"这块是文字"。
+ */
+export function ScanTextIcon({ className }: IconProps) {
+  return (
+    <svg className={className ?? 'ico'} viewBox="0 0 20 20" aria-hidden="true">
+      <path
+        d="M3 7.2V4.9a1.9 1.9 0 011.9-1.9H7.2M12.8 3h2.3A1.9 1.9 0 0117 4.9v2.3M17 12.8v2.3a1.9 1.9 0 01-1.9 1.9h-2.3M7.2 17H4.9A1.9 1.9 0 013 15.1v-2.3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path d="M7 10h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function SearchIcon({ className }: IconProps) {
   return (
     <svg className={className ?? 'ico'} viewBox="0 0 20 20" aria-hidden="true">

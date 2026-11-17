@@ -10,6 +10,15 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 # 内容哈希：安装前后的完整性校验、卸载前的"文件没被换过"判定
 blake3 = "1"
+# 字体识别：惰性解析 + 栅格化。
+# 换掉 fontdue 的原因：它加载时把**全部字形**解码成自己的轮廓表示，
+# 1MB 字体要 46ms、35MB 字体要 3.5s；而识别只画 6 个字形。
+# swash 加载只校验表目录（0.005ms），取一个字形才读那一个。
+swash = "0.2"
+# 字体识别：读取用户截取的图片（另一半）
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+# 字体识别：几百个字体逐个解析是 CPU 密集的纯并行任务
+rayon = "1"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 # 只为读写 HKCU 下的字体登记项
