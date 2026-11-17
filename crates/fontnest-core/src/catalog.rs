@@ -82,6 +82,13 @@ pub struct CatalogVariant {
     pub file_name: String,
     #[serde(default)]
     pub size: u64,
+    /// 若下载的是压缩包，这里是包内的字体文件名。
+    ///
+    /// 存在这个字段时，`sources[].sha256` 校验的是**下载到的归档文件**，
+    /// 不是解出来的字体——因为校验必须针对"传输中的那份字节"。
+    /// 解包是确定性的后续步骤，不再单独校验。
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub member: Option<String>,
     #[serde(default)]
     pub sources: Vec<CatalogSource>,
 }

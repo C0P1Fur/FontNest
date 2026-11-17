@@ -152,23 +152,32 @@ async function main() {
             size: bytes.length,
           })
           let result
+          let member = null
           try {
             result = await fetchFont(variant.url, scratch)
           } catch (error) {
-            // 只发 zip 的字体：解开再取里面的 .ttf
+            // 只发 zip 的字体：校验对象是归档本身（传输中的那份字节），
+            // 解包交给 Rust 侧做——所以这里记录的是 zip 的哈希和成员名。
             if (!(error instanceof ZipArchive) || !variant.member) throw error
+            const archive = await readFile(join(scratch, 'download.bin'))
             const bytes = await extractFromZip(join(scratch, 'download.bin'), variant.member, scratch)
             if (!looksLikeFont(bytes)) throw new Error(`${variant.member} 不是有效字体文件`)
-            result = hashOf(bytes)
+            result = hashOf(archive)
+            member = variant.member
           }
           const { sha256, size } = result
-          variants.push({
+          const entry = {
             name: variant.name,
             fileName: variant.file,
             size,
             sources: [{ url: variant.url, mirror: false, sha256 }],
-          })
-          console.log(`[ok]   ${recipe.id}/${variant.name}  ${human(size)}  sha=${sha256.slice(0, 12)}…`)
+          }
+          if (member) entry.member = member
+          variants.push(entry)
+          console.log(
+            `[ok]   ${recipe.id}/${variant.name}  ${human(size)}  sha=${sha256.slice(0, 12)}…` +
+              (member ? `  (zip→${member})` : ''),
+          )
         } catch (error) {
           failures.push(`${recipe.id}/${variant.name}: ${error.message}`)
           console.error(`[FAIL] ${recipe.id}/${variant.name}  ${error.message}`)

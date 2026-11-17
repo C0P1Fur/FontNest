@@ -22,6 +22,8 @@ rayon = "1"
 # 目录下载的完整性校验。选 sha256 而不是复用 blake3：
 # 哈希由 Node 生成脚本算出并写进 catalog，Node 没内置 blake3。
 sha2 = "0.10"
+# 有些字体只以 zip 发布（得意黑、芫荽）。不用 tar 命令解：Linux 的 GNU tar 不认 zip。
+zip = { version = "2", default-features = false, features = ["deflate"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 # 只为读写 HKCU 下的字体登记项

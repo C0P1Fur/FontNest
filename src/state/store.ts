@@ -50,6 +50,12 @@ export interface AppState {
   catalogItems: CatalogItem[]
   catalogBusy: string | null
   catalogError: string | null
+  /** 批量下载进度；null 表示没有在批量下载 */
+  catalogAllProgress: { done: number; total: number; current: string } | null
+  /** 批量下载里失败的条目，结束后展示 */
+  catalogAllFailed: string[]
+  /** 用户点了取消：当前这一款下完就停 */
+  catalogCancel: boolean
   /** 上手引导是否显示 */
   tourOpen: boolean
   /** 引导是否已完成或跳过（来自 ui.json） */
@@ -87,6 +93,8 @@ export interface AppState {
   closeCatalog: () => void
   downloadCatalogFont: (id: string) => Promise<void>
   removeCatalogFont: (id: string) => Promise<void>
+  downloadAllCatalog: () => Promise<void>
+  cancelDownloadAll: () => void
   openTour: () => void
   /** 完成或跳过引导：关掉并落盘 */
   finishTour: (step: number) => Promise<void>
@@ -153,6 +161,9 @@ export const useApp = create<AppState>()((set, get) => ({
   catalogItems: [],
   catalogBusy: null,
   catalogError: null,
+  catalogAllProgress: null,
+  catalogAllFailed: [],
+  catalogCancel: false,
   tourOpen: false,
   tourSeen: true,
   capture: null,
@@ -346,6 +357,68 @@ export const useApp = create<AppState>()((set, get) => ({
       set({ catalogBusy: null })
     }
   },
+
+  /**
+   * 批量下载全部可下载字体。
+   *
+   * 三个刻意的设计：
+   * 1. **串行**：并发会同时压满代理和磁盘，而且进度没法线性显示
+   * 2. **最后只重扫一次**：每下一款就重扫会让 32 款变成 32 次全盘扫描
+   * 3. **单款失败不中断**：238 MB 里某一个源挂了，不该让其余 31 款白下
+   */
+  downloadAllCatalog: async () => {
+    if (get().catalogAllProgress) return
+
+    const pending = get().catalogItems.filter((item) => item.redistributable && !item.downloaded)
+    if (pending.length === 0) return
+
+    set({
+      catalogAllFailed: [],
+      catalogCancel: false,
+      catalogAllProgress: { done: 0, total: pending.length, current: '' },
+    })
+
+    const failed: string[] = []
+    let done = 0
+
+    for (const item of pending) {
+      if (get().catalogCancel) break
+      set({
+        catalogAllProgress: {
+          done,
+          total: pending.length,
+          current: item.nameZh || item.family,
+        },
+      })
+      try {
+        await api.fetchCatalogFont(item.id)
+        done += 1
+      } catch (error) {
+        failed.push(`${item.nameZh || item.family}：${String(error)}`)
+      }
+      set({
+        catalogAllProgress: { done, total: pending.length, current: '' },
+      })
+    }
+
+    // 无论中途取消还是全下完，都重扫一次——
+    // 已经下好的那些必须出现在字体列表里，否则用户会以为白下了
+    try {
+      await get().rescan()
+      const listing = await api.listCatalog()
+      set({ catalogItems: listing.items })
+    } catch (error) {
+      set({ catalogError: String(error) })
+    }
+
+    set({
+      catalogAllProgress: null,
+      catalogAllFailed: failed,
+      catalogCancel: false,
+    })
+  },
+
+  cancelDownloadAll: () => set({ catalogCancel: true }),
 
   openTour: () => set({ tourOpen: true }),
 

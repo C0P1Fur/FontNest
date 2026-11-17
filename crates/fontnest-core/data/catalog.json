@@ -255,14 +255,15 @@
         {
           "name": "Regular",
           "fileName": "Iansui-Regular.ttf",
-          "size": 9447424,
+          "size": 4803795,
           "sources": [
             {
               "url": "https://github.com/ButTaiwan/iansui/releases/latest/download/iansui.zip",
               "mirror": false,
-              "sha256": "7f1aa62e9dcbf40d0ce41a5d3f1e5ea602e66c295778ac6fefb6b84d8ed08bd5"
+              "sha256": "28d58aef9b7a21c137945a4fd14138d6284a8573c0c1b123f6e5b708423348a6"
             }
-          ]
+          ],
+          "member": "Iansui-Regular.ttf"
         }
       ]
     },
@@ -965,14 +966,15 @@
         {
           "name": "Oblique",
           "fileName": "SmileySans-Oblique.ttf",
-          "size": 2629764,
+          "size": 5781344,
           "sources": [
             {
               "url": "https://github.com/atelier-anchor/smiley-sans/releases/latest/download/smiley-sans-v2.0.1.zip",
               "mirror": false,
-              "sha256": "b447d7e781f08bc95c4c9f23ba71ed2b8ebb639aa7184485c71c4ca5afcd25c4"
+              "sha256": "299c0be6c960ae37361762eca76f7d0cd516615435bb96c0d4b98a1e70178a07"
             }
-          ]
+          ],
+          "member": "SmileySans-Oblique.ttf"
         }
       ]
     },

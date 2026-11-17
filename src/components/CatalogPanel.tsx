@@ -30,6 +30,10 @@ export function CatalogPanel() {
   const remove = useApp((state) => state.removeCatalogFont)
   const toggleEnabled = useApp((state) => state.toggleEnabled)
   const openCatalog = useApp((state) => state.openCatalog)
+  const downloadAll = useApp((state) => state.downloadAllCatalog)
+  const cancelAll = useApp((state) => state.cancelDownloadAll)
+  const progress = useApp((state) => state.catalogAllProgress)
+  const allFailed = useApp((state) => state.catalogAllFailed)
 
   const [tab, setTab] = useState<'downloadable' | 'link'>('downloadable')
   const [filter, setFilter] = useState('')
@@ -49,6 +53,18 @@ export function CatalogPanel() {
     [items],
   )
   const linkOnly = useMemo(() => items.filter((item) => !item.redistributable), [items])
+
+  // 批量下载只针对「可下载且还没下」的，体积先算出来给用户看
+  const pending = useMemo(
+    () => downloadable.filter((item) => !item.downloaded),
+    [downloadable],
+  )
+  const pendingSize = useMemo(
+    () => pending.reduce((sum, item) => sum + item.size, 0),
+    [pending],
+  )
+  /** 批量下载进行中时，禁止一切单条操作，避免重入 */
+  const locked = busy !== null || progress !== null
 
   const visible = useMemo(() => {
     const pool = tab === 'downloadable' ? downloadable : linkOnly
@@ -125,7 +141,38 @@ export function CatalogPanel() {
             aria-label="筛选字体"
             onChange={(event) => setFilter(event.target.value)}
           />
+
+          {progress ? (
+            <span className="catalog-bulk is-running" role="status">
+              <span className="catalog-bulk-text">
+                {progress.done}/{progress.total}
+                {progress.current ? ` ${progress.current}` : ''}
+              </span>
+              <button type="button" className="catalog-ghost" onClick={cancelAll}>
+                取消
+              </button>
+            </span>
+          ) : pending.length > 0 ? (
+            <button
+              type="button"
+              className="catalog-bulk-btn"
+              disabled={locked}
+              title={`将依次下载 ${pending.length} 款字体，约 ${humanSize(pendingSize)}`}
+              onClick={() => {
+                void downloadAll()
+              }}
+            >
+              全部下载 · {humanSize(pendingSize)}
+            </button>
+          ) : null}
         </div>
+
+        {allFailed.length > 0 ? (
+          <p className="field-error" role="alert">
+            {allFailed.length} 款下载失败：{allFailed.slice(0, 3).join('；')}
+            {allFailed.length > 3 ? ' …' : ''}
+          </p>
+        ) : null}
 
         {error ? (
           <p className="field-error" role="alert">
@@ -157,7 +204,7 @@ export function CatalogPanel() {
                   <button
                     type="button"
                     className="catalog-primary"
-                    disabled={busy !== null}
+                    disabled={locked}
                     onClick={() => {
                       // 启用之后必须重新拉一次目录，否则按钮不会变成「已装进系统」
                       void toggleEnabled(item.fontId as string).then(() => openCatalog())
@@ -169,7 +216,7 @@ export function CatalogPanel() {
                   <button
                     type="button"
                     className="catalog-primary"
-                    disabled={busy !== null}
+                    disabled={locked}
                     onClick={() => {
                       void download(item.id)
                     }}
@@ -191,7 +238,7 @@ export function CatalogPanel() {
                   <button
                     type="button"
                     className="catalog-ghost"
-                    disabled={busy !== null}
+                    disabled={locked}
                     onClick={() => {
                       void remove(item.id)
                     }}

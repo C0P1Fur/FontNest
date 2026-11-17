@@ -112,9 +112,29 @@ where
                         continue;
                     }
                 };
-                // 校验通过才改名。半截文件永远不进库。
-                std::fs::rename(&partial, &target)
-                    .map_err(|error| CoreError::Io(format!("改名失败：{error}")))?;
+                // 校验通过才落地。半截文件永远不进库。
+                //
+                // 有 `member` 时，下载到的是 zip：先解出字体，再丢掉归档。
+                // 注意不能先 rename 到 target 再解包——Windows 上 rename
+                // 覆盖已存在的文件会失败。
+                match &variant.member {
+                    Some(member) => {
+                        let extracted = directory.join(format!("{}.extract", variant.file_name));
+                        if let Err(error) = extract_member(&partial, member, &extracted) {
+                            let _ = std::fs::remove_file(&partial);
+                            let _ = std::fs::remove_file(&extracted);
+                            failures.push(format!("{}：解包失败（{error}）", source.url));
+                            continue;
+                        }
+                        let _ = std::fs::remove_file(&partial);
+                        std::fs::rename(&extracted, &target)
+                            .map_err(|error| CoreError::Io(format!("改名失败：{error}")))?;
+                    }
+                    None => {
+                        std::fs::rename(&partial, &target)
+                            .map_err(|error| CoreError::Io(format!("改名失败：{error}")))?;
+                    }
+                }
 
                 FontMeta {
                     font_id: font.id.clone(),
@@ -251,6 +271,34 @@ fn verify_file(path: &Path, expected: &str) -> Result<String, CoreError> {
     Ok(actual)
 }
 
+/// 从 zip 里取出指定成员，写到 `target`。
+///
+/// 用 `zip` crate 而不是调 `tar` 命令：Linux 的 GNU tar 不认 zip，
+/// 而这三个平台都要能跑。
+fn extract_member(archive: &Path, member: &str, target: &Path) -> Result<(), CoreError> {
+    let file = std::fs::File::open(archive)
+        .map_err(|error| CoreError::Io(format!("打开归档失败：{error}")))?;
+    let mut zip = zip::ZipArchive::new(file)
+        .map_err(|error| CoreError::Invalid(format!("不是有效的 zip：{error}")))?;
+
+    for index in 0..zip.len() {
+        let mut entry = zip
+            .by_index(index)
+            .map_err(|error| CoreError::Io(format!("读取归档条目失败：{error}")))?;
+        // 包里可能带目录层级，按文件名匹配
+        if entry.name().rsplit('/').next() != Some(member) {
+            continue;
+        }
+        let mut out = std::fs::File::create(target)
+            .map_err(|error| CoreError::Io(format!("写出失败：{error}")))?;
+        std::io::copy(&mut entry, &mut out)
+            .map_err(|error| CoreError::Io(format!("解包失败：{error}")))?;
+        return Ok(());
+    }
+
+    Err(CoreError::Invalid(format!("归档里找不到 {member}")))
+}
+
 /* ───────────── 本地库查询 ───────────── */
 
 /// 这个字体是否已经下载到本地库（文件在，且 meta 记录对得上）
@@ -364,6 +412,7 @@ mod tests {
             name: "Regular".to_string(),
             file_name: "a.ttf".to_string(),
             size: 0,
+            member: None,
             sources: vec![
                 catalog::CatalogSource {
                     url: "https://github.com/upstream.ttf".to_string(),
