@@ -4,7 +4,9 @@
 //! 也能被 CLI 直接使用。Tauri 壳只做参数搬运与错误转换。
 
 pub mod assess;
+pub mod catalog;
 pub mod collection;
+pub mod fetch;
 pub mod install;
 pub mod library;
 pub mod model;
@@ -15,6 +17,7 @@ pub mod sfnt;
 pub mod ui;
 
 pub use assess::{assess, Assessment, Reason};
+pub use catalog::{Catalog, CatalogFont, CatalogIssue, CatalogSource, CatalogVariant, FontMeta};
 
 pub use collection::{Collection, CollectionStore};
 pub use install::{FontHome, Manifest, ReconcileReport, Registry, WindowsRegistry};

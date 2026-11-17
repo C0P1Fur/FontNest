@@ -1,0 +1,345 @@
+{
+  "version": 1,
+  "updatedAt": "2026-11-17",
+  "fonts": [
+    {
+      "id": "atkinson-hyperlegible",
+      "family": "Atkinson Hyperlegible",
+      "aliases": [
+        "atkinson",
+        "hyperlegible",
+        "低视力"
+      ],
+      "nameZh": "Atkinson Hyperlegible",
+      "category": "sans",
+      "scripts": [
+        "latin"
+      ],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/atkinsonhyperlegible/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://www.brailleinstitute.org/freefont",
+      "note": "",
+      "variants": [
+        {
+          "name": "Regular",
+          "fileName": "AtkinsonHyperlegible-Regular.ttf",
+          "size": 54348,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/atkinsonhyperlegible/AtkinsonHyperlegible-Regular.ttf",
+              "mirror": false,
+              "sha256": "7fb917c89019896d0b52ee84b7cbb3304c18cb90b19a62f5e32712bd23e97669"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "eb-garamond",
+      "family": "EB Garamond",
+      "aliases": [
+        "eb garamond",
+        "garamond"
+      ],
+      "nameZh": "EB Garamond",
+      "category": "serif",
+      "scripts": [
+        "latin"
+      ],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/ebgaramond/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://github.com/octaviopardo/EBGaramond12",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "EBGaramond-Variable.ttf",
+          "size": 851176,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/ebgaramond/EBGaramond%5Bwght%5D.ttf",
+              "mirror": false,
+              "sha256": "ef9512f92f6d579e5dc75af59a5a4b1b8b47d2eda89e00b954d44520e5369027"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fira-code",
+      "family": "Fira Code",
+      "aliases": [
+        "fira code",
+        "fira"
+      ],
+      "nameZh": "Fira Code",
+      "category": "mono",
+      "scripts": [
+        "latin"
+      ],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/tonsky/FiraCode/blob/master/LICENSE",
+      "redistributable": true,
+      "homepage": "https://github.com/tonsky/FiraCode",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "FiraCode-Variable.ttf",
+          "size": 260364,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/firacode/FiraCode%5Bwght%5D.ttf",
+              "mirror": false,
+              "sha256": "9335b082b3c7850d98a64b584f3417f65355f3471278bb5eeb8c6c0e8657aeeb"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inter",
+      "family": "Inter",
+      "aliases": [
+        "inter",
+        "英特"
+      ],
+      "nameZh": "Inter",
+      "category": "sans",
+      "scripts": [
+        "latin"
+      ],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/rsms/inter/blob/master/LICENSE.txt",
+      "redistributable": true,
+      "homepage": "https://rsms.me/inter/",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "Inter-Variable.ttf",
+          "size": 876576,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf",
+              "mirror": false,
+              "sha256": "29160a80ff49ddcab2c97711247e08b1fab27a484a329ce8b813d820dc559031"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jetbrains-mono",
+      "family": "JetBrains Mono",
+      "aliases": [
+        "jetbrains mono",
+        "jb mono"
+      ],
+      "nameZh": "JetBrains Mono",
+      "category": "mono",
+      "scripts": [
+        "latin"
+      ],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/JetBrains/JetBrainsMono/blob/master/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://www.jetbrains.com/lp/mono/",
+      "note": "",
+      "variants": [
+        {
+          "name": "Regular",
+          "fileName": "JetBrainsMono-Regular.ttf",
+          "size": 270224,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/JetBrains/JetBrainsMono/master/fonts/ttf/JetBrainsMono-Regular.ttf",
+              "mirror": false,
+              "sha256": "e6fd0d7e91550b3ed2b735d4312474362c4716edc4fc0577a0f61ed782d5aed1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lexend",
+      "family": "Lexend",
+      "aliases": [
+        "lexend",
+        "阅读障碍"
+      ],
+      "nameZh": "Lexend",
+      "category": "sans",
+      "scripts": [
+        "latin"
+      ],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/lexend/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://www.lexend.com",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "Lexend-Variable.ttf",
+          "size": 175756,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/lexend/Lexend%5Bwght%5D.ttf",
+              "mirror": false,
+              "sha256": "3add53e641fbc81da64da4bb254285e2831b52b029527bc0714e2b9610832ee6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lxgw-wenkai",
+      "family": "LXGW WenKai",
+      "aliases": [
+        "霞鹜文楷",
+        "文楷",
+        "wenkai",
+        "lxgw"
+      ],
+      "nameZh": "霞鹜文楷",
+      "category": "kai",
+      "scripts": [
+        "hans",
+        "latin"
+      ],
+      "coverage": "常用",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/lxgw/LxgwWenKai/blob/main/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://github.com/lxgw/LxgwWenKai",
+      "note": "",
+      "variants": [
+        {
+          "name": "Regular",
+          "fileName": "LXGWWenKai-Regular.ttf",
+          "size": 25928940,
+          "sources": [
+            {
+              "url": "https://github.com/lxgw/LxgwWenKai/releases/latest/download/LXGWWenKai-Regular.ttf",
+              "mirror": false,
+              "sha256": "2d73eea94ad808999d90c0000c239a84a33b09d4bc6ab6c5b8bbf1eda8a7fc8b"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "noto-sans-sc",
+      "family": "Noto Sans SC",
+      "aliases": [
+        "思源黑体",
+        "思源黑",
+        "noto sans sc",
+        "黑体"
+      ],
+      "nameZh": "思源黑体（Noto）",
+      "category": "sans",
+      "scripts": [
+        "hans",
+        "latin"
+      ],
+      "coverage": "GB18030-2022",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/notosanssc/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://fonts.google.com/noto/specimen/Noto+Sans+SC",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "NotoSansSC-Variable.ttf",
+          "size": 17772300,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf",
+              "mirror": false,
+              "sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "smiley-sans",
+      "family": "Smiley Sans",
+      "aliases": [
+        "得意黑",
+        "smiley",
+        "smiley sans"
+      ],
+      "nameZh": "得意黑",
+      "category": "display",
+      "scripts": [
+        "hans",
+        "latin"
+      ],
+      "coverage": "展示",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/atelier-anchor/smiley-sans/blob/main/LICENSE",
+      "redistributable": true,
+      "homepage": "https://github.com/atelier-anchor/smiley-sans",
+      "note": "",
+      "variants": [
+        {
+          "name": "Oblique",
+          "fileName": "SmileySans-Oblique.ttf",
+          "size": 2629764,
+          "sources": [
+            {
+              "url": "https://github.com/atelier-anchor/smiley-sans/releases/latest/download/smiley-sans-v2.0.1.zip",
+              "mirror": false,
+              "sha256": "b447d7e781f08bc95c4c9f23ba71ed2b8ebb639aa7184485c71c4ca5afcd25c4"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "source-serif-4",
+      "family": "Source Serif 4",
+      "aliases": [
+        "source serif",
+        "思源宋体 西文"
+      ],
+      "nameZh": "思源宋体（西文）",
+      "category": "serif",
+      "scripts": [
+        "latin"
+      ],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/adobe-fonts/source-serif/blob/release/LICENSE.md",
+      "redistributable": true,
+      "homepage": "https://github.com/adobe-fonts/source-serif",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "SourceSerif4-Variable.ttf",
+          "size": 1209508,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/sourceserif4/SourceSerif4%5Bopsz%2Cwght%5D.ttf",
+              "mirror": false,
+              "sha256": "97b2d4da6e3cb494b5a1e66ae176914d852ccabef49e0c02c0df25f3e39aca0b"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

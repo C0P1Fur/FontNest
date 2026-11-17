@@ -28,6 +28,7 @@ fn main() -> ExitCode {
         "selftest" => selftest::run(&args),
         "bench-parse" | "bench" => bench::run_bench(),
         "recognize" | "recognise" => run_recognize(&args),
+        "catalog" => run_catalog(&args),
         "help" | "--help" | "-h" => {
             print_help();
             ExitCode::SUCCESS
@@ -190,8 +191,157 @@ fn print_help() {
          \x20 fontnest scan        只输出扫描摘要\n\
          \x20 fontnest dirs        打印本机字体目录\n\
          \x20 fontnest render <字体文件> --text \"Rag 8g\" --out q.png [--index N]\n\
-         \x20 fontnest recognize <图片> --text \"Rag 8g\" [--top 8]\n"
+         \x20 fontnest recognize <图片> --text \"Rag 8g\" [--top 8]\n\
+         \x20 fontnest catalog list              列出可选字体库\n\
+         \x20 fontnest catalog check             校验目录数据\n\
+         \x20 fontnest catalog fetch <id> [变体]  下载某款字体到本地库\n\
+         \x20 fontnest catalog remove <id>       从本地库删除\n"
     );
+}
+
+/* ───────────── 可选字体库 ───────────── */
+
+fn run_catalog(args: &[String]) -> ExitCode {
+    let sub = args.get(1).map(String::as_str).unwrap_or("list");
+
+    match sub {
+        "list" => {
+            let (catalog, issues) = fontnest_core::fetch::load_catalog();
+            for issue in &issues {
+                eprintln!("[目录告警] {}：{}", issue.font_id, issue.message);
+            }
+
+            let downloaded = catalog
+                .fonts
+                .iter()
+                .filter(|font| fontnest_core::fetch::is_downloaded(font))
+                .count();
+
+            println!(
+                "可下载 {} 条 · 仅链接 {} 条 · 本地已有 {} 条",
+                catalog.only_redistributable().count(),
+                catalog.only_link_only().count(),
+                downloaded
+            );
+            println!();
+            for font in &catalog.fonts {
+                let mark = if font.redistributable {
+                    if fontnest_core::fetch::is_downloaded(font) {
+                        "已下载"
+                    } else {
+                        "可下载"
+                    }
+                } else {
+                    "仅链接"
+                };
+                let size = font
+                    .variants
+                    .first()
+                    .map(|variant| format!("{:.1} MB", variant.size as f64 / 1024.0 / 1024.0))
+                    .unwrap_or_else(|| "—".to_string());
+                println!(
+                    "  {:<12} {:<22} {:<16} {:<6} {}",
+                    mark,
+                    font.id,
+                    font.name_zh,
+                    font.coverage,
+                    size
+                );
+            }
+            ExitCode::SUCCESS
+        }
+
+        "check" => {
+            let (catalog, dropped) = fontnest_core::fetch::load_catalog();
+            let issues = catalog.validate();
+            let total = catalog.fonts.len();
+
+            if dropped.is_empty() && issues.is_empty() {
+                println!("目录干净：{total} 条，无问题。");
+                return ExitCode::SUCCESS;
+            }
+            for issue in dropped.iter().chain(issues.iter()) {
+                eprintln!("  {}：{}", issue.font_id, issue.message);
+            }
+            eprintln!("共 {} 个问题（目录 {total} 条）", dropped.len() + issues.len());
+            ExitCode::FAILURE
+        }
+
+        "fetch" => {
+            let Some(id) = args.get(2) else {
+                eprintln!("用法：fontnest catalog fetch <id> [变体]");
+                return ExitCode::FAILURE;
+            };
+            let (catalog, _) = fontnest_core::fetch::load_catalog();
+            let Some(font) = catalog.find(id) else {
+                eprintln!("目录里没有 {id}");
+                return ExitCode::FAILURE;
+            };
+
+            let variant = args
+                .get(3)
+                .cloned()
+                .or_else(|| font.variants.first().map(|item| item.name.clone()))
+                .unwrap_or_default();
+
+            if !font.redistributable {
+                eprintln!("{} 的许可不允许第三方分发，请从官网获取：{}", font.family, font.homepage);
+                return ExitCode::FAILURE;
+            }
+
+            println!("下载 {} / {variant} …", font.family);
+            let mut last = 0u64;
+            match fontnest_core::fetch::download_variant(font, &variant, |bytes| {
+                // 每 4MB 报一次，避免刷屏
+                if bytes > last + 4 * 1024 * 1024 {
+                    last = bytes;
+                    println!("  {:.1} MB", bytes as f64 / 1024.0 / 1024.0);
+                }
+            }) {
+                Ok(report) => {
+                    println!("完成：{}", report.path.display());
+                    println!(
+                        "  {:.2} MB · 来源 {} · sha256 {}",
+                        report.bytes as f64 / 1024.0 / 1024.0,
+                        report.source,
+                        &report.sha256[..16]
+                    );
+                    ExitCode::SUCCESS
+                }
+                Err(error) => {
+                    eprintln!("失败：{error}");
+                    ExitCode::FAILURE
+                }
+            }
+        }
+
+        "remove" => {
+            let Some(id) = args.get(2) else {
+                eprintln!("用法：fontnest catalog remove <id>");
+                return ExitCode::FAILURE;
+            };
+            let (catalog, _) = fontnest_core::fetch::load_catalog();
+            let Some(font) = catalog.find(id) else {
+                eprintln!("目录里没有 {id}");
+                return ExitCode::FAILURE;
+            };
+            match fontnest_core::fetch::remove_download(font) {
+                Ok(()) => {
+                    println!("已从本地库删除 {id}");
+                    ExitCode::SUCCESS
+                }
+                Err(error) => {
+                    eprintln!("删除失败：{error}");
+                    ExitCode::FAILURE
+                }
+            }
+        }
+
+        other => {
+            eprintln!("未知的 catalog 子命令：{other}");
+            ExitCode::FAILURE
+        }
+    }
 }
 
 fn run_render(args: &[String]) -> ExitCode {

@@ -1,0 +1,197 @@
+{
+  "_comment": "目录配方。build-catalog.mjs 会逐条下载、算 sha256、生成 crates/fontnest-core/data/catalog.json。只放 redistributable=true 的候选；B 类（不可入库）不进这里。",
+  "version": 1,
+  "fonts": [
+    {
+      "id": "inter",
+      "family": "Inter",
+      "nameZh": "Inter",
+      "aliases": ["inter", "英特"],
+      "category": "sans",
+      "scripts": ["latin"],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/rsms/inter/blob/master/LICENSE.txt",
+      "homepage": "https://rsms.me/inter/",
+      "variants": [
+        {
+          "name": "Variable",
+          "file": "Inter-Variable.ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf"
+        }
+      ]
+    },
+    {
+      "id": "jetbrains-mono",
+      "family": "JetBrains Mono",
+      "nameZh": "JetBrains Mono",
+      "aliases": ["jetbrains mono", "jb mono"],
+      "category": "mono",
+      "scripts": ["latin"],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/JetBrains/JetBrainsMono/blob/master/OFL.txt",
+      "homepage": "https://www.jetbrains.com/lp/mono/",
+      "variants": [
+        {
+          "name": "Regular",
+          "file": "JetBrainsMono-Regular.ttf",
+          "url": "https://raw.githubusercontent.com/JetBrains/JetBrainsMono/master/fonts/ttf/JetBrainsMono-Regular.ttf"
+        }
+      ]
+    },
+    {
+      "id": "fira-code",
+      "family": "Fira Code",
+      "nameZh": "Fira Code",
+      "aliases": ["fira code", "fira"],
+      "category": "mono",
+      "scripts": ["latin"],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/tonsky/FiraCode/blob/master/LICENSE",
+      "homepage": "https://github.com/tonsky/FiraCode",
+      "variants": [
+        {
+          "name": "Variable",
+          "file": "FiraCode-Variable.ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/firacode/FiraCode%5Bwght%5D.ttf"
+        }
+      ]
+    },
+    {
+      "id": "source-serif-4",
+      "family": "Source Serif 4",
+      "nameZh": "思源宋体（西文）",
+      "aliases": ["source serif", "思源宋体 西文"],
+      "category": "serif",
+      "scripts": ["latin"],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/adobe-fonts/source-serif/blob/release/LICENSE.md",
+      "homepage": "https://github.com/adobe-fonts/source-serif",
+      "variants": [
+        {
+          "name": "Variable",
+          "file": "SourceSerif4-Variable.ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/sourceserif4/SourceSerif4%5Bopsz%2Cwght%5D.ttf"
+        }
+      ]
+    },
+    {
+      "id": "eb-garamond",
+      "family": "EB Garamond",
+      "nameZh": "EB Garamond",
+      "aliases": ["eb garamond", "garamond"],
+      "category": "serif",
+      "scripts": ["latin"],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/ebgaramond/OFL.txt",
+      "homepage": "https://github.com/octaviopardo/EBGaramond12",
+      "variants": [
+        {
+          "name": "Variable",
+          "file": "EBGaramond-Variable.ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/ebgaramond/EBGaramond%5Bwght%5D.ttf"
+        }
+      ]
+    },
+    {
+      "id": "atkinson-hyperlegible",
+      "family": "Atkinson Hyperlegible",
+      "nameZh": "Atkinson Hyperlegible",
+      "aliases": ["atkinson", "hyperlegible", "低视力"],
+      "category": "sans",
+      "scripts": ["latin"],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/atkinsonhyperlegible/OFL.txt",
+      "homepage": "https://www.brailleinstitute.org/freefont",
+      "variants": [
+        {
+          "name": "Regular",
+          "file": "AtkinsonHyperlegible-Regular.ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/atkinsonhyperlegible/AtkinsonHyperlegible-Regular.ttf"
+        }
+      ]
+    },
+    {
+      "id": "lexend",
+      "family": "Lexend",
+      "nameZh": "Lexend",
+      "aliases": ["lexend", "阅读障碍"],
+      "category": "sans",
+      "scripts": ["latin"],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/lexend/OFL.txt",
+      "homepage": "https://www.lexend.com",
+      "variants": [
+        {
+          "name": "Variable",
+          "file": "Lexend-Variable.ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/lexend/Lexend%5Bwght%5D.ttf"
+        }
+      ]
+    },
+    {
+      "id": "lxgw-wenkai",
+      "family": "LXGW WenKai",
+      "nameZh": "霞鹜文楷",
+      "aliases": ["霞鹜文楷", "文楷", "wenkai", "lxgw"],
+      "category": "kai",
+      "scripts": ["hans", "latin"],
+      "coverage": "常用",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/lxgw/LxgwWenKai/blob/main/OFL.txt",
+      "homepage": "https://github.com/lxgw/LxgwWenKai",
+      "variants": [
+        {
+          "name": "Regular",
+          "file": "LXGWWenKai-Regular.ttf",
+          "url": "https://github.com/lxgw/LxgwWenKai/releases/latest/download/LXGWWenKai-Regular.ttf"
+        }
+      ]
+    },
+    {
+      "id": "smiley-sans",
+      "family": "Smiley Sans",
+      "nameZh": "得意黑",
+      "aliases": ["得意黑", "smiley", "smiley sans"],
+      "category": "display",
+      "scripts": ["hans", "latin"],
+      "coverage": "展示",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/atelier-anchor/smiley-sans/blob/main/LICENSE",
+      "homepage": "https://github.com/atelier-anchor/smiley-sans",
+      "variants": [
+        {
+          "name": "Oblique",
+          "file": "SmileySans-Oblique.ttf",
+          "url": "https://github.com/atelier-anchor/smiley-sans/releases/latest/download/smiley-sans-v2.0.1.zip",
+          "member": "SmileySans-Oblique.ttf"
+        }
+      ]
+    },
+    {
+      "id": "noto-sans-sc",
+      "family": "Noto Sans SC",
+      "nameZh": "思源黑体（Noto）",
+      "aliases": ["思源黑体", "思源黑", "noto sans sc", "黑体"],
+      "category": "sans",
+      "scripts": ["hans", "latin"],
+      "coverage": "GB18030-2022",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/notosanssc/OFL.txt",
+      "homepage": "https://fonts.google.com/noto/specimen/Noto+Sans+SC",
+      "variants": [
+        {
+          "name": "Variable",
+          "file": "NotoSansSC-Variable.ttf",
+          "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf"
+        }
+      ]
+    }
+  ]
+}
