@@ -1,0 +1,21 @@
+[workspace]
+resolver = "2"
+members = ["crates/fontnest-core", "crates/fontnest-cli", "src-tauri"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["FontNest"]
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# 桌面应用只发布单文件二进制，体积优先
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
+panic = "abort"

@@ -1,17 +1,72 @@
+# ═══════════════════════════════════════════════════════════
+# FontNest .gitignore
+#
+# 一条原则：**可再生的产物不进库，源码与锁文件必须进库。**
+# 下面每个区块都写了"为什么"，改之前先看一眼理由。
+# ═══════════════════════════════════════════════════════════
+
+# ───────── Node / 前端 ─────────
 node_modules/
+# Vite 产物：`pnpm build` 随时可重建
 dist/
 dist-ssr/
+# Vite 依赖预打包缓存
+.vite/
+# 本地覆盖配置（Vite 约定 *.local 是机器私有）
 *.local
+# TypeScript 增量编译信息
+*.tsbuildinfo
+# 测试覆盖率报告
+coverage/
 
-# Rust / Tauri
-src-tauri/target/
+# ───────── Rust / Tauri ─────────
+# 根目录 target 与 src-tauri/target 都命中（无前导斜杠 = 任意层级）
+target/
+# Tauri 构建时生成的 schema，可再生成
 src-tauri/gen/
+# Windows 调试符号
+*.pdb
+*.idb
 
-# 编辑器
+# 注意：以下文件**必须提交**，不要加进这里
+#   Cargo.lock        —— 这是应用不是库，锁版本才能复现构建
+#   pnpm-lock.yaml    —— 同上
+#   pnpm-workspace.yaml —— 里面的 allowBuilds 是安全审计记录
+#   src-tauri/icons/  —— 图标是源资产，不是产物（丢了下不了 Windows 资源）
+
+# ───────── 环境变量 ─────────
+.env
+.env.*
+!.env.example
+
+# ───────── 日志 ─────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ───────── 编辑器 ─────────
+# 保留扩展推荐，其余编辑器状态属于个人
 .vscode/*
 !.vscode/extensions.json
 .idea/
-.DS_Store
-Thumbs.db
+*.iml
+*.suo
+*.user
+*.swp
+*~
 
-*.log
+# ───────── 操作系统 ─────────
+.DS_Store
+.AppleDouble
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ───────── 本地工具 ─────────
+# AI 助手的技能包（.agents/skills/…），是开发环境的一部分而非产品源码。
+# 如果团队需要共享同一套技能，把下面这行删掉即可。
+.agents/

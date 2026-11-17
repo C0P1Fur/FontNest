@@ -1,0 +1,17 @@
+[package]
+name = "fontnest-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "调试用 CLI：不经 GUI 直接验证扫描结果"
+
+[[bin]]
+# 必须叫 fontnest-cli：src-tauri 的包名是 fontnest，
+# 若这里也叫 fontnest，两个 crate 会产出同名的 target/debug/fontnest.exe，
+# 互相覆盖，导致 `tauri dev` 跑起来的是 CLI 而不是窗口。
+name = "fontnest-cli"
+path = "src/main.rs"
+
+[dependencies]
+fontnest-core = { path = "../fontnest-core" }
+serde_json = { workspace = true }

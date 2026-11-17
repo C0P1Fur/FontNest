@@ -177,9 +177,11 @@ export const useApp = create<AppState>()((set, get) => ({
         },
       )
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
       console.error('[fontnest] 切换启用状态失败', error)
       set({ pendingId: null })
-      get().showToast('操作失败，已回滚')
+      // 把后端的原话透出来：M2 未实现时要让用户知道是"还没做"，不是"出错了"
+      get().showToast(`操作失败：${message}`)
     }
   },
 

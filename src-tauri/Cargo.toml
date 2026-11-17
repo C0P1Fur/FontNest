@@ -1,0 +1,19 @@
+[package]
+name = "fontnest"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "FontNest 桌面壳（Tauri 2）"
+
+[lib]
+name = "fontnest_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+fontnest-core = { path = "../crates/fontnest-core" }

@@ -80,7 +80,7 @@ export function Inspector({ font }: { font: Font | null }) {
           <span>{CATEGORY_LABEL[font.category]}</span>
           {font.variable ? <span className="v-badge">VARIABLE</span> : null}
           <span>·</span>
-          <span>{font.year}</span>
+          <span>{font.year > 0 ? font.year : '—'}</span>
         </div>
         <h2 className="insp-name" style={face}>
           {font.family}
@@ -147,7 +147,10 @@ export function Inspector({ font }: { font: Font | null }) {
             <MetaRow label="样式数" value={`${font.instanceCount} 个${font.variable ? ' · 可变' : ''}`} />
             <MetaRow label="字形数" value={formatCount(font.glyphCount)} />
             <MetaRow label="厂商" value={font.foundry} />
-            <MetaRow label="设计" value={`${font.designer} · ${font.year}`} />
+            <MetaRow
+              label="设计"
+              value={font.year > 0 ? `${font.designer} · ${font.year}` : font.designer}
+            />
             <MetaRow label="授权" value={font.license} />
             <MetaRow label="文件" value={font.filePath} mono />
             <MetaRow label="大小" value={formatBytes(font.sizeBytes)} />

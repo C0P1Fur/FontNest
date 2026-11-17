@@ -1,0 +1,12 @@
+[package]
+name = "fontnest-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "字体扫描、解析与索引（不依赖 GUI，可单独测试）"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]

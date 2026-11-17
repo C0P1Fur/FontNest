@@ -27,7 +27,13 @@ export const FontCard = memo(function FontCard({
   onToggleFavorite,
   onToggleEnabled,
 }: FontCardProps) {
-  const face = { fontFamily: fontStack(font) }
+  // 同一个 family 的 Regular / Bold / Italic 是不同记录，
+  // 卡片必须把字重与倾斜也带上，否则四条 Arial 会长得一模一样。
+  const face = {
+    fontFamily: fontStack(font),
+    fontWeight: font.weight,
+    fontStyle: font.italic ? 'italic' : 'normal',
+  }
   // 首屏错开进场，避免 58 张卡同时闪一下
   const delay = { animationDelay: `${Math.min(index * 14, 220)}ms` }
 
