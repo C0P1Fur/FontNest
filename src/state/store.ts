@@ -95,6 +95,8 @@ export interface AppState {
   removeCatalogFont: (id: string) => Promise<void>
   downloadAllCatalog: () => Promise<void>
   cancelDownloadAll: () => void
+  /** 手动导入（B 类）。返回一句给用户看的结果摘要 */
+  importFonts: (paths: string[]) => Promise<string>
   openTour: () => void
   /** 完成或跳过引导：关掉并落盘 */
   finishTour: (step: number) => Promise<void>
@@ -419,6 +421,31 @@ export const useApp = create<AppState>()((set, get) => ({
   },
 
   cancelDownloadAll: () => set({ catalogCancel: true }),
+
+  /**
+   * 手动导入。B 类字体只能这么进来——用户自己去官网下载，再拖进来。
+   *
+   * 导入成功后必须重扫：文件进了库目录，但没经过解析就不会出现在列表里。
+   */
+  importFonts: async (paths) => {
+    if (paths.length === 0) return ''
+    try {
+      const summary = await api.importFontFiles(paths)
+      await get().rescan()
+      const listing = await api.listCatalog()
+      set({ catalogItems: listing.items })
+
+      const parts: string[] = []
+      if (summary.imported.length > 0) parts.push(`已导入 ${summary.imported.length} 个`)
+      if (summary.skipped.length > 0) parts.push(`已存在 ${summary.skipped.length} 个`)
+      if (summary.failed.length > 0) {
+        parts.push(`${summary.failed.length} 个失败：${summary.failed[0]}`)
+      }
+      return parts.join('，') || '没有可导入的文件'
+    } catch (error) {
+      return `导入失败：${String(error)}`
+    }
+  },
 
   openTour: () => set({ tourOpen: true }),
 

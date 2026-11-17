@@ -100,6 +100,7 @@ pub fn run() {
             commands::catalog_list,
             commands::catalog_fetch,
             commands::catalog_remove,
+            commands::import_font_files,
             commands::app_status,
         ])
         .run(tauri::generate_context!())

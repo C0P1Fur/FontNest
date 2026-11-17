@@ -7,6 +7,7 @@ pub mod assess;
 pub mod catalog;
 pub mod collection;
 pub mod fetch;
+pub mod import;
 pub mod install;
 pub mod library;
 pub mod model;

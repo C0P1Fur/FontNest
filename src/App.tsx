@@ -12,7 +12,7 @@ import { CatalogPanel } from './components/CatalogPanel'
 import { RecognizePanel } from './components/RecognizePanel'
 import { Tour } from './components/Tour'
 import { applyQuery } from './lib/filter'
-import { api } from './lib/ipc'
+import { api, isTauriRuntime } from './lib/ipc'
 import { RIPPLE_SELECTOR, rippleFrom, tactile } from './lib/motion'
 import { SAMPLES, SIZES } from './lib/samples'
 import { useApp } from './state/store'
@@ -100,6 +100,49 @@ export default function App() {
 
     document.addEventListener('pointerdown', onPointerDown, true)
     return () => document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [])
+
+  /**
+   * 拖入字体文件直接导入。
+   *
+   * 这是 B 类字体唯一的入口场景：许可禁止我们分发文件，用户只能自己
+   * 去官网下载，然后拖进来。没有这条路径，"去官网下载"就是死胡同。
+   *
+   * 监听失败（非 Tauri / 权限不足）时静默跳过——退化成只有「导入字体文件…」
+   * 按钮，功能仍在，只是少一条捷径。
+   */
+  useEffect(() => {
+    if (!isTauriRuntime) return
+    let unlisten: (() => void) | undefined
+    let cancelled = false
+
+    void (async () => {
+      try {
+        const { getCurrentWebview } = await import('@tauri-apps/api/webview')
+        const stop = await getCurrentWebview().onDragDropEvent((event) => {
+          if (event.payload.type !== 'drop') return
+          const paths = event.payload.paths.filter((path) =>
+            /\.(ttf|otf|ttc)$/i.test(path),
+          )
+          if (paths.length === 0) return
+          void useApp
+            .getState()
+            .importFonts(paths)
+            .then((note) => {
+              if (note) useApp.getState().showToast(note)
+            })
+        })
+        if (cancelled) stop()
+        else unlisten = stop
+      } catch (error) {
+        console.warn('[fontnest] 拖放导入不可用', error)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+      unlisten?.()
+    }
   }, [])
 
   /* 键盘：全部读取 store 快照，避免闭包过期 */

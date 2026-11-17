@@ -312,6 +312,21 @@ async function removeCatalogFont(id: string): Promise<void> {
   }
 }
 
+export interface ImportSummary {
+  imported: string[]
+  skipped: string[]
+  failed: string[]
+}
+
+async function importFontFiles(paths: string[]): Promise<ImportSummary> {
+  if (isTauriRuntime) {
+    return invokeTauri<ImportSummary>('import_font_files', { paths })
+  }
+  await delay(MOCK_LATENCY.install)
+  // 浏览器预览没有真实文件系统，按"第一个成功"造假即可
+  return { imported: ['示例字体'], skipped: [], failed: [] }
+}
+
 /* ───────────── 字体识别 ───────────── */
 
 async function recognizeFonts(
@@ -411,4 +426,5 @@ export const api = {
   listCatalog,
   fetchCatalogFont,
   removeCatalogFont,
+  importFontFiles,
 }

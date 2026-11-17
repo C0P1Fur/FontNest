@@ -29,6 +29,7 @@ fn main() -> ExitCode {
         "bench-parse" | "bench" => bench::run_bench(),
         "recognize" | "recognise" => run_recognize(&args),
         "catalog" => run_catalog(&args),
+        "import" => run_import(&args),
         "help" | "--help" | "-h" => {
             print_help();
             ExitCode::SUCCESS
@@ -200,6 +201,47 @@ fn print_help() {
 }
 
 /* ───────────── 可选字体库 ───────────── */
+
+/* ───────────── 手动导入 ───────────── */
+
+fn run_import(args: &[String]) -> ExitCode {
+    let paths: Vec<std::path::PathBuf> = args
+        .iter()
+        .skip(1)
+        .filter(|arg| !arg.starts_with("--"))
+        .map(std::path::PathBuf::from)
+        .collect();
+
+    if paths.is_empty() {
+        eprintln!("用法：fontnest import <字体文件> [更多文件…]");
+        return ExitCode::FAILURE;
+    }
+
+    let mut failed = 0;
+    for path in &paths {
+        match fontnest_core::import::import_file(path) {
+            Ok(outcome) => {
+                let mark = if outcome.already_present { "已存在" } else { "已导入" };
+                println!(
+                    "  {mark}  {}  ({:.1} MB) → {}",
+                    outcome.family,
+                    outcome.bytes as f64 / 1024.0 / 1024.0,
+                    outcome.path.display()
+                );
+            }
+            Err(error) => {
+                failed += 1;
+                eprintln!("  失败  {}：{error}", path.display());
+            }
+        }
+    }
+
+    if failed > 0 {
+        ExitCode::FAILURE
+    } else {
+        ExitCode::SUCCESS
+    }
+}
 
 fn run_catalog(args: &[String]) -> ExitCode {
     let sub = args.get(1).map(String::as_str).unwrap_or("list");

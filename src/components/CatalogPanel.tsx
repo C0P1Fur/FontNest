@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { isTauriRuntime } from '../lib/ipc'
 import { useApp } from '../state/store'
 import type { CatalogItem } from '../lib/ipc'
 
@@ -34,10 +35,13 @@ export function CatalogPanel() {
   const cancelAll = useApp((state) => state.cancelDownloadAll)
   const progress = useApp((state) => state.catalogAllProgress)
   const allFailed = useApp((state) => state.catalogAllFailed)
+  const importFonts = useApp((state) => state.importFonts)
 
   const [tab, setTab] = useState<'downloadable' | 'link'>('downloadable')
   const [filter, setFilter] = useState('')
   const [copied, setCopied] = useState<string | null>(null)
+  const [importNote, setImportNote] = useState('')
+  const [importing, setImporting] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -78,6 +82,35 @@ export function CatalogPanel() {
   }, [tab, downloadable, linkOnly, filter])
 
   if (!open) return null
+
+  /**
+   * 选文件并导入。
+   *
+   * 插件走动态 import：浏览器里跑 `pnpm dev` 时这段代码根本不会加载，
+   * 按钮也是禁用的 —— 和设置面板里的文件夹选择器同一套做法。
+   */
+  async function pickFiles() {
+    if (!isTauriRuntime || importing) return
+    try {
+      const { open } = await import('@tauri-apps/plugin-dialog')
+      const picked = await open({
+        multiple: true,
+        title: '选择从官网下载的字体文件',
+        filters: [{ name: '字体文件', extensions: ['ttf', 'otf', 'ttc'] }],
+      })
+      const paths = Array.isArray(picked) ? picked : picked ? [picked] : []
+      if (paths.length === 0) return
+
+      setImporting(true)
+      setImportNote('正在导入…')
+      const note = await importFonts(paths)
+      setImportNote(note)
+    } catch (error) {
+      setImportNote(`导入失败：${String(error)}`)
+    } finally {
+      setImporting(false)
+    }
+  }
 
   /** 外链：先试 window.open，被拦截就退回剪贴板——总有一条路能走通 */
   function openHomepage(item: CatalogItem) {
@@ -260,6 +293,29 @@ export function CatalogPanel() {
         <p className="modal-note catalog-foot">
           下载的字体先进本地库，不会影响其他软件；点「装进系统」后才进入系统字体列表。
         </p>
+
+        <div className="catalog-import">
+          <button
+            type="button"
+            className="catalog-ghost"
+            disabled={!isTauriRuntime || importing || locked}
+            title={
+              isTauriRuntime
+                ? '选择从官网下载好的 .ttf / .otf / .ttc 文件'
+                : '浏览器预览不支持读取本地文件'
+            }
+            onClick={() => {
+              void pickFiles()
+            }}
+          >
+            {importing ? '导入中…' : '导入字体文件…'}
+          </button>
+          {importNote ? (
+            <span className="catalog-import-note" role="status">
+              {importNote}
+            </span>
+          ) : null}
+        </div>
       </div>
     </div>
   )

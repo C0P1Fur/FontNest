@@ -208,6 +208,51 @@ pub fn catalog_remove(id: String) -> Result<(), String> {
     fontnest_core::fetch::remove_download(font).map_err(|error| error.to_string())
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportSummary {
+    /// 新导入的字体族名
+    pub imported: Vec<String>,
+    /// 库里已有同一份内容
+    pub skipped: Vec<String>,
+    /// "族名或文件名：原因"
+    pub failed: Vec<String>,
+}
+
+/// 手动导入（B 类：许可禁止我们分发，只能用户自己去官网下）
+#[tauri::command]
+pub async fn import_font_files(paths: Vec<String>) -> Result<ImportSummary, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut imported = Vec::new();
+        let mut skipped = Vec::new();
+        let mut failed = Vec::new();
+
+        for path in &paths {
+            match fontnest_core::import::import_file(std::path::Path::new(path)) {
+                Ok(outcome) if outcome.already_present => skipped.push(outcome.family),
+                Ok(outcome) => imported.push(outcome.family),
+                Err(error) => failed.push(format!("{}：{error}", short_name(path))),
+            }
+        }
+
+        ImportSummary {
+            imported,
+            skipped,
+            failed,
+        }
+    })
+    .await
+    .map_err(|error| error.to_string())
+}
+
+fn short_name(path: &str) -> String {
+    std::path::Path::new(path)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or(path)
+        .to_string()
+}
+
 /* ───────────── 字体识别 ───────────── */
 
 /// 用已知文本在本地全部字体里做视觉比对。
