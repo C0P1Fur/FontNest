@@ -176,7 +176,7 @@ export function Rail() {
           <span className="btn-lede">
             <LibraryIcon />
           </span>
-          <span className="btn-text">字体库</span>
+          <span className="btn-text">推荐下载字体</span>
         </button>
 
         <button

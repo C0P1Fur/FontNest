@@ -134,7 +134,7 @@ export function CatalogPanel() {
         onMouseDown={(event) => event.stopPropagation()}
       >
         <header className="modal-head">
-          <h2 id="catalog-title">字体库</h2>
+          <h2 id="catalog-title">推荐下载字体</h2>
           <button type="button" className="modal-close" aria-label="关闭" onClick={close}>
             ✕
           </button>
