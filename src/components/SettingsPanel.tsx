@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { isTauriRuntime } from '../lib/ipc'
 import { useApp } from '../state/store'
 
 /**
@@ -47,6 +48,32 @@ export function SettingsPanel() {
     setError(null)
     const message = await removeDir(dir)
     if (message) setError(message)
+  }
+
+  /**
+   * 原生文件夹选择器。插件走动态 import：浏览器里跑 `pnpm dev` 时
+   * 这段代码根本不会加载，按钮也是禁用的。
+   */
+  async function browse() {
+    if (busy || !isTauriRuntime) return
+    try {
+      const { open } = await import('@tauri-apps/plugin-dialog')
+      const picked = await open({
+        directory: true,
+        multiple: false,
+        title: '选择字体目录',
+      })
+      if (typeof picked !== 'string' || !picked) return
+
+      setBusy(true)
+      setError(null)
+      const message = await addDir(picked)
+      setBusy(false)
+      if (message) setError(message)
+    } catch (error) {
+      setBusy(false)
+      setError(error instanceof Error ? error.message : String(error))
+    }
   }
 
   return (
@@ -100,6 +127,17 @@ export function SettingsPanel() {
             spellCheck={false}
             onChange={(event) => setValue(event.target.value)}
           />
+          <button
+            type="button"
+            className="dir-browse"
+            onClick={() => {
+              void browse()
+            }}
+            disabled={busy || !isTauriRuntime}
+            title={isTauriRuntime ? '选择文件夹' : '浏览器预览不支持原生选择器'}
+          >
+            浏览…
+          </button>
           <button type="submit" disabled={busy}>
             {busy ? '添加中…' : '添加'}
           </button>

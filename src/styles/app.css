@@ -1726,6 +1726,19 @@ input[type="range"]::-moz-range-thumb {
   pointer-events: none;
 }
 
+.dir-form .dir-browse {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line-2);
+  font-weight: 500;
+  padding: 0 12px;
+}
+
+.dir-form .dir-browse:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
 .field-error {
   margin-top: 8px;
   font-size: 11.5px;
