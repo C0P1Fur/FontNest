@@ -3,6 +3,39 @@
   "updatedAt": "2026-11-17",
   "fonts": [
     {
+      "id": "andika",
+      "family": "Andika",
+      "aliases": [
+        "andika",
+        "识字"
+      ],
+      "nameZh": "Andika",
+      "category": "sans",
+      "scripts": [
+        "latin"
+      ],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/andika/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://software.sil.org/andika/",
+      "note": "",
+      "variants": [
+        {
+          "name": "Regular",
+          "fileName": "Andika-Regular.ttf",
+          "size": 669828,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/andika/Andika-Regular.ttf",
+              "mirror": false,
+              "sha256": "202b96b1f174a4a43baefe885b40dacacb81786755efd08ed4b7704e79c45515"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "atkinson-hyperlegible",
       "family": "Atkinson Hyperlegible",
       "aliases": [
@@ -31,6 +64,72 @@
               "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/atkinsonhyperlegible/AtkinsonHyperlegible-Regular.ttf",
               "mirror": false,
               "sha256": "7fb917c89019896d0b52ee84b7cbb3304c18cb90b19a62f5e32712bd23e97669"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "biz-ud-gothic",
+      "family": "BIZ UDGothic",
+      "aliases": [
+        "biz ud",
+        "bizudgothic"
+      ],
+      "nameZh": "BIZ UD 黑体",
+      "category": "sans",
+      "scripts": [
+        "jpan"
+      ],
+      "coverage": "JIS",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/bizudgothic/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://github.com/googlefonts/BIZ-UD",
+      "note": "",
+      "variants": [
+        {
+          "name": "Regular",
+          "fileName": "BIZUDGothic-Regular.ttf",
+          "size": 4667376,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/bizudgothic/BIZUDGothic-Regular.ttf",
+              "mirror": false,
+              "sha256": "709fcd41e3209fb765da750472f55ccdf925653e9fa7e1eb007cb65c8f749c75"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cascadia-code",
+      "family": "Cascadia Code",
+      "aliases": [
+        "cascadia",
+        "微软等宽"
+      ],
+      "nameZh": "Cascadia Code",
+      "category": "mono",
+      "scripts": [
+        "latin"
+      ],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/cascadiacode/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://github.com/microsoft/cascadia-code",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "CascadiaCode-Variable.ttf",
+          "size": 727940,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/cascadiacode/CascadiaCode%5Bwght%5D.ttf",
+              "mirror": false,
+              "sha256": "30f2e14a5c389b346b1fce110c4ddcf0dc5ce8265faf5eca2ab7323f49dba590"
             }
           ]
         }
@@ -103,6 +202,71 @@
       ]
     },
     {
+      "id": "geist",
+      "family": "Geist",
+      "aliases": [
+        "geist"
+      ],
+      "nameZh": "Geist",
+      "category": "sans",
+      "scripts": [
+        "latin"
+      ],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/geist/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://vercel.com/font",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "Geist-Variable.ttf",
+          "size": 169056,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/geist/Geist%5Bwght%5D.ttf",
+              "mirror": false,
+              "sha256": "73894e0448cae90a92b6c2f8732b7bb9acb7b94c418bff559dad4a18e1de9659"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "iansui",
+      "family": "Iansui",
+      "aliases": [
+        "芫荽",
+        "iansui"
+      ],
+      "nameZh": "芫荽",
+      "category": "kai",
+      "scripts": [
+        "hant"
+      ],
+      "coverage": "常用（繁）",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/ButTaiwan/iansui/blob/main/LICENSE",
+      "redistributable": true,
+      "homepage": "https://github.com/ButTaiwan/iansui",
+      "note": "",
+      "variants": [
+        {
+          "name": "Regular",
+          "fileName": "Iansui-Regular.ttf",
+          "size": 9447424,
+          "sources": [
+            {
+              "url": "https://github.com/ButTaiwan/iansui/releases/latest/download/iansui.zip",
+              "mirror": false,
+              "sha256": "7f1aa62e9dcbf40d0ce41a5d3f1e5ea602e66c295778ac6fefb6b84d8ed08bd5"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "inter",
       "family": "Inter",
       "aliases": [
@@ -169,6 +333,39 @@
       ]
     },
     {
+      "id": "klee-one",
+      "family": "Klee One",
+      "aliases": [
+        "klee",
+        "klee one"
+      ],
+      "nameZh": "Klee One",
+      "category": "kai",
+      "scripts": [
+        "jpan"
+      ],
+      "coverage": "JIS",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/kleeone/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://fonts.google.com/specimen/Klee+One",
+      "note": "",
+      "variants": [
+        {
+          "name": "Regular",
+          "fileName": "KleeOne-Regular.ttf",
+          "size": 8724204,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/kleeone/KleeOne-Regular.ttf",
+              "mirror": false,
+              "sha256": "bf4063f030cc2ae6adf0a11424a1888e5c0eb4438f1f6d02f52294af868e9b3a"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "lexend",
       "family": "Lexend",
       "aliases": [
@@ -196,6 +393,41 @@
               "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/lexend/Lexend%5Bwght%5D.ttf",
               "mirror": false,
               "sha256": "3add53e641fbc81da64da4bb254285e2831b52b029527bc0714e2b9610832ee6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lxgw-neoxihei",
+      "family": "LXGW Neo XiHei",
+      "aliases": [
+        "霞鹜新晰黑",
+        "新晰黑",
+        "neoxihei"
+      ],
+      "nameZh": "霞鹜新晰黑",
+      "category": "sans",
+      "scripts": [
+        "hans",
+        "latin"
+      ],
+      "coverage": "常用",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/lxgw/LxgwNeoXiHei/blob/main/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://github.com/lxgw/LxgwNeoXiHei",
+      "note": "",
+      "variants": [
+        {
+          "name": "Regular",
+          "fileName": "LXGWNeoXiHei.ttf",
+          "size": 7475784,
+          "sources": [
+            {
+              "url": "https://github.com/lxgw/LxgwNeoXiHei/releases/latest/download/LXGWNeoXiHei.ttf",
+              "mirror": false,
+              "sha256": "2e938517d1bb2d23c452829bac6c2830a4577d9eebbad22445c5c4191eb4308f"
             }
           ]
         }
@@ -238,15 +470,117 @@
       ]
     },
     {
+      "id": "lxgw-wenkai-gb",
+      "family": "LXGW WenKai GB",
+      "aliases": [
+        "文楷gb",
+        "霞鹜文楷gb",
+        "wenkai gb"
+      ],
+      "nameZh": "霞鹜文楷 GB",
+      "category": "kai",
+      "scripts": [
+        "hans",
+        "latin"
+      ],
+      "coverage": "GB18030",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/lxgw/LxgwWenKaiGB/blob/main/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://github.com/lxgw/LxgwWenKaiGB",
+      "note": "",
+      "variants": [
+        {
+          "name": "Regular",
+          "fileName": "LXGWWenKaiGB-Regular.ttf",
+          "size": 26170696,
+          "sources": [
+            {
+              "url": "https://github.com/lxgw/LxgwWenKaiGB/releases/latest/download/LXGWWenKaiGB-Regular.ttf",
+              "mirror": false,
+              "sha256": "5561d48097d92e5ab99fe7b1459d381bbcdff533bfc479207b089c6860c3990e"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "noto-sans-jp",
+      "family": "Noto Sans JP",
+      "aliases": [
+        "noto sans jp",
+        "日文黑体"
+      ],
+      "nameZh": "Noto Sans JP",
+      "category": "sans",
+      "scripts": [
+        "jpan"
+      ],
+      "coverage": "JIS",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/notosansjp/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://fonts.google.com/noto/specimen/Noto+Sans+JP",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "NotoSansJP-Variable.ttf",
+          "size": 9589900,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/notosansjp/NotoSansJP%5Bwght%5D.ttf",
+              "mirror": false,
+              "sha256": "c2f3b4d463500a2ddcd3849cded1fceeb9fd6d1c32e6cbecd568453ba50fc68f"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "noto-sans-kr",
+      "family": "Noto Sans KR",
+      "aliases": [
+        "noto sans kr",
+        "韩文黑体"
+      ],
+      "nameZh": "Noto Sans KR",
+      "category": "sans",
+      "scripts": [
+        "kore"
+      ],
+      "coverage": "KS",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/notosanskr/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://fonts.google.com/noto/specimen/Noto+Sans+KR",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "NotoSansKR-Variable.ttf",
+          "size": 10414588,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/notosanskr/NotoSansKR%5Bwght%5D.ttf",
+              "mirror": false,
+              "sha256": "194018e6b2b293a7964f037b25c0249ce1418bc9ab3c971060a03aa57861e252"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "noto-sans-sc",
       "family": "Noto Sans SC",
       "aliases": [
         "思源黑体",
         "思源黑",
         "noto sans sc",
-        "黑体"
+        "黑体",
+        "source han sans"
       ],
-      "nameZh": "思源黑体（Noto）",
+      "nameZh": "思源黑体",
       "category": "sans",
       "scripts": [
         "hans",
@@ -268,6 +602,340 @@
               "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf",
               "mirror": false,
               "sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "noto-sans-tc",
+      "family": "Noto Sans TC",
+      "aliases": [
+        "繁体黑体",
+        "noto sans tc",
+        "繁中"
+      ],
+      "nameZh": "思源黑体（繁）",
+      "category": "sans",
+      "scripts": [
+        "hant",
+        "latin"
+      ],
+      "coverage": "Big5",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/noto-sans-tc/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://fonts.google.com/noto/specimen/Noto+Sans+TC",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "NotoSansTC-Variable.ttf",
+          "size": 11941968,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/notosanstc/NotoSansTC%5Bwght%5D.ttf",
+              "mirror": false,
+              "sha256": "864727d210d54f2537bbe23b3a839436c3992af72de9322af5270897246bd44f"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "noto-serif",
+      "family": "Noto Serif",
+      "aliases": [
+        "noto serif"
+      ],
+      "nameZh": "Noto Serif",
+      "category": "serif",
+      "scripts": [
+        "latin"
+      ],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/notoserif/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://fonts.google.com/noto/specimen/Noto+Serif",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "NotoSerif-Variable.ttf",
+          "size": 1887192,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/notoserif/NotoSerif%5Bwdth%2Cwght%5D.ttf",
+              "mirror": false,
+              "sha256": "4d8e6761424656867019081a1a01336f3cb086982682698714054fc33f782713"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "noto-serif-jp",
+      "family": "Noto Serif JP",
+      "aliases": [
+        "noto serif jp",
+        "日文明朝"
+      ],
+      "nameZh": "Noto Serif JP",
+      "category": "serif",
+      "scripts": [
+        "jpan"
+      ],
+      "coverage": "JIS",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/notoserifjp/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://fonts.google.com/noto/specimen/Noto+Serif+JP",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "NotoSerifJP-Variable.ttf",
+          "size": 13574352,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/notoserifjp/NotoSerifJP%5Bwght%5D.ttf",
+              "mirror": false,
+              "sha256": "2fd527ba12b6a44ec30d796d633360da0aeba6c5d4af1304ce12bb4dc15a7dfc"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "noto-serif-kr",
+      "family": "Noto Serif KR",
+      "aliases": [
+        "noto serif kr",
+        "韩文明朝"
+      ],
+      "nameZh": "Noto Serif KR",
+      "category": "serif",
+      "scripts": [
+        "kore"
+      ],
+      "coverage": "KS",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/notoserifkr/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://fonts.google.com/noto/specimen/Noto+Serif+KR",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "NotoSerifKR-Variable.ttf",
+          "size": 23795420,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/notoserifkr/NotoSerifKR%5Bwght%5D.ttf",
+              "mirror": false,
+              "sha256": "11f8d5de6f1b79195efba3828aaa2ec95c1178f5ae976fb23c8d53250a9938f3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "noto-serif-sc",
+      "family": "Noto Serif SC",
+      "aliases": [
+        "思源宋体",
+        "思源宋",
+        "noto serif sc",
+        "宋体",
+        "source han serif"
+      ],
+      "nameZh": "思源宋体",
+      "category": "serif",
+      "scripts": [
+        "hans",
+        "latin"
+      ],
+      "coverage": "GB18030-2022",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/notoserifsc/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://fonts.google.com/noto/specimen/Noto+Serif+SC",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "NotoSerifSC-Variable.ttf",
+          "size": 25125512,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/notoserifsc/NotoSerifSC%5Bwght%5D.ttf",
+              "mirror": false,
+              "sha256": "050080d9255a86808f2945bffac582b31ef32bc36411ce29563b4961670c66f9"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "noto-serif-tc",
+      "family": "Noto Serif TC",
+      "aliases": [
+        "繁体宋体",
+        "noto serif tc"
+      ],
+      "nameZh": "思源宋体（繁）",
+      "category": "serif",
+      "scripts": [
+        "hant",
+        "latin"
+      ],
+      "coverage": "Big5",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/noto-serif-tc/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://fonts.google.com/noto/specimen/Noto+Serif+TC",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "NotoSerifTC-Variable.ttf",
+          "size": 16851596,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/notoseriftc/NotoSerifTC%5Bwght%5D.ttf",
+              "mirror": false,
+              "sha256": "0077e18f57c6908f4a000969880940bdb0dad057c0e8d98b49dc364c3d1b09c6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "playfair-display",
+      "family": "Playfair Display",
+      "aliases": [
+        "playfair"
+      ],
+      "nameZh": "Playfair Display",
+      "category": "serif",
+      "scripts": [
+        "latin"
+      ],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/playfairdisplay/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://fonts.google.com/specimen/Playfair+Display",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "PlayfairDisplay-Variable.ttf",
+          "size": 300724,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/playfairdisplay/PlayfairDisplay%5Bwght%5D.ttf",
+              "mirror": false,
+              "sha256": "c40f2293766a503bc70cce9e512ef844a4ccb7cbcde792fe2ea31d191917d8d6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pretendard",
+      "family": "Pretendard",
+      "aliases": [
+        "pretendard",
+        "现代韩文"
+      ],
+      "nameZh": "Pretendard",
+      "category": "sans",
+      "scripts": [
+        "kore",
+        "latin"
+      ],
+      "coverage": "KS",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/orioncactus/pretendard/blob/main/LICENSE",
+      "redistributable": true,
+      "homepage": "https://github.com/orioncactus/pretendard",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "PretendardVariable.ttf",
+          "size": 6739336,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/orioncactus/pretendard/main/packages/pretendard/dist/public/variable/PretendardVariable.ttf",
+              "mirror": false,
+              "sha256": "3090ccde0442bb347aa7685d9ba8b17436a60682df6e8f92a9a670de14056e22"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "public-sans",
+      "family": "Public Sans",
+      "aliases": [
+        "public sans"
+      ],
+      "nameZh": "Public Sans",
+      "category": "sans",
+      "scripts": [
+        "latin"
+      ],
+      "coverage": "latin",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/publicsans/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://github.com/uswds/public-sans",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "PublicSans-Variable.ttf",
+          "size": 103316,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/publicsans/PublicSans%5Bwght%5D.ttf",
+              "mirror": false,
+              "sha256": "d75a7dc1a27eb9e336d5b33f55489d2ecb5621bf694d5c43b2415bce2ca830a8"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "roboto-mono",
+      "family": "Roboto Mono",
+      "aliases": [
+        "roboto mono"
+      ],
+      "nameZh": "Roboto Mono",
+      "category": "mono",
+      "scripts": [
+        "latin"
+      ],
+      "coverage": "latin",
+      "license": "Apache-2.0",
+      "licenseUrl": "https://github.com/google/fonts/blob/main/ofl/robotomono/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://fonts.google.com/specimen/Roboto+Mono",
+      "note": "",
+      "variants": [
+        {
+          "name": "Variable",
+          "fileName": "RobotoMono-Variable.ttf",
+          "size": 183700,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/robotomono/RobotoMono%5Bwght%5D.ttf",
+              "mirror": false,
+              "sha256": "66a80e79d17e4c7cabd162e2916578a4cc08fd19eef6e2a643305eae9c567b2b"
             }
           ]
         }
@@ -315,7 +983,7 @@
         "source serif",
         "思源宋体 西文"
       ],
-      "nameZh": "思源宋体（西文）",
+      "nameZh": "Source Serif 4",
       "category": "serif",
       "scripts": [
         "latin"
@@ -336,6 +1004,73 @@
               "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/sourceserif4/SourceSerif4%5Bopsz%2Cwght%5D.ttf",
               "mirror": false,
               "sha256": "97b2d4da6e3cb494b5a1e66ae176914d852ccabef49e0c02c0df25f3e39aca0b"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wqy-microhei",
+      "family": "WenQuanYi Micro Hei",
+      "aliases": [
+        "微米黑",
+        "文泉驿",
+        "wqy"
+      ],
+      "nameZh": "文泉驿微米黑",
+      "category": "sans",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "常用",
+      "license": "Apache-2.0",
+      "licenseUrl": "https://github.com/anthonyfok/fonts-wqy-microhei/blob/master/LICENSE",
+      "redistributable": true,
+      "homepage": "https://github.com/anthonyfok/fonts-wqy-microhei",
+      "note": "",
+      "variants": [
+        {
+          "name": "Regular",
+          "fileName": "wqy-microhei.ttc",
+          "size": 5177387,
+          "sources": [
+            {
+              "url": "https://raw.githubusercontent.com/anthonyfok/fonts-wqy-microhei/master/wqy-microhei.ttc",
+              "mirror": false,
+              "sha256": "e4bca8df123ce01b104780f576ea1a58b9a5ff1662a91124b6d3180cb6c88212"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "yozai",
+      "family": "Yozai",
+      "aliases": [
+        "悠哉",
+        "yozai"
+      ],
+      "nameZh": "悠哉字体",
+      "category": "kai",
+      "scripts": [
+        "hans"
+      ],
+      "coverage": "常用",
+      "license": "OFL-1.1",
+      "licenseUrl": "https://github.com/lxgw/yozai-font/blob/main/OFL.txt",
+      "redistributable": true,
+      "homepage": "https://github.com/lxgw/yozai-font",
+      "note": "",
+      "variants": [
+        {
+          "name": "Regular",
+          "fileName": "Yozai-Regular.ttf",
+          "size": 15605374,
+          "sources": [
+            {
+              "url": "https://github.com/lxgw/yozai-font/releases/latest/download/Yozai-Regular.ttf",
+              "mirror": false,
+              "sha256": "25071998a0fe6a72f54c235e714986d259633e5ff670b1a2b5e264387f3316ac"
             }
           ]
         }
