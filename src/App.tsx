@@ -13,6 +13,19 @@ import { RIPPLE_SELECTOR, rippleFrom, tactile } from './lib/motion'
 import { SAMPLES, SIZES } from './lib/samples'
 import { useApp } from './state/store'
 
+/**
+ * 这三个处理器定义在模块作用域，而不是组件内联。
+ *
+ * 内联箭头函数每次渲染都是新对象，`FontCard` 的 memo 浅比较必然失败，
+ * 401 张卡会在每次选中/改字号时全部重渲染 —— 这是卡顿的主因之一。
+ * 放在模块层，函数身份永久稳定，memo 才真正生效。
+ */
+const handleSelect = (id: string) => useApp.getState().select(id)
+const handleToggleFavorite = (id: string) => useApp.getState().toggleFavorite(id)
+const handleToggleEnabled = (id: string) => {
+  void useApp.getState().toggleEnabled(id)
+}
+
 export default function App() {
   const fonts = useApp((state) => state.fonts)
   const status = useApp((state) => state.status)
@@ -35,9 +48,6 @@ export default function App() {
     const found = visible.find((font) => font.id === selectedId)
     return found ?? visible[0] ?? null
   }, [visible, selectedId])
-
-  const filters =
-    (scope === 'all' ? 0 : 1) + categories.length + (query.trim() ? 1 : 0)
 
   /* 首次加载 */
   useEffect(() => {
@@ -177,11 +187,9 @@ export default function App() {
               sample={sample}
               selectedId={selected?.id ?? null}
               view={view}
-              onSelect={(id) => useApp.getState().select(id)}
-              onToggleFavorite={(id) => useApp.getState().toggleFavorite(id)}
-              onToggleEnabled={(id) => {
-                void useApp.getState().toggleEnabled(id)
-              }}
+              onSelect={handleSelect}
+              onToggleFavorite={handleToggleFavorite}
+              onToggleEnabled={handleToggleEnabled}
             />
           ) : (
             <div className="empty">
@@ -197,7 +205,7 @@ export default function App() {
       </main>
 
       <Inspector font={selected} />
-      <StatusBar visible={visible.length} total={fonts.length} filters={filters} />
+      <StatusBar visible={visible.length} total={fonts.length} />
       <SettingsPanel />
       <Toast />
     </div>

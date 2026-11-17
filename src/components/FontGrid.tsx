@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { Font, ViewMode } from '../types/font'
 import { FontCard } from './FontCard'
 
@@ -11,7 +12,13 @@ interface FontGridProps {
   onToggleEnabled: (id: string) => void
 }
 
-export function FontGrid({
+/**
+ * 网格本身也 memo 化。
+ *
+ * App 因为字号、主题、Toast 之类的状态重渲染时，只要 fonts / selectedId
+ * 没变，这里就整棵跳过 —— 不做 401 次 createElement。
+ */
+export const FontGrid = memo(function FontGrid({
   fonts,
   sample,
   selectedId,
@@ -49,4 +56,4 @@ export function FontGrid({
       ))}
     </ul>
   )
-}
+})

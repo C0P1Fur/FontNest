@@ -186,13 +186,29 @@ export function StarOutlineIcon({ className }: IconProps) {
   return <StarIcon className={className} />
 }
 
-export function SettingsIcon({ className }: IconProps) {
+/**
+ * 扫描目录：文件夹 + 加号。
+ *
+ * 早先画的是"三条滑杆 + 三个圆"，16px 下三条线加三个圆会糊成一团，
+ * 而且读不出"这里能加文件夹"。现在复用与 FolderIcon 相同的文件夹轮廓，
+ * 内部一个加号 —— 形状简单，缩小到 16px 仍然认得出。
+ */
+export function FolderPlusIcon({ className }: IconProps) {
   return (
     <svg className={className ?? 'ico'} viewBox="0 0 20 20" aria-hidden="true">
-      <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="7" cy="6" r="2.1" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="13" cy="10" r="2.1" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="9" cy="14" r="2.1" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M2.4 6.2a1.4 1.4 0 011.4-1.4h3.1l1.5 1.8h7.3a1.4 1.4 0 011.4 1.4v6.4a1.4 1.4 0 01-1.4 1.4H3.8a1.4 1.4 0 01-1.4-1.4z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10 9.3v4.2M7.9 11.4h4.2"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
     </svg>
   )
 }

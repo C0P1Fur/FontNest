@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../state/store'
-import { KeyboardIcon, SearchIcon, SettingsIcon, SunIcon } from './Icons'
+import { KeyboardIcon, SearchIcon, SunIcon, FolderPlusIcon } from './Icons'
 
 export function TopBar() {
   const query = useApp((state) => state.query)
@@ -64,11 +64,11 @@ export function TopBar() {
         <button
           type="button"
           className="icon-btn"
-          aria-label="扫描目录设置"
-          title="扫描目录"
+          aria-label="添加扫描目录"
+          title="添加扫描目录"
           onClick={openSettings}
         >
-          <SettingsIcon />
+          <FolderPlusIcon />
         </button>
 
         <button

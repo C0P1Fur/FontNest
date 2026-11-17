@@ -81,114 +81,124 @@ export function Inspector({ font }: { font: Font | null }) {
 
   return (
     <aside className="inspector" aria-label="字体详情">
-      <div className="insp-head">
-        <div className="insp-eyebrow">
-          <span>{CATEGORY_LABEL[font.category]}</span>
-          {font.variable ? <span className="v-badge">VARIABLE</span> : null}
-          <span>·</span>
-          <span>{font.year > 0 ? font.year : '—'}</span>
-        </div>
-        <h2 className="insp-name" style={face}>
-          {font.family}
-        </h2>
-        <p className="insp-sub">
-          {font.instanceCount} 个样式 · {font.designer} · {font.foundry}
-        </p>
-      </div>
-
-      <div className="specimen" onClick={cycleSize} title="点击切换字号">
-        <div className="specimen-text" style={specimenStyle}>
-          {sample}
-        </div>
-        <span className="specimen-hint">点击改字号</span>
-      </div>
-
-      {font.axes.length > 0 ? (
-        <div className="axes" role="group" aria-label="可变字体轴">
-          {font.axes.map((axis) => {
-            const value = axes[axis.tag] ?? axis.defaultValue
-            return (
-              <div className="axis" key={axis.tag}>
-                <label htmlFor={`axis-${axis.tag}`}>{axis.tag}</label>
-                <input
-                  id={`axis-${axis.tag}`}
-                  type="range"
-                  min={axis.min}
-                  max={axis.max}
-                  value={value}
-                  onChange={(event) =>
-                    setAxes((prev) => ({ ...prev, [axis.tag]: Number(event.target.value) }))
-                  }
-                />
-                <output htmlFor={`axis-${axis.tag}`}>{value}</output>
-              </div>
-            )
-          })}
-        </div>
-      ) : null}
-
-      <div className="tabs" ref={wrapRef} role="tablist" aria-label="详情分栏">
-        <span className="tab-ind" ref={indicatorRef} aria-hidden="true" />
-        {TABS.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            role="tab"
-            aria-selected={tab === item.key}
-            data-active={tab === item.key}
-            className={tab === item.key ? 'tab is-active' : 'tab'}
-            onClick={() => setTab(item.key)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'meta' ? (
-        <div className="tab-body">
-          <dl className="meta-list">
-            <MetaRow label="家族名" value={font.family} />
-            <MetaRow label="PostScript" value={font.psName} mono />
-            <MetaRow label="分类" value={CATEGORY_LABEL[font.category]} />
-            <MetaRow label="样式数" value={`${font.instanceCount} 个${font.variable ? ' · 可变' : ''}`} />
-            <MetaRow label="字形数" value={formatCount(font.glyphCount)} />
-            <MetaRow label="厂商" value={font.foundry} />
-            <MetaRow
-              label="设计"
-              value={font.year > 0 ? `${font.designer} · ${font.year}` : font.designer}
-            />
-            <MetaRow label="授权" value={font.license} />
-            <MetaRow label="文件" value={font.filePath} mono />
-            <MetaRow label="大小" value={formatBytes(font.sizeBytes)} />
-          </dl>
-        </div>
-      ) : null}
-
-      {tab === 'chars' ? (
-        <div className="tab-body">
-          <div className="charmap" style={face}>
-            {chars.split('').map((char, index) => (
-              <span key={`${char}-${index}`}>{char}</span>
-            ))}
+      {/*
+        可滚动区与操作栏必须是两个独立的行：
+        早先把操作栏做成 sticky 叠在内容上，内容一长（元数据 10 行）
+        就会从 tab-body 里溢出、钻到操作栏底下被遮住。
+      */}
+      <div className="insp-scroll">
+        <div className="insp-head">
+          <div className="insp-eyebrow">
+            <span>{CATEGORY_LABEL[font.category]}</span>
+            {font.variable ? <span className="v-badge">VARIABLE</span> : null}
+            <span>·</span>
+            <span>{font.year > 0 ? font.year : '—'}</span>
           </div>
-          <p className="charmap-note">
-            缺失字形显示为方框 · 共 {formatCount(font.glyphCount)} 个字形
+          <h2 className="insp-name" style={face}>
+            {font.family}
+          </h2>
+          <p className="insp-sub">
+            {font.instanceCount} 个样式 · {font.designer} · {font.foundry}
           </p>
         </div>
-      ) : null}
 
-      {tab === 'license' ? (
-        <div className="tab-body">
-          <div className="license-body">
-            <strong>{font.license}</strong>
-            <p>
-              此字体由 {font.foundry} 提供，嵌入与再分发条款以厂商许可为准。FontNest
-              仅索引本机文件，不上传、不解析授权内容。
-            </p>
-            <p>字体文件位于当前用户目录，卸载时将被移入应用回收站，7 天内可恢复。</p>
+        <div className="specimen" onClick={cycleSize} title="点击切换字号">
+          <div className="specimen-text" style={specimenStyle}>
+            {sample}
           </div>
+          <span className="specimen-hint">点击改字号</span>
         </div>
-      ) : null}
+
+        {font.axes.length > 0 ? (
+          <div className="axes" role="group" aria-label="可变字体轴">
+            {font.axes.map((axis) => {
+              const value = axes[axis.tag] ?? axis.defaultValue
+              return (
+                <div className="axis" key={axis.tag}>
+                  <label htmlFor={`axis-${axis.tag}`}>{axis.tag}</label>
+                  <input
+                    id={`axis-${axis.tag}`}
+                    type="range"
+                    min={axis.min}
+                    max={axis.max}
+                    value={value}
+                    onChange={(event) =>
+                      setAxes((prev) => ({ ...prev, [axis.tag]: Number(event.target.value) }))
+                    }
+                  />
+                  <output htmlFor={`axis-${axis.tag}`}>{value}</output>
+                </div>
+              )
+            })}
+          </div>
+        ) : null}
+
+        <div className="tabs" ref={wrapRef} role="tablist" aria-label="详情分栏">
+          <span className="tab-ind" ref={indicatorRef} aria-hidden="true" />
+          {TABS.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              role="tab"
+              aria-selected={tab === item.key}
+              data-active={tab === item.key}
+              className={tab === item.key ? 'tab is-active' : 'tab'}
+              onClick={() => setTab(item.key)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'meta' ? (
+          <div className="tab-body">
+            <dl className="meta-list">
+              <MetaRow label="家族名" value={font.family} />
+              <MetaRow label="PostScript" value={font.psName} mono />
+              <MetaRow label="分类" value={CATEGORY_LABEL[font.category]} />
+              <MetaRow
+                label="样式数"
+                value={`${font.instanceCount} 个${font.variable ? ' · 可变' : ''}`}
+              />
+              <MetaRow label="字形数" value={formatCount(font.glyphCount)} />
+              <MetaRow label="厂商" value={font.foundry} />
+              <MetaRow
+                label="设计"
+                value={font.year > 0 ? `${font.designer} · ${font.year}` : font.designer}
+              />
+              <MetaRow label="授权" value={font.license} />
+              <MetaRow label="文件" value={font.filePath} mono />
+              <MetaRow label="大小" value={formatBytes(font.sizeBytes)} />
+            </dl>
+          </div>
+        ) : null}
+
+        {tab === 'chars' ? (
+          <div className="tab-body">
+            <div className="charmap" style={face}>
+              {chars.split('').map((char, index) => (
+                <span key={`${char}-${index}`}>{char}</span>
+              ))}
+            </div>
+            <p className="charmap-note">
+              缺失字形显示为方框 · 共 {formatCount(font.glyphCount)} 个字形
+            </p>
+          </div>
+        ) : null}
+
+        {tab === 'license' ? (
+          <div className="tab-body">
+            <div className="license-body">
+              <strong>{font.license}</strong>
+              <p>
+                此字体由 {font.foundry} 提供，嵌入与再分发条款以厂商许可为准。FontNest
+                仅索引本机文件，不上传、不解析授权内容。
+              </p>
+              <p>字体文件位于当前用户目录，卸载时将被移入应用回收站，7 天内可恢复。</p>
+            </div>
+          </div>
+        ) : null}
+      </div>
 
       <div className="insp-actions">
         {font.source === 'custom' ? (

@@ -482,12 +482,6 @@ kbd {
   border-color: var(--ok);
 }
 
-.scan-note {
-  font-size: 10px;
-  color: var(--faint);
-  text-align: center;
-}
-
 /* ═══════════ 工作区 ═══════════ */
 .workspace {
   grid-area: main;
@@ -662,6 +656,10 @@ kbd {
   border: 1px solid var(--line);
   text-align: left;
   overflow: hidden;
+  /* 视口外的卡片跳过布局与绘制：401 张里通常只有 30–40 张可见。
+     auto 关键字会记住上次渲染出的实际高度，避免滚动条跳动。 */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 132px;
   transition: border-color var(--t-2) var(--e-out), transform var(--t-2) var(--e-out),
     background var(--t-2) var(--e-out), box-shadow var(--t-2) var(--e-out);
   animation: cardIn var(--t-4) var(--e-out) both;
@@ -916,7 +914,16 @@ kbd {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  /* 自身不滚动：滚动交给 .insp-scroll，操作栏固定在它下面 */
+  overflow: hidden;
+}
+
+/* 唯一可滚动的一层。内容再长也只在这里滚，碰不到下方操作栏 */
+.insp-scroll {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .insp-head {
@@ -1109,8 +1116,6 @@ input[type="range"]::-moz-range-thumb {
 
 .tab-body {
   padding: 12px 18px 16px;
-  flex: 1;
-  min-height: 0;
 }
 
 .meta-list {
@@ -1193,8 +1198,8 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .insp-actions {
-  position: sticky;
-  bottom: 0;
+  /* 不再 sticky：它是 flex 的最后一个固定行，天然不会被内容覆盖 */
+  flex: none;
   display: flex;
   gap: 8px;
   padding: 12px 18px 16px;
@@ -1382,10 +1387,6 @@ input[type="range"]::-moz-range-thumb {
 .status-hints kbd {
   font-size: 8.5px;
   padding: 1px 3px;
-}
-
-.status-right {
-  margin-left: auto;
 }
 
 /* ═══════════ Toast ═══════════ */

@@ -99,7 +99,6 @@ export function Rail() {
           </span>
           <span className="btn-text">{scanPhase === 'scanning' ? '扫描中…' : '刷新索引'}</span>
         </button>
-        <p className="scan-note">当前用户级 · 只读系统字体目录</p>
       </div>
     </aside>
   )
