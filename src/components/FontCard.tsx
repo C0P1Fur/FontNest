@@ -86,10 +86,6 @@ export const FontCard = memo(function FontCard({
       </span>
 
       <span className="card-foot">
-        <span
-          className="dot-state"
-          title={font.enabled ? '已启用' : font.source === 'custom' ? '未安装' : '未启用'}
-        />
         <span>{font.instanceCount} styles</span>
         {font.variable ? (
           <>

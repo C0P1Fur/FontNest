@@ -7,7 +7,6 @@ export function TopBar() {
   const setQuery = useApp((state) => state.setQuery)
   const theme = useApp((state) => state.theme)
   const toggleTheme = useApp((state) => state.toggleTheme)
-  const scanPhase = useApp((state) => state.scanPhase)
   const openSettings = useApp((state) => state.openSettings)
   const openRecognize = useApp((state) => state.openRecognize)
   const openTour = useApp((state) => state.openTour)
@@ -94,11 +93,6 @@ export function TopBar() {
       </div>
 
       <div className="top-actions">
-        <div className={scanPhase === 'scanning' ? 'sync is-scanning' : 'sync'}>
-          <span className="pulse" />
-          <span>{scanPhase === 'scanning' ? '扫描中' : '已同步'}</span>
-        </div>
-
         <button
           type="button"
           className="icon-btn"
