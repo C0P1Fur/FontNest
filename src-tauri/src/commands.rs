@@ -92,6 +92,122 @@ pub fn save_ui_state(state: UiState) -> Result<(), String> {
     fontnest_core::ui::save(&state).map_err(|error| error.to_string())
 }
 
+/* ───────────── 可选字体库 ───────────── */
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CatalogItem {
+    pub id: String,
+    pub family: String,
+    pub name_zh: String,
+    pub aliases: Vec<String>,
+    pub category: String,
+    pub coverage: String,
+    pub license: String,
+    pub license_url: String,
+    pub redistributable: bool,
+    pub homepage: String,
+    pub note: String,
+    /// 主变体的体积（目录里第一个变体）
+    pub size: u64,
+    /// 文件是否已在本地库
+    pub downloaded: bool,
+    /// 是否已装进系统
+    pub installed: bool,
+    /// 本地库里的 Font.id；前端用它调 set_enabled
+    pub font_id: Option<String>,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CatalogListing {
+    pub items: Vec<CatalogItem>,
+    pub issues: Vec<String>,
+}
+
+#[tauri::command]
+pub fn catalog_list(state: State<AppState>) -> Result<CatalogListing, String> {
+    let (catalog, issues) = fontnest_core::fetch::load_catalog();
+
+    // 已落库的字体是否"装进了系统"，只能从扫描结果里看 —— 那是唯一真相
+    let library = state.library.lock().map_err(|_| lock_error())?;
+
+    let items = catalog
+        .fonts
+        .iter()
+        .map(|font| {
+            let path = fontnest_core::fetch::downloaded_path(font);
+            let scanned = path.as_ref().and_then(|target| {
+                let text = target.to_string_lossy().to_string();
+                library.fonts().iter().find(|item| item.file_path == text)
+            });
+            CatalogItem {
+                id: font.id.clone(),
+                family: font.family.clone(),
+                name_zh: font.name_zh.clone(),
+                aliases: font.aliases.clone(),
+                category: font.category.clone(),
+                coverage: font.coverage.clone(),
+                license: font.license.clone(),
+                license_url: font.license_url.clone(),
+                redistributable: font.redistributable,
+                homepage: font.homepage.clone(),
+                note: font.note.clone(),
+                size: font.variants.first().map(|item| item.size).unwrap_or(0),
+                downloaded: path.is_some(),
+                installed: scanned.map(|item| item.enabled).unwrap_or(false),
+                font_id: scanned.map(|item| item.id.clone()),
+            }
+        })
+        .collect();
+
+    Ok(CatalogListing {
+        items,
+        issues: issues
+            .into_iter()
+            .map(|issue| format!("{}：{}", issue.font_id, issue.message))
+            .collect(),
+    })
+}
+
+/// 下载是阻塞的（curl 子进程），必须放到阻塞线程池，否则会卡住 UI 线程
+#[tauri::command]
+pub async fn catalog_fetch(id: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let (catalog, _) = fontnest_core::fetch::load_catalog();
+        let font = catalog
+            .find(&id)
+            .ok_or_else(|| format!("目录里没有 {id}"))?;
+
+        if !font.redistributable {
+            return Err(format!(
+                "{} 的许可不允许第三方分发，请从官网获取：{}",
+                font.family, font.homepage
+            ));
+        }
+        let variant = font
+            .variants
+            .first()
+            .map(|item| item.name.clone())
+            .ok_or_else(|| format!("{} 没有可下载的变体", font.family))?;
+
+        fontnest_core::fetch::download_variant(font, &variant, |_| {})
+            .map(|_| ())
+            .map_err(|error| error.to_string())
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
+pub fn catalog_remove(id: String) -> Result<(), String> {
+    let (catalog, _) = fontnest_core::fetch::load_catalog();
+    let font = catalog
+        .find(&id)
+        .ok_or_else(|| format!("目录里没有 {id}"))?;
+    fontnest_core::fetch::remove_download(font).map_err(|error| error.to_string())
+}
+
 /* ───────────── 字体识别 ───────────── */
 
 /// 用已知文本在本地全部字体里做视觉比对。

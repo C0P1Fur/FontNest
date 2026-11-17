@@ -11,6 +11,7 @@ import type {
   ViewMode,
 } from '../types/font'
 import { api } from '../lib/ipc'
+import type { CatalogItem } from '../lib/ipc'
 
 export type Theme = 'light' | 'dark'
 
@@ -44,6 +45,11 @@ export interface AppState {
   theme: Theme
   settingsOpen: boolean
   recognizeOpen: boolean
+  /** 可选字体库面板 */
+  catalogOpen: boolean
+  catalogItems: CatalogItem[]
+  catalogBusy: string | null
+  catalogError: string | null
   /** 上手引导是否显示 */
   tourOpen: boolean
   /** 引导是否已完成或跳过（来自 ui.json） */
@@ -77,6 +83,10 @@ export interface AppState {
   toggleTheme: () => void
   openSettings: () => void
   closeSettings: () => void
+  openCatalog: () => Promise<void>
+  closeCatalog: () => void
+  downloadCatalogFont: (id: string) => Promise<void>
+  removeCatalogFont: (id: string) => Promise<void>
   openTour: () => void
   /** 完成或跳过引导：关掉并落盘 */
   finishTour: (step: number) => Promise<void>
@@ -139,6 +149,10 @@ export const useApp = create<AppState>()((set, get) => ({
   theme: readTheme(),
   settingsOpen: false,
   recognizeOpen: false,
+  catalogOpen: false,
+  catalogItems: [],
+  catalogBusy: null,
+  catalogError: null,
   tourOpen: false,
   tourSeen: true,
   capture: null,
@@ -288,6 +302,50 @@ export const useApp = create<AppState>()((set, get) => ({
 
   openSettings: () => set({ settingsOpen: true }),
   closeSettings: () => set({ settingsOpen: false }),
+
+  openCatalog: async () => {
+    set({ catalogOpen: true, catalogError: null })
+    try {
+      const listing = await api.listCatalog()
+      set({ catalogItems: listing.items, catalogError: listing.issues[0] ?? null })
+    } catch (error) {
+      console.error('[fontnest] 加载字体目录失败', error)
+      set({ catalogError: String(error) })
+    }
+  },
+  closeCatalog: () => set({ catalogOpen: false, catalogBusy: null }),
+
+  downloadCatalogFont: async (id) => {
+    if (get().catalogBusy) return
+    set({ catalogBusy: id, catalogError: null })
+    try {
+      await api.fetchCatalogFont(id)
+      // 下载完必须重扫：库里的新文件要经过解析才会出现在字体列表里。
+      // 不重扫的话用户会看到"下载成功"但列表里什么都没有。
+      await get().rescan()
+      const listing = await api.listCatalog()
+      set({ catalogItems: listing.items })
+    } catch (error) {
+      set({ catalogError: String(error) })
+    } finally {
+      set({ catalogBusy: null })
+    }
+  },
+
+  removeCatalogFont: async (id) => {
+    if (get().catalogBusy) return
+    set({ catalogBusy: id, catalogError: null })
+    try {
+      await api.removeCatalogFont(id)
+      await get().rescan()
+      const listing = await api.listCatalog()
+      set({ catalogItems: listing.items })
+    } catch (error) {
+      set({ catalogError: String(error) })
+    } finally {
+      set({ catalogBusy: null })
+    }
+  },
 
   openTour: () => set({ tourOpen: true }),
 

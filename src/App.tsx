@@ -8,6 +8,7 @@ import { Inspector } from './components/Inspector'
 import { StatusBar } from './components/StatusBar'
 import { Toast } from './components/Toast'
 import { SettingsPanel } from './components/SettingsPanel'
+import { CatalogPanel } from './components/CatalogPanel'
 import { RecognizePanel } from './components/RecognizePanel'
 import { Tour } from './components/Tour'
 import { applyQuery } from './lib/filter'
@@ -233,6 +234,7 @@ export default function App() {
       <Inspector font={selected} />
       <StatusBar visible={visible.length} total={fonts.length} />
       <SettingsPanel />
+      <CatalogPanel />
       <RecognizePanel />
       <Tour />
       <Toast />

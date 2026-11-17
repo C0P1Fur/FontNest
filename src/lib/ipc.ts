@@ -199,6 +199,119 @@ async function saveUiState(state: UiState): Promise<void> {
   Object.assign(mockUi, state)
 }
 
+/* ───────────── 可选字体库 ───────────── */
+
+export interface CatalogItem {
+  id: string
+  family: string
+  nameZh: string
+  aliases: string[]
+  category: string
+  /** 字符集覆盖，如 "GB18030-2022" / "常用" / "展示" */
+  coverage: string
+  license: string
+  licenseUrl: string
+  /** 许可是否允许我们再分发：false 的只能去官网下载 */
+  redistributable: boolean
+  homepage: string
+  note: string
+  size: number
+  downloaded: boolean
+  installed: boolean
+  fontId: string | null
+}
+
+export interface CatalogListing {
+  items: CatalogItem[]
+  issues: string[]
+}
+
+/** 浏览器预览用的假目录，形状与真后端一致 */
+const mockCatalog: CatalogItem[] = [
+  {
+    id: 'inter',
+    family: 'Inter',
+    nameZh: 'Inter',
+    aliases: ['inter'],
+    category: 'sans',
+    coverage: 'latin',
+    license: 'OFL-1.1',
+    licenseUrl: '',
+    redistributable: true,
+    homepage: 'https://rsms.me/inter/',
+    note: '',
+    size: 876576,
+    downloaded: false,
+    installed: false,
+    fontId: null,
+  },
+  {
+    id: 'lxgw-wenkai',
+    family: 'LXGW WenKai',
+    nameZh: '霞鹜文楷',
+    aliases: ['霞鹜文楷', '文楷'],
+    category: 'kai',
+    coverage: '常用',
+    license: 'OFL-1.1',
+    licenseUrl: '',
+    redistributable: true,
+    homepage: 'https://github.com/lxgw/LxgwWenKai',
+    note: '',
+    size: 25928940,
+    downloaded: false,
+    installed: false,
+    fontId: null,
+  },
+  {
+    id: 'alibaba-puhuiti',
+    family: 'Alibaba PuHuiTi',
+    nameZh: '阿里巴巴普惠体',
+    aliases: ['阿里巴巴普惠体', '普惠体'],
+    category: 'sans',
+    coverage: 'GB18030',
+    license: '阿里巴巴字体许可',
+    licenseUrl: '',
+    redistributable: false,
+    homepage: 'https://www.alibabafonts.com/',
+    note: '许可禁止第三方转载字体文件，请从官网获取',
+    size: 0,
+    downloaded: false,
+    installed: false,
+    fontId: null,
+  },
+]
+
+async function listCatalog(): Promise<CatalogListing> {
+  if (isTauriRuntime) {
+    return invokeTauri<CatalogListing>('catalog_list')
+  }
+  await delay(MOCK_LATENCY.quick)
+  return { items: mockCatalog.map((item) => ({ ...item })), issues: [] }
+}
+
+async function fetchCatalogFont(id: string): Promise<void> {
+  if (isTauriRuntime) {
+    await invokeTauri<void>('catalog_fetch', { id })
+    return
+  }
+  await delay(MOCK_LATENCY.install)
+  const item = mockCatalog.find((entry) => entry.id === id)
+  if (item) item.downloaded = true
+}
+
+async function removeCatalogFont(id: string): Promise<void> {
+  if (isTauriRuntime) {
+    await invokeTauri<void>('catalog_remove', { id })
+    return
+  }
+  await delay(MOCK_LATENCY.quick)
+  const item = mockCatalog.find((entry) => entry.id === id)
+  if (item) {
+    item.downloaded = false
+    item.installed = false
+  }
+}
+
 /* ───────────── 字体识别 ───────────── */
 
 async function recognizeFonts(
@@ -295,4 +408,7 @@ export const api = {
   reconcileFonts,
   getUiState,
   saveUiState,
+  listCatalog,
+  fetchCatalogFont,
+  removeCatalogFont,
 }

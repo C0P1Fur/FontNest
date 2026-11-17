@@ -233,3 +233,43 @@ export function FolderPlusIcon({ className }: IconProps) {
     </svg>
   )
 }
+
+/**
+ * 字体库：两本立着的书（有一本略斜）。
+ *
+ * 刻意不用"叠放的层"——那和「全部字体」的 LayersIcon 撞了。
+ * 书本轮廓在 16px 下靠两条竖条 + 一个斜面就能读出来。
+ */
+export function LibraryIcon({ className }: IconProps) {
+  return (
+    <svg className={className ?? 'ico'} viewBox="0 0 20 20" aria-hidden="true">
+      <rect
+        x="3.4"
+        y="4.6"
+        width="4.2"
+        height="11"
+        rx="1.2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <rect
+        x="8.4"
+        y="4.6"
+        width="4.2"
+        height="11"
+        rx="1.2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M14.2 5.6l2.1.6-2.3 9.4-2.1-.6z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}

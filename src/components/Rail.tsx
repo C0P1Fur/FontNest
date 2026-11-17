@@ -7,6 +7,7 @@ import {
   CircleCheckIcon,
   CircleDashedIcon,
   LayersIcon,
+  LibraryIcon,
   RefreshIcon,
   StarOutlineIcon,
   VariableIcon,
@@ -30,6 +31,7 @@ export function Rail() {
   const toggleCategory = useApp((state) => state.toggleCategory)
   const rescan = useApp((state) => state.rescan)
   const scanPhase = useApp((state) => state.scanPhase)
+  const openCatalog = useApp((state) => state.openCatalog)
 
   const collections = useApp((state) => state.collections)
   const activeCollectionId = useApp((state) => state.activeCollectionId)
@@ -164,6 +166,19 @@ export function Rail() {
       </div>
 
       <div className="rail-foot">
+        <button
+          type="button"
+          className="ghost-btn"
+          onClick={() => {
+            void openCatalog()
+          }}
+        >
+          <span className="btn-lede">
+            <LibraryIcon />
+          </span>
+          <span className="btn-text">字体库</span>
+        </button>
+
         <button
           type="button"
           className={
