@@ -62,15 +62,15 @@ export const FontGrid = memo(function FontGrid({  fonts,
     >
       {fonts.map((font, index) => {
         const group = groupInfo.get(font.id)
-        // 意图决定可选范围：装了才能卸、没装才能装、对比谁都能选
+        // 意图决定可选范围：装了才能卸、没装才能装、对比与分类夹动作谁都能选
         const selectable =
-          selectionMode === null
+          selectionMode === null || selectionMode === 'compare'
             ? true
-            : selectionMode === 'compare'
-              ? true
-              : selectionMode === 'install'
-                ? font.source === 'custom' && !font.enabled
-                : font.source === 'custom' && font.enabled
+            : selectionMode === 'install'
+              ? font.source === 'custom' && !font.enabled
+              : selectionMode === 'uninstall'
+                ? font.source === 'custom' && font.enabled
+                : true
         return (
           <FontCard
             key={font.id}

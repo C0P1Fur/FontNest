@@ -86,11 +86,19 @@ export type BrowseContainer =
 /**
  * 多选意图。
  *
- * 进多选之前先在下拉里选"要干什么"，因为三个动作的**可选范围完全不同**：
- * 安装只放行还没装的，卸载只放行已经装的，对比谁都能选。
+ * 进多选之前先在下拉里选"要干什么"，因为各个动作的**可选范围不同**：
+ * 安装只放行还没装的、卸载只放行已经装的、对比谁都能选。
  * 先声明意图，才能在下拉之后就告诉用户"哪些卡片能点、哪些已经灰了"。
+ *
+ * 两个分类夹动作也在这条下拉里 —— 它们同样需要先勾一批字体，
+ * 再对这批字体做一件事。
  */
-export type SelectionMode = 'install' | 'uninstall' | 'compare'
+export type SelectionMode =
+  | 'install'
+  | 'uninstall'
+  | 'compare'
+  | 'addToCollection'
+  | 'removeFromCollection'
 export interface FontQuery {
   query: string
   /** 当前容器。内置视图与分类夹走同一条判定路径 */

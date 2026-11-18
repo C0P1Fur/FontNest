@@ -177,6 +177,10 @@ export interface AppState {
   removeDir: (path: string) => Promise<string | null>
   /** 新建分类夹。成功返回 null，失败返回给用户看的错误文案 */
   createCollection: (name: string) => Promise<string | null>
+  /** 把选中的族整族加入某个分类夹 */
+  addSelectedToCollection: (collectionId: string) => Promise<void>
+  /** 把选中的族从某个分类夹移出 */
+  removeSelectedFromCollection: (collectionId: string) => Promise<void>
   deleteCollection: (id: string) => Promise<string | null>
   toggleInCollection: (collectionId: string, fontId: string) => Promise<void>
   showToast: (message: string, undo?: () => void) => void
@@ -731,6 +735,81 @@ export const useApp = create<AppState>()((set, get) => ({
       return null
     } catch (error) {
       return error instanceof Error ? error.message : String(error)
+    }
+  },
+
+  /** 把当前选中的族整族加入某个分类夹。所有容器下都可用 */
+  addSelectedToCollection: async (collectionId) => {
+    const state = get()
+    const collection = state.collections.find((item) => item.id === collectionId)
+    if (!collection) return
+
+    const keys = new Set(state.selectedFamilies)
+    const ids = state.fonts
+      .filter((font) => keys.has(font.family.toLowerCase()))
+      .map((font) => font.id)
+    if (ids.length === 0) return
+
+    const merged = [...new Set([...collection.fontIds, ...ids])]
+    if (merged.length === collection.fontIds.length) {
+      get().showToast('所选字体都已经在这个分类夹里了')
+      return
+    }
+
+    // 先改本地：批量操作要立刻有反馈
+    set((current) => ({
+      collections: current.collections.map((item) =>
+        item.id === collectionId ? { ...item, fontIds: merged } : item,
+      ),
+    }))
+
+    try {
+      await api.setCollectionFonts(collectionId, merged)
+      get().showToast(`已加入 ${keys.size} 个字体族 · ${collection.name}`)
+      // 与安装/卸载一致：做完一件事就退出多选，别让用户停在半截状态
+      set({ selectedFamilies: [], selectionMode: null })
+    } catch (error) {
+      console.error('[fontnest] 加入分类夹失败', error)
+      get().showToast('集合保存失败')
+    }
+  },
+
+  /**
+   * 把当前选中的族从某个分类夹移出。
+   *
+   * 只在"当前浏览的就是这个分类夹"时有意义 —— 界面上由 SelectionBar 把关，
+   * 这里再判断一次，避免将来有别的入口绕过 UI。
+   */
+  removeSelectedFromCollection: async (collectionId) => {
+    const state = get()
+    const collection = state.collections.find((item) => item.id === collectionId)
+    if (!collection) return
+
+    const keys = new Set(state.selectedFamilies)
+    const doomed = new Set(
+      state.fonts
+        .filter((font) => keys.has(font.family.toLowerCase()))
+        .map((font) => font.id),
+    )
+    const next = collection.fontIds.filter((id) => !doomed.has(id))
+    if (next.length === collection.fontIds.length) {
+      get().showToast('所选字体本来就不在这个分类夹里')
+      return
+    }
+
+    set((current) => ({
+      collections: current.collections.map((item) =>
+        item.id === collectionId ? { ...item, fontIds: next } : item,
+      ),
+    }))
+
+    try {
+      await api.setCollectionFonts(collectionId, next)
+      get().showToast(`已移出 ${keys.size} 个字体族 · ${collection.name}`)
+      set({ selectedFamilies: [], selectionMode: null })
+    } catch (error) {
+      console.error('[fontnest] 移出分类夹失败', error)
+      get().showToast('集合保存失败')
     }
   },
 

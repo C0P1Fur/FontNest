@@ -1227,6 +1227,15 @@ kbd {
   white-space: nowrap;
 }
 
+/* 操作条里的"添加到分类夹"下拉：高度跟按钮对齐，名字长了不撑破 */
+.selection-add {
+  flex: none;
+}
+
+.selection-add select {
+  max-width: 128px;
+}
+
 .selection-ghost {
   height: 28px;
   padding: 0 12px;

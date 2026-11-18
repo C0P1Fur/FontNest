@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Font } from '../types/font'
 import { ALL_VIEW, useApp } from '../state/store'
 
 /**
@@ -158,5 +159,69 @@ describe('勾选数量：装卸不设限，对比卡 6 个', () => {
     useApp.getState().exitSelection()
     expect(useApp.getState().selectionMode).toBeNull()
     expect(useApp.getState().selectedFamilies).toEqual([])
+  })
+})
+describe('批量分类夹操作', () => {
+  function face(id: string, family: string): Font {
+    return { id, family, source: 'system', enabled: true } as Font
+  }
+
+  beforeEach(() => {
+    useApp.setState({
+      fonts: [face('f1', 'Arial'), face('f2', 'Arial'), face('f3', 'Georgia')],
+      selectedFamilies: [],
+      selectionMode: null,
+    })
+  })
+
+  it('加入分类夹会把整族的所有字重都放进去', async () => {
+    await useApp.getState().createCollection('批量加入')
+    const id = useApp.getState().collections.at(-1)?.id as string
+
+    useApp.setState({ selectedFamilies: ['arial'] })
+    await useApp.getState().addSelectedToCollection(id)
+
+    const target = useApp.getState().collections.find((item) => item.id === id)
+    expect(target?.fontIds).toEqual(['f1', 'f2'])
+  })
+
+  it('加入成功后会退出多选态', async () => {
+    await useApp.getState().createCollection('退出多选')
+    const id = useApp.getState().collections.at(-1)?.id as string
+
+    useApp.getState().startSelection('addToCollection')
+    useApp.setState({ selectedFamilies: ['arial'] })
+    await useApp.getState().addSelectedToCollection(id)
+
+    const state = useApp.getState()
+    expect(state.selectionMode).toBeNull()
+    expect(state.selectedFamilies).toEqual([])
+  })
+
+  it('重复加入不会产生重复项', async () => {
+    await useApp.getState().createCollection('重复加入')
+    const id = useApp.getState().collections.at(-1)?.id as string
+
+    useApp.setState({ selectedFamilies: ['arial'] })
+    await useApp.getState().addSelectedToCollection(id)
+    await useApp.getState().addSelectedToCollection(id)
+
+    const target = useApp.getState().collections.find((item) => item.id === id)
+    expect(target?.fontIds).toEqual(['f1', 'f2'])
+  })
+
+  it('从分类夹移出会删掉整族的全部字重', async () => {
+    await useApp.getState().createCollection('批量移出')
+    const id = useApp.getState().collections.at(-1)?.id as string
+
+    useApp.setState({ selectedFamilies: ['arial', 'georgia'] })
+    await useApp.getState().addSelectedToCollection(id)
+    expect(useApp.getState().collections.find((item) => item.id === id)?.fontIds).toHaveLength(3)
+
+    useApp.setState({ selectedFamilies: ['arial'] })
+    await useApp.getState().removeSelectedFromCollection(id)
+
+    const target = useApp.getState().collections.find((item) => item.id === id)
+    expect(target?.fontIds).toEqual(['f3'])
   })
 })
