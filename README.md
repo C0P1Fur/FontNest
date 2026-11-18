@@ -47,7 +47,7 @@ Windows x64 用户推荐下载 EXE 安装程序：
 
 ## 界面预览
 
-![FontNest Windows 桌面版：字体列表与详情预览](assets/screenshots/fontnest-main.jpg)
+![FontNest Windows 桌面版：字体列表与详情预览](assets/screenshots/fontnest-main.png)
 
 *实际 Windows 桌面版截图，展示本机字体扫描结果。字体种类和数量取决于你的电脑。*
 
@@ -306,7 +306,7 @@ pnpm dev
 
 ### 用截图寻找字体
 
-![FontNest 桌面版的字体识别入口](assets/screenshots/fontnest-recognize.jpg)
+![FontNest 桌面版的字体识别入口](assets/screenshots/fontnest-recognize.png)
 
 *识别面板：选择截图并输入图中文字。此图展示操作入口，不是识别结果。*
 
