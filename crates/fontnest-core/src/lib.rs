@@ -21,7 +21,10 @@ pub use assess::{assess, Assessment, Reason};
 pub use catalog::{Catalog, CatalogFont, CatalogIssue, CatalogSource, CatalogVariant, FontMeta};
 
 pub use collection::{Collection, CollectionStore};
-pub use install::{FontHome, Manifest, ReconcileReport, Registry, WindowsRegistry};
+pub use install::{
+    platform_registry, FontHome, Manifest, PassiveRegistry, ReconcileReport, Registry,
+    WindowsRegistry,
+};
 pub use library::{CoreError, Library};
 pub use model::{Axis, Category, Font, Format, ScanSummary, Source, UnsupportedExt};
 pub use paths::{data_dir, platform_dirs, FontDir};

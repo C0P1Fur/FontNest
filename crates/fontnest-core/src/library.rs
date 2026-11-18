@@ -14,7 +14,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::collection::{Collection, CollectionStore};
 use crate::install::{
-    install, reconcile, uninstall, FontHome, Manifest, ReconcileReport, Registry, WindowsRegistry,
+    install, platform_registry, reconcile, uninstall, FontHome, Manifest, ReconcileReport,
+    Registry,
 };
 use crate::model::{Font, ScanSummary, Source};
 use crate::paths::{data_dir, platform_dirs, FontDir};
@@ -200,10 +201,8 @@ impl Library {
     pub fn set_enabled(&mut self, id: &str, enabled: bool) -> Result<(), CoreError> {
         // 先克隆路径：registry 若借用 self.home，就没法再 &mut self 了
         let registry_path = self.home.registry_path.clone();
-        let registry = WindowsRegistry {
-            path: &registry_path,
-        };
-        self.set_enabled_with(id, enabled, &registry).map(|_| ())
+        let registry = platform_registry(&registry_path);
+        self.set_enabled_with(id, enabled, registry.as_ref()).map(|_| ())
     }
 
     /// 返回是否真的发生了改变（已经是目标状态时返回 false）
@@ -265,11 +264,9 @@ impl Library {
     /// 启动时对账：让清单与磁盘/注册表的实际状态对齐。
     pub fn reconcile(&mut self) -> Result<ReconcileReport, CoreError> {
         let registry_path = self.home.registry_path.clone();
-        let registry = WindowsRegistry {
-            path: &registry_path,
-        };
+        let registry = platform_registry(&registry_path);
 
-        let report = reconcile(&registry, &mut self.manifest)?;
+        let report = reconcile(registry.as_ref(), &mut self.manifest)?;
 
         if report.missing > 0 {
             // 被移出清单的条目，内存里的 enabled 也要跟着改
