@@ -103,8 +103,36 @@ pub fn run() {
             commands::import_font_files,
             commands::app_status,
         ])
-        .run(tauri::generate_context!())
-        .expect("FontNest 启动失败");
+        // macOS 惯例：点红灯 / ⌘W 只是收起窗口，App 留在 Dock 里，⌘Q 才退出。
+        // 对 FontNest 尤其重要：全局热键要靠进程活着，窗口一关就退出的话，
+        // 用户截完图按 ⌃⌥F 不会有任何反应。
+        .on_window_event(|window, event| {
+            #[cfg(target_os = "macos")]
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+            }
+            #[cfg(not(target_os = "macos"))]
+            let _ = (window, event);
+        })
+        .build(tauri::generate_context!())
+        .expect("FontNest 启动失败")
+        .run(|app, event| {
+            // 点 Dock 图标时把收起的窗口叫回来
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen {
+                has_visible_windows: false,
+                ..
+            } = event
+            {
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+            }
+            #[cfg(not(target_os = "macos"))]
+            let _ = (app, event);
+        });
 }
 
 /// 热键按下时做的事：抓剪贴板 → 存起来 → 通知前端 → 把窗口叫到前面。
