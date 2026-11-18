@@ -38,20 +38,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 版本由 package.json 的 packageManager 字段锁定（pnpm@11.5.2）。
+      # 这里不能再写 version —— 两者同时存在会报 "Multiple versions of pnpm specified"。
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
+      # pnpm 11 需要 Node >= 22.13（内部用了 node:sqlite），
+      # 仓库其他工具链也都以 Node 24 为准，所以与本地保持一致。
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
 
       - uses: dtolnay/rust-toolchain@stable
 
+      # 缓存路径必须是「Cargo workspace 根 -> target 目录」。
+      # 本项目是 cargo workspace，[workspace] 在仓库根的 Cargo.toml 里，
+      # target 也在根目录（不是 src-tauri/target），写成 src-tauri -> target 会缓存空目录。
       - uses: swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri -> target
+          workspaces: . -> target
 
       # Linux 缺这几个包会在编译期报一堆看不懂的 pkg-config 错误
       - name: 安装 Linux 系统依赖
