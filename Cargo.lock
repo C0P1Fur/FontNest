@@ -1033,7 +1033,7 @@ dependencies = [
 
 [[package]]
 name = "fontnest"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "arboard",
  "base64 0.22.1",
@@ -1048,7 +1048,7 @@ dependencies = [
 
 [[package]]
 name = "fontnest-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "fontdue",
  "fontnest-core",
@@ -1058,7 +1058,7 @@ dependencies = [
 
 [[package]]
 name = "fontnest-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "blake3",
  "image",
