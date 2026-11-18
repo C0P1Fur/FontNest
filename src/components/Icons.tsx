@@ -273,3 +273,19 @@ export function LibraryIcon({ className }: IconProps) {
     </svg>
   )
 }
+
+/** 从分类夹移出：文件夹里一个减号 */
+export function FolderMinusIcon({ className }: IconProps) {
+  return (
+    <svg className={className ?? 'ico'} viewBox="0 0 20 20" aria-hidden="true">
+      <path
+        d="M2.4 6.2a1.4 1.4 0 011.4-1.4h3.1l1.5 1.8h7.3a1.4 1.4 0 011.4 1.4v6.4a1.4 1.4 0 01-1.4 1.4H3.8a1.4 1.4 0 01-1.4-1.4z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path d="M7.9 11.4h4.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  )
+}

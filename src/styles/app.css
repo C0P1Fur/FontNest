@@ -1144,9 +1144,12 @@ kbd {
   border-color: var(--line);
 }
 
-/* 多选时收藏星让位给整卡点击：否则点右上角会变成收藏而不是选中。
-   「N 个字重」按钮保留 —— 它不改变选中结果，只是让人看清这一族有哪些字重。 */
-.card.is-selecting .fav {
+/* 多选时收藏星、分类夹按钮、「N 个字重」都让位给整卡点击：
+   否则点右上角变成收藏、点右下角变成展开，都不是"选中"。
+   想先看清一族有哪些字重，退出多选再展开。 */
+.card.is-selecting .fav,
+.card.is-selecting .card-coll,
+.card.is-selecting .card-group {
   display: none;
 }
 
@@ -1227,13 +1230,51 @@ kbd {
   white-space: nowrap;
 }
 
-/* 操作条里的"添加到分类夹"下拉：高度跟按钮对齐，名字长了不撑破 */
-.selection-add {
-  flex: none;
+/* ═══════════ 分类夹选择弹框 ═══════════ */
+
+.coll-picker {
+  width: min(380px, 100%);
 }
 
-.selection-add select {
-  max-width: 128px;
+.coll-pick-list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.coll-pick-list button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--r-sm);
+  text-align: left;
+  color: var(--ink);
+  transition: background var(--t-2) var(--e-out);
+}
+
+.coll-pick-list button:hover {
+  background: var(--bg);
+}
+
+.coll-pick-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+}
+
+.coll-pick-list .count {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--faint);
 }
 
 .selection-ghost {
@@ -1865,6 +1906,47 @@ kbd {
 
 .fav[aria-pressed="true"] {
   color: var(--warn);
+}
+
+/*
+ * 分类夹按钮：和收藏星同一行，排在它左边。
+ * 平时不显示，悬停/聚焦才出现在 —— 卡片上一整排常驻按钮会盖住样张。
+ */
+.card-coll {
+  position: absolute;
+  top: 8px;
+  right: 36px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  color: var(--faint);
+  opacity: 0;
+  transition:
+    opacity var(--t-2) var(--e-out),
+    color var(--t-2) var(--e-out),
+    background var(--t-2) var(--e-out),
+    transform var(--t-1) var(--e-out);
+}
+
+.card:hover .card-coll,
+.card:focus-within .card-coll {
+  opacity: 1;
+}
+
+.card-coll:hover {
+  color: var(--ink);
+  background: var(--bg);
+}
+
+.card-coll:active {
+  transform: scale(0.85);
+}
+
+.card-coll svg {
+  width: 13px;
+  height: 13px;
 }
 
 .fav svg {

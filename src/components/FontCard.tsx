@@ -3,7 +3,7 @@ import type { Font } from '../types/font'
 import type { GroupInfo } from './FontGrid'
 import { faceFamily, ensureFace } from '../lib/fontFaces'
 import { spawnSparks } from '../lib/motion'
-import { StarIcon } from './Icons'
+import { FolderMinusIcon, FolderPlusIcon, StarIcon } from './Icons'
 
 interface FontCardProps {
   font: Font
@@ -18,11 +18,17 @@ interface FontCardProps {
   picked: boolean
   /** 是否可被勾选。系统 / 用户目录的字体不归我们管，一律不可选 */
   selectable: boolean
+  /** 当前浏览的是否是分类夹 —— 决定卡片右上角那个按钮是"加入"还是"移出" */
+  inCollection: boolean
   onSelect: (id: string) => void
   onToggleFavorite: (id: string) => void
   onToggleGroup: (key: string) => void
   /** 参数是字体族 key —— 多选以族为粒度 */
   onToggleSelected: (familyKey: string) => void
+  /** 把这一族加入某个分类夹（会弹框让用户挑） */
+  onAddToCollection: (familyKey: string) => void
+  /** 把这一族移出当前分类夹 */
+  onRemoveFromCollection: (familyKey: string) => void
 }
 
 /**
@@ -43,10 +49,13 @@ export const FontCard = memo(function FontCard({
   selectionMode,
   picked,
   selectable,
+  inCollection,
   onSelect,
   onToggleFavorite,
   onToggleGroup,
   onToggleSelected,
+  onAddToCollection,
+  onRemoveFromCollection,
 }: FontCardProps) {
   useEffect(() => {
     ensureFace(font)
@@ -116,6 +125,29 @@ export const FontCard = memo(function FontCard({
       }}
     >
       <span className="card-bar" aria-hidden="true" />
+
+      {/*
+        收藏左边是分类夹动作：非分类夹容器里是"加入"（弹框挑一个），
+        正在浏览分类夹时变成"移出当前分类夹"。同一个位置一个按钮，
+        因为这两种情况下用户只会想做其中一件事。
+      */}
+      <button
+        type="button"
+        className="card-coll"
+        aria-label={
+          inCollection ? `从分类夹移出 ${font.family}` : `把 ${font.family} 加入分类夹`
+        }
+        title={inCollection ? '从当前分类夹移出' : '加入分类夹'}
+        onClick={(event) => {
+          event.stopPropagation()
+          const key = font.family.toLowerCase()
+          if (inCollection) onRemoveFromCollection(key)
+          else onAddToCollection(key)
+        }}
+        onDoubleClick={(event) => event.stopPropagation()}
+      >
+        {inCollection ? <FolderMinusIcon /> : <FolderPlusIcon />}
+      </button>
 
       <button
         type="button"

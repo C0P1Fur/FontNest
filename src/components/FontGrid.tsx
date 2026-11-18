@@ -17,6 +17,8 @@ interface FontGridProps {
   selectedId: string | null
   view: ViewMode
   selectionMode: SelectionMode | null
+  /** 当前浏览的是否是分类夹 */
+  inCollection: boolean
   /** 已勾选的字体族 key。用 Set 而不是数组：几百张卡每次渲染都要查一次 */
   pickedFamilies: Set<string>
   onSelect: (id: string) => void
@@ -24,6 +26,8 @@ interface FontGridProps {
   onToggleGroup: (key: string) => void
   /** 参数是字体族 key —— 多选以族为粒度 */
   onToggleSelected: (familyKey: string) => void
+  onAddToCollection: (familyKey: string) => void
+  onRemoveFromCollection: (familyKey: string) => void
 }
 
 /**
@@ -38,11 +42,14 @@ export const FontGrid = memo(function FontGrid({  fonts,
   selectedId,
   view,
   selectionMode,
+  inCollection,
   pickedFamilies,
   onSelect,
   onToggleFavorite,
   onToggleGroup,
   onToggleSelected,
+  onAddToCollection,
+  onRemoveFromCollection,
 }: FontGridProps) {
   if (fonts.length === 0) {
     return (
@@ -82,10 +89,13 @@ export const FontGrid = memo(function FontGrid({  fonts,
             selectionMode={selectionMode !== null}
             picked={pickedFamilies.has(font.family.toLowerCase())}
             selectable={selectable}
+            inCollection={inCollection}
             onSelect={onSelect}
             onToggleFavorite={onToggleFavorite}
             onToggleGroup={onToggleGroup}
             onToggleSelected={onToggleSelected}
+            onAddToCollection={onAddToCollection}
+            onRemoveFromCollection={onRemoveFromCollection}
           />
         )
       })}

@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { MAX_COMPARE, MIN_COMPARE, summarizeSelection } from '../lib/selection'
 import { useApp } from '../state/store'
 
@@ -36,11 +35,8 @@ export function SelectionBar({ pickableFamilies }: SelectionBarProps) {
   const setSelectedFamilies = useApp((state) => state.setSelectedFamilies)
   const batch = useApp((state) => state.batchSetEnabled)
   const openCompare = useApp((state) => state.openCompare)
-  const addSelectedToCollection = useApp((state) => state.addSelectedToCollection)
-  const removeSelectedFromCollection = useApp((state) => state.removeSelectedFromCollection)
-
-  // 受控的重置值：选完目标要弹回占位文案，否则一直显示上次选的分类夹
-  const [targetId, setTargetId] = useState('')
+  const removeFamiliesFromCollection = useApp((state) => state.removeFamiliesFromCollection)
+  const openCollectionPicker = useApp((state) => state.openCollectionPicker)
 
   if (!mode) return null
 
@@ -54,8 +50,6 @@ export function SelectionBar({ pickableFamilies }: SelectionBarProps) {
     container.kind === 'collection'
       ? collections.find((item) => item.id === container.id)
       : undefined
-
-  const targetCollection = collections.find((item) => item.id === targetId)
 
   let targets = summary.families
   let enabled = false
@@ -80,20 +74,16 @@ export function SelectionBar({ pickableFamilies }: SelectionBarProps) {
           : null
     action = openCompare
   } else if (mode === 'addToCollection') {
-    enabled = Boolean(targetCollection) && summary.families > 0
+    // 目标分类夹这时候还没定 —— 点主按钮才弹框问
+    enabled = summary.families > 0
     hint = collections.length === 0 ? '还没有分类夹' : null
-    action = () => {
-      if (targetCollection) {
-        setTargetId('')
-        void addSelectedToCollection(targetCollection.id)
-      }
-    }
+    action = openCollectionPicker
   } else {
     // removeFromCollection
     enabled = Boolean(currentCollection) && summary.families > 0
     hint = currentCollection ? null : '请先进入一个分类夹'
     action = () => {
-      if (currentCollection) void removeSelectedFromCollection(currentCollection.id)
+      if (currentCollection) void removeFamiliesFromCollection(currentCollection.id, selectedFamilies)
     }
   }
 
@@ -121,25 +111,6 @@ export function SelectionBar({ pickableFamilies }: SelectionBarProps) {
       >
         取消全选
       </button>
-
-      {/* 加进哪个分类夹得先挑一个 —— 这是该意图唯一多出来的输入 */}
-      {mode === 'addToCollection' ? (
-        <div className="seg selection-add">
-          <select
-            aria-label="目标分类夹"
-            value={targetId}
-            disabled={nothingPicked || collections.length === 0}
-            onChange={(event) => setTargetId(event.target.value)}
-          >
-            <option value="">选分类夹…</option>
-            {collections.map((collection) => (
-              <option key={collection.id} value={collection.id}>
-                {collection.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      ) : null}
 
       <button
         type="button"

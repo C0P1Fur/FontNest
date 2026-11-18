@@ -108,6 +108,10 @@ export interface AppState {
   selectionMode: SelectionMode | null
   selectedFamilies: string[]
   selectionBusy: boolean
+  /** "添加到分类夹"的选夹弹框 */
+  collectionPickerOpen: boolean
+  /** 从卡片打开弹框时要加入的那一族；null 表示走多选的已选集合 */
+  collectionPickerFamily: string | null
 
   /* 字体对比 */
   compareOpen: boolean
@@ -141,6 +145,10 @@ export interface AppState {
   toggleFamily: (key: string) => void
   /** 进入某个多选意图；重复选同一项等于退出。退出时清空已选 */
   startSelection: (mode: SelectionMode) => void
+  openCollectionPicker: () => void
+  /** 从卡片按钮打开，只加入这一族 */
+  openCollectionPickerForFamily: (familyKey: string) => void
+  closeCollectionPicker: () => void
   exitSelection: () => void
   /** 勾选/取消一整个字体族（小写族名） */
   toggleSelected: (familyKey: string) => void
@@ -178,9 +186,9 @@ export interface AppState {
   /** 新建分类夹。成功返回 null，失败返回给用户看的错误文案 */
   createCollection: (name: string) => Promise<string | null>
   /** 把选中的族整族加入某个分类夹 */
-  addSelectedToCollection: (collectionId: string) => Promise<void>
+  addFamiliesToCollection: (collectionId: string, families: string[]) => Promise<void>
   /** 把选中的族从某个分类夹移出 */
-  removeSelectedFromCollection: (collectionId: string) => Promise<void>
+  removeFamiliesFromCollection: (collectionId: string, families: string[]) => Promise<void>
   deleteCollection: (id: string) => Promise<string | null>
   toggleInCollection: (collectionId: string, fontId: string) => Promise<void>
   showToast: (message: string, undo?: () => void) => void
@@ -231,6 +239,8 @@ export const useApp = create<AppState>()((set, get) => ({
   selectionMode: null,
   selectedFamilies: [],
   selectionBusy: false,
+  collectionPickerOpen: false,
+  collectionPickerFamily: null,
   compareOpen: false,
   compareFamilies: [],
   catalogOpen: false,
@@ -383,6 +393,13 @@ export const useApp = create<AppState>()((set, get) => ({
       selectedFamilies: [],
       selectionBusy: false,
     })),
+
+  openCollectionPicker: () => set({ collectionPickerOpen: true, collectionPickerFamily: null }),
+  closeCollectionPicker: () =>
+    set({ collectionPickerOpen: false, collectionPickerFamily: null }),
+  /** 从卡片的按钮打开：只加这一族 */
+  openCollectionPickerForFamily: (familyKey) =>
+    set({ collectionPickerOpen: true, collectionPickerFamily: familyKey }),
 
   exitSelection: () =>
     set({ selectionMode: null, selectedFamilies: [], selectionBusy: false }),
@@ -738,13 +755,13 @@ export const useApp = create<AppState>()((set, get) => ({
     }
   },
 
-  /** 把当前选中的族整族加入某个分类夹。所有容器下都可用 */
-  addSelectedToCollection: async (collectionId) => {
+  /** 把若干字体族整族加入某个分类夹。多选和卡片按钮共用 */
+  addFamiliesToCollection: async (collectionId, families) => {
     const state = get()
     const collection = state.collections.find((item) => item.id === collectionId)
     if (!collection) return
 
-    const keys = new Set(state.selectedFamilies)
+    const keys = new Set(families)
     const ids = state.fonts
       .filter((font) => keys.has(font.family.toLowerCase()))
       .map((font) => font.id)
@@ -775,17 +792,17 @@ export const useApp = create<AppState>()((set, get) => ({
   },
 
   /**
-   * 把当前选中的族从某个分类夹移出。
+   * 把若干字体族从某个分类夹移出。
    *
-   * 只在"当前浏览的就是这个分类夹"时有意义 —— 界面上由 SelectionBar 把关，
-   * 这里再判断一次，避免将来有别的入口绕过 UI。
+   * 只在"当前浏览的就是这个分类夹"时有意义 —— 界面上由 SelectionBar 和
+   * 卡片按钮把关，这里不重复判断，免得卡片按钮也被拦。
    */
-  removeSelectedFromCollection: async (collectionId) => {
+  removeFamiliesFromCollection: async (collectionId, families) => {
     const state = get()
     const collection = state.collections.find((item) => item.id === collectionId)
     if (!collection) return
 
-    const keys = new Set(state.selectedFamilies)
+    const keys = new Set(families)
     const doomed = new Set(
       state.fonts
         .filter((font) => keys.has(font.family.toLowerCase()))

@@ -12,6 +12,7 @@ import { CatalogPanel } from './components/CatalogPanel'
 import { RecognizePanel } from './components/RecognizePanel'
 import { SelectionBar } from './components/SelectionBar'
 import { ComparePanel } from './components/ComparePanel'
+import { CollectionPicker } from './components/CollectionPicker'
 import { Tour } from './components/Tour'
 import { applyQuery } from './lib/filter'
 import { flattenGroups, groupFonts, pickPrimary } from './lib/group'
@@ -68,6 +69,13 @@ const handleSelect = (id: string) => useApp.getState().select(id)
 const handleToggleFavorite = (id: string) => useApp.getState().toggleFavorite(id)
 const handleToggleSelected = (familyKey: string) =>
   useApp.getState().toggleSelected(familyKey)
+const handleAddToCollection = (familyKey: string) =>
+  useApp.getState().openCollectionPickerForFamily(familyKey)
+const handleRemoveFromCollection = (familyKey: string) => {
+  const state = useApp.getState()
+  if (state.container.kind !== 'collection') return
+  void state.removeFamiliesFromCollection(state.container.id, [familyKey])
+}
 
 /**
  * 展开/收起一个字体族。
@@ -419,11 +427,14 @@ export default function App() {
               selectedId={selected?.id ?? null}
               view={view}
               selectionMode={selectionMode}
+              inCollection={container.kind === 'collection'}
               pickedFamilies={pickedFamilies}
               onSelect={handleSelect}
               onToggleFavorite={handleToggleFavorite}
               onToggleGroup={handleToggleFamily}
               onToggleSelected={handleToggleSelected}
+              onAddToCollection={handleAddToCollection}
+              onRemoveFromCollection={handleRemoveFromCollection}
             />
           ) : (
             <div className="empty">
@@ -442,6 +453,7 @@ export default function App() {
       <StatusBar visible={visible.length} total={fonts.length} />
       <SelectionBar pickableFamilies={pickableFamilies} />
       <ComparePanel />
+      <CollectionPicker />
       <SettingsPanel />
       <CatalogPanel />
       <RecognizePanel />

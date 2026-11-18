@@ -179,7 +179,7 @@ describe('批量分类夹操作', () => {
     const id = useApp.getState().collections.at(-1)?.id as string
 
     useApp.setState({ selectedFamilies: ['arial'] })
-    await useApp.getState().addSelectedToCollection(id)
+    await useApp.getState().addFamiliesToCollection(id, useApp.getState().selectedFamilies)
 
     const target = useApp.getState().collections.find((item) => item.id === id)
     expect(target?.fontIds).toEqual(['f1', 'f2'])
@@ -191,7 +191,7 @@ describe('批量分类夹操作', () => {
 
     useApp.getState().startSelection('addToCollection')
     useApp.setState({ selectedFamilies: ['arial'] })
-    await useApp.getState().addSelectedToCollection(id)
+    await useApp.getState().addFamiliesToCollection(id, useApp.getState().selectedFamilies)
 
     const state = useApp.getState()
     expect(state.selectionMode).toBeNull()
@@ -203,8 +203,8 @@ describe('批量分类夹操作', () => {
     const id = useApp.getState().collections.at(-1)?.id as string
 
     useApp.setState({ selectedFamilies: ['arial'] })
-    await useApp.getState().addSelectedToCollection(id)
-    await useApp.getState().addSelectedToCollection(id)
+    await useApp.getState().addFamiliesToCollection(id, useApp.getState().selectedFamilies)
+    await useApp.getState().addFamiliesToCollection(id, useApp.getState().selectedFamilies)
 
     const target = useApp.getState().collections.find((item) => item.id === id)
     expect(target?.fontIds).toEqual(['f1', 'f2'])
@@ -215,13 +215,80 @@ describe('批量分类夹操作', () => {
     const id = useApp.getState().collections.at(-1)?.id as string
 
     useApp.setState({ selectedFamilies: ['arial', 'georgia'] })
-    await useApp.getState().addSelectedToCollection(id)
+    await useApp.getState().addFamiliesToCollection(id, useApp.getState().selectedFamilies)
     expect(useApp.getState().collections.find((item) => item.id === id)?.fontIds).toHaveLength(3)
 
     useApp.setState({ selectedFamilies: ['arial'] })
-    await useApp.getState().removeSelectedFromCollection(id)
+    await useApp.getState().removeFamiliesFromCollection(id, useApp.getState().selectedFamilies)
 
     const target = useApp.getState().collections.find((item) => item.id === id)
     expect(target?.fontIds).toEqual(['f3'])
+  })
+})
+describe('添加到分类夹：先选后问', () => {
+  beforeEach(() => {
+    useApp.setState({
+      collectionPickerOpen: false,
+      selectionMode: null,
+      selectedFamilies: [],
+    })
+  })
+
+  it('选「添加到分类夹」直接进入多选，不弹框', () => {
+    useApp.getState().startSelection('addToCollection')
+
+    const state = useApp.getState()
+    expect(state.selectionMode).toBe('addToCollection')
+    expect(state.collectionPickerOpen).toBe(false)
+  })
+
+  it('勾完之后点主按钮才弹框', () => {
+    useApp.getState().startSelection('addToCollection')
+    useApp.setState({ selectedFamilies: ['arial'] })
+    useApp.getState().openCollectionPicker()
+
+    expect(useApp.getState().collectionPickerOpen).toBe(true)
+    // 弹框打开时仍然停在这个多选意图里，勾选不丢
+    expect(useApp.getState().selectionMode).toBe('addToCollection')
+    expect(useApp.getState().selectedFamilies).toEqual(['arial'])
+  })
+
+  it('关掉弹框不影响已勾选的内容', () => {
+    useApp.getState().startSelection('addToCollection')
+    useApp.setState({ selectedFamilies: ['arial'] })
+    useApp.getState().openCollectionPicker()
+    useApp.getState().closeCollectionPicker()
+
+    expect(useApp.getState().collectionPickerOpen).toBe(false)
+    expect(useApp.getState().selectedFamilies).toEqual(['arial'])
+  })
+})
+describe('卡片上的分类夹按钮', () => {
+  beforeEach(() => {
+    useApp.setState({
+      collectionPickerOpen: false,
+      collectionPickerFamily: null,
+      selectedFamilies: [],
+    })
+  })
+
+  it('从卡片打开弹框时记住是哪一族，不依赖多选的已选集合', () => {
+    useApp.setState({ selectedFamilies: ['完全无关的族'] })
+    useApp.getState().openCollectionPickerForFamily('arial')
+
+    const state = useApp.getState()
+    expect(state.collectionPickerOpen).toBe(true)
+    expect(state.collectionPickerFamily).toBe('arial')
+  })
+
+  it('从多选条打开时没有指定族，走已选集合', () => {
+    useApp.getState().openCollectionPicker()
+    expect(useApp.getState().collectionPickerFamily).toBeNull()
+  })
+
+  it('关闭弹框会清掉指定的族，避免影响下一次打开', () => {
+    useApp.getState().openCollectionPickerForFamily('arial')
+    useApp.getState().closeCollectionPicker()
+    expect(useApp.getState().collectionPickerFamily).toBeNull()
   })
 })
