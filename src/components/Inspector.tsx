@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
 import type { Font } from '../types/font'
 import { CATEGORY_LABEL } from '../lib/filter'
+import { axisStep, roundAxisValue } from '../lib/axes'
 import { faceFamily, ensureFace } from '../lib/fontFaces'
 import { formatBytes, formatCount } from '../lib/format'
 import { spawnSparks } from '../lib/motion'
@@ -47,7 +48,9 @@ export function Inspector({ font }: { font: Font | null }) {
     // 自定义目录的字体要先把 @font-face 挂上去，否则详情区也是兜底字形
     ensureFace(font)
     const next: Record<string, number> = {}
-    for (const axis of font.axes) next[axis.tag] = axis.defaultValue
+    // defaultValue 来自 f32，序列化后可能带 0.30000001192092896 这种尾巴，
+    // 直接写进 font-variation-settings 会让 CSS 里出现一长串无意义小数
+    for (const axis of font.axes) next[axis.tag] = roundAxisValue(axis.defaultValue)
     setAxes(next)
     // 只跟随字体切换重置，编辑轴时不重置
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -87,7 +90,12 @@ export function Inspector({ font }: { font: Font | null }) {
   const inCollection = activeCollection?.fontIds.includes(font.id) ?? false
   const weight = axes.wght ?? font.weight
   const variation = font.variable
-    ? font.axes.map((axis) => `"${axis.tag}" ${axes[axis.tag] ?? axis.defaultValue}`).join(', ')
+    ? font.axes
+        .map(
+          (axis) =>
+            `"${axis.tag}" ${roundAxisValue(axes[axis.tag] ?? axis.defaultValue)}`,
+        )
+        .join(', ')
     : undefined
 
   const specimenStyle: CSSProperties = {
@@ -136,7 +144,7 @@ export function Inspector({ font }: { font: Font | null }) {
         {font.axes.length > 0 ? (
           <div className="axes" role="group" aria-label="可变字体轴">
             {font.axes.map((axis) => {
-              const value = axes[axis.tag] ?? axis.defaultValue
+              const value = roundAxisValue(axes[axis.tag] ?? axis.defaultValue)
               return (
                 <div className="axis" key={axis.tag}>
                   <label htmlFor={`axis-${axis.tag}`}>{axis.tag}</label>
@@ -145,9 +153,14 @@ export function Inspector({ font }: { font: Font | null }) {
                     type="range"
                     min={axis.min}
                     max={axis.max}
+                    // 0–1 的归一化轴默认步长 1 只有两档，按量程自适应
+                    step={axisStep(axis)}
                     value={value}
                     onChange={(event) =>
-                      setAxes((prev) => ({ ...prev, [axis.tag]: Number(event.target.value) }))
+                      setAxes((prev) => ({
+                        ...prev,
+                        [axis.tag]: roundAxisValue(Number(event.target.value)),
+                      }))
                     }
                   />
                   <output htmlFor={`axis-${axis.tag}`}>{value}</output>

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import type { SortKey, ViewMode } from '../types/font'
 import { SIZES } from '../lib/samples'
-import { useApp } from '../state/store'
+import { MAX_COMPARE, useApp } from '../state/store'
 import { Segmented } from './Segmented'
 import { GridIcon, ListIcon } from './Icons'
 
@@ -101,6 +101,16 @@ export function ControlBar() {
           onClick={() => startSelection('uninstall')}
         >
           多选卸载
+        </button>
+
+        <button
+          type="button"
+          className={selectionMode === 'compare' ? 'multi-btn is-active' : 'multi-btn'}
+          aria-pressed={selectionMode === 'compare'}
+          title={`并排比较字体的实际排版效果（最多 ${MAX_COMPARE} 个）`}
+          onClick={() => startSelection('compare')}
+        >
+          字体对比
         </button>
       </div>
     </div>

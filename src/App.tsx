@@ -11,6 +11,7 @@ import { SettingsPanel } from './components/SettingsPanel'
 import { CatalogPanel } from './components/CatalogPanel'
 import { RecognizePanel } from './components/RecognizePanel'
 import { SelectionBar } from './components/SelectionBar'
+import { ComparePanel } from './components/ComparePanel'
 import { Tour } from './components/Tour'
 import { applyQuery } from './lib/filter'
 import { flattenGroups, groupFonts, pickPrimary } from './lib/group'
@@ -156,13 +157,20 @@ export default function App() {
   /**
    * 当前通道下可选、且可见的字体族。
    *
-   * 安装通道只放行"还有字重没装"的族，卸载通道只放行"还有字重装着"的族。
+   * 安装通道只放行"还有字重没装"的族，卸载通道只放行"还有字重装着"的族；
+   * 对比通道对所有字体开放 —— 系统字体也值得拿来比。
    * 其余卡片在多选时变灰 —— 用户不需要自己判断哪些能点。
    */
   const pickableFamilies = useMemo(() => {
     if (!selectionMode) return []
-    const installing = selectionMode === 'install'
     const keys = new Set<string>()
+
+    if (selectionMode === 'compare') {
+      for (const font of shown) keys.add(font.family.toLowerCase())
+      return [...keys]
+    }
+
+    const installing = selectionMode === 'install'
     for (const font of shown) {
       if (font.source !== 'custom') continue
       if (installing ? !font.enabled : font.enabled) keys.add(font.family.toLowerCase())
@@ -357,20 +365,11 @@ export default function App() {
           ?.scrollIntoView({ block: 'nearest' })
       }
 
-      // 网格是流式多列布局，列数随窗口宽度和字号变化，跨行跳 N 个必然算错。
-      // 而 ←/→ 在同一行内本来就等于"前一个/后一个"，所以四个方向统一走
-      // 同一条"线性前进一步"的规则，不另算列数。
+      // 移动只保留 ←/→。
+      // 网格是流式多列布局，列数随窗口宽度和字号变化，跨行跳 N 个必然算错；
+      // 而 ←/→ 在同一行内就等于"前一个/后一个"，一条规则覆盖两个方向。
+      // ↑/↓ 与 j/k 一并让出来，不再改选中项 —— 上下方向交给网格自己的滚动。
       switch (event.key) {
-        case 'ArrowDown':
-        case 'j':
-          event.preventDefault()
-          moveTo(list[Math.min(index + 1, list.length - 1)].id)
-          return
-        case 'ArrowUp':
-        case 'k':
-          event.preventDefault()
-          moveTo(list[Math.max(index - 1, 0)].id)
-          return
         // 引导里 → 是"下一步"、← 是"上一步"。Tour 在 capture 阶段接管了它们，
         // 但它没有 stopPropagation，这里必须让路，否则选中项会跟着一起动。
         case 'ArrowRight':
@@ -454,6 +453,7 @@ export default function App() {
       <Inspector font={selected} />
       <StatusBar visible={visible.length} total={fonts.length} />
       <SelectionBar pickableFamilies={pickableFamilies} />
+      <ComparePanel />
       <SettingsPanel />
       <CatalogPanel />
       <RecognizePanel />

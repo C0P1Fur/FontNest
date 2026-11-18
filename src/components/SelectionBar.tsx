@@ -1,4 +1,4 @@
-import { useApp } from '../state/store'
+import { MAX_COMPARE, MIN_COMPARE, useApp } from '../state/store'
 
 interface SelectionBarProps {
   /** 当前通道下可选、且可见的字体族 key */
@@ -8,9 +8,11 @@ interface SelectionBarProps {
 /**
  * 多选操作条。
  *
- * 安装和卸载是两条独立通道，所以这里只有一个主按钮 —— 进哪个通道就做什么事，
- * 不需要再让用户选一次。粒度是**字体族**：装一个字体从来都是装一族
- * （Regular + Bold + Italic…），只装其中一个字重会让系统里出现半套字体。
+ * 三条通道各有自己的主按钮：安装 / 卸载 / 对比。
+ * 进哪个通道就做什么事，不需要再让用户选一次。
+ *
+ * 安装和卸载的粒度是**字体族**（只装 Regular 会让系统里出现半套字体）；
+ * 对比也按族选，但每个族只取主面展示 —— 比的是设计语言，不是字重。
  */
 export function SelectionBar({ pickableFamilies }: SelectionBarProps) {
   const mode = useApp((state) => state.selectionMode)
@@ -20,22 +22,56 @@ export function SelectionBar({ pickableFamilies }: SelectionBarProps) {
   const exitSelection = useApp((state) => state.exitSelection)
   const setSelectedFamilies = useApp((state) => state.setSelectedFamilies)
   const batch = useApp((state) => state.batchSetEnabled)
+  const openCompare = useApp((state) => state.openCompare)
 
   if (!mode) return null
 
-  const installing = mode === 'install'
   const picked = new Set(selectedFamilies)
 
+  if (mode === 'compare') {
+    const enough = picked.size >= MIN_COMPARE
+    return (
+      <div className="selection-bar is-compare" role="region" aria-label="字体对比">
+        <span className="selection-count">
+          已选 <b>{picked.size}</b> / {MAX_COMPARE} 个字体
+          {enough ? null : <em>再选 {MIN_COMPARE - picked.size} 个</em>}
+        </span>
+
+        <button
+          type="button"
+          className="selection-ghost"
+          disabled={picked.size === 0}
+          onClick={() => setSelectedFamilies([])}
+        >
+          清空
+        </button>
+
+        <button
+          type="button"
+          className="selection-primary"
+          disabled={!enough}
+          onClick={openCompare}
+        >
+          {enough ? `开始对比 ${picked.size} 个` : '开始对比'}
+        </button>
+
+        <button type="button" className="selection-exit" onClick={exitSelection}>
+          取消
+        </button>
+      </div>
+    )
+  }
+
+  const installing = mode === 'install'
   const pickable = new Set(pickableFamilies)
   const allPicked = pickable.size > 0 && pickableFamilies.every((key) => picked.has(key))
 
   // 只统计「真的会被改动」的字体：通道本身已经按状态过滤过，
   // 但选中的族里可能混着已经就位的字重（半装状态）
-  const targets = new Set(selectedFamilies)
   const changed = fonts.filter(
     (font) =>
       font.source === 'custom' &&
-      targets.has(font.family.toLowerCase()) &&
+      picked.has(font.family.toLowerCase()) &&
       font.enabled !== installing,
   ).length
 
@@ -64,17 +100,17 @@ export function SelectionBar({ pickableFamilies }: SelectionBarProps) {
       <button
         type="button"
         className="selection-primary"
-        disabled={busy || targets.size === 0}
+        disabled={busy || picked.size === 0}
         onClick={() => {
           void batch()
         }}
       >
         {busy
           ? '处理中…'
-          : `${installing ? '安装' : '卸载'}${targets.size > 0 ? ` ${targets.size} 个` : ''}`}
+          : `${installing ? '安装' : '卸载'}${picked.size > 0 ? ` ${picked.size} 个` : ''}`}
       </button>
 
-      {changed === 0 && targets.size > 0 ? (
+      {changed === 0 && picked.size > 0 ? (
         <span className="selection-note">所选字重已就位</span>
       ) : null}
 

@@ -14,6 +14,18 @@ import type {
 import { api } from '../lib/ipc'
 import type { CatalogItem } from '../lib/ipc'
 
+/**
+ * 对比面板同时显示的字体族上限。
+ *
+ * 为什么是 4：对比的目的是"分辨差异"，人眼一次能并排分辨的样式上限大约
+ * 就是 3–4 个。再多就得往下滚，滚动会让行与行错位，反而看不清差异；
+ * 而且 4 行在 720p 的面板高度里能全部显示，不需要滚动。
+ *
+ * 下限是 2：只有一个字体不叫对比。
+ */
+export const MAX_COMPARE = 4
+export const MIN_COMPARE = 2
+
 export type Theme = 'light' | 'dark'
 
 export interface ToastPayload {
@@ -73,10 +85,15 @@ export interface AppState {
    */
   expandedFamilies: string[]
 
-  /* 多选模式：拆成安装和卸载两条通道，一次只做一件事 */
+  /* 多选模式：拆分通道，一次只做一件事 */
   selectionMode: SelectionMode | null
   selectedFamilies: string[]
   selectionBusy: boolean
+
+  /* 字体对比 */
+  compareOpen: boolean
+  /** 参与对比的族名（小写），顺序即展示顺序 */
+  compareFamilies: string[]
 
   /* 选中与瞬时态 */
   selectedId: string | null
@@ -115,6 +132,9 @@ export interface AppState {
   setFamilyEnabled: (family: string, enabled: boolean) => Promise<void>
   /** 在当前多选通道里执行批量操作（装还是卸由通道决定） */
   batchSetEnabled: () => Promise<void>
+  /** 用已选的族打开对比面板 */
+  openCompare: () => void
+  closeCompare: () => void
   openCatalog: () => Promise<void>
   closeCatalog: () => void
   downloadCatalogFont: (id: string) => Promise<void>
@@ -189,6 +209,8 @@ export const useApp = create<AppState>()((set, get) => ({
   selectionMode: null,
   selectedFamilies: [],
   selectionBusy: false,
+  compareOpen: false,
+  compareFamilies: [],
   catalogOpen: false,
   catalogItems: [],
   catalogBusy: null,
@@ -332,14 +354,49 @@ export const useApp = create<AppState>()((set, get) => ({
   exitSelection: () =>
     set({ selectionMode: null, selectedFamilies: [], selectionBusy: false }),
 
-  toggleSelected: (familyKey) =>
+  toggleSelected: (familyKey) => {
+    const state = get()
+    const picked = state.selectedFamilies
+
+    if (picked.includes(familyKey)) {
+      set({ selectedFamilies: picked.filter((item) => item !== familyKey) })
+      return
+    }
+
+    // 对比有人数上限，超了就明确说不行，而不是静默把第 5 个丢掉
+    if (state.selectionMode === 'compare' && picked.length >= MAX_COMPARE) {
+      state.showToast(`最多同时对比 ${MAX_COMPARE} 个字体`)
+      return
+    }
+
+    set({ selectedFamilies: [...picked, familyKey] })
+  },
+
+  setSelectedFamilies: (keys) =>
     set((state) => ({
-      selectedFamilies: state.selectedFamilies.includes(familyKey)
-        ? state.selectedFamilies.filter((item) => item !== familyKey)
-        : [...state.selectedFamilies, familyKey],
+      // 全选也要守上限：对比通道里截断，安装/卸载通道不限
+      selectedFamilies:
+        state.selectionMode === 'compare' ? keys.slice(0, MAX_COMPARE) : keys,
     })),
 
-  setSelectedFamilies: (keys) => set({ selectedFamilies: keys }),
+  openCompare: () => {
+    const state = get()
+    const picked = state.selectedFamilies
+
+    if (picked.length < MIN_COMPARE) {
+      state.showToast(`至少选 ${MIN_COMPARE} 个字体才能对比`)
+      return
+    }
+
+    set({
+      compareFamilies: picked.slice(0, MAX_COMPARE),
+      compareOpen: true,
+      selectionMode: null,
+      selectedFamilies: [],
+    })
+  },
+
+  closeCompare: () => set({ compareOpen: false }),
 
   /**
    * 单条批量操作的公共实现。

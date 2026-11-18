@@ -30,7 +30,7 @@ export type LibraryScope =
  * - 每个通道可以只放行"能操作"的字体（装的时候灰掉已装的，卸的时候灰掉没装的），
  *   不需要让用户自己判断哪些能点
  */
-export type SelectionMode = 'install' | 'uninstall'
+export type SelectionMode = 'install' | 'uninstall' | 'compare'
 
 export type SortKey = 'name' | 'styles' | 'year' | 'state'
 
