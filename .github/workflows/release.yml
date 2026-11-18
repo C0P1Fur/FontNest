@@ -1,0 +1,87 @@
+# 打 tag 即自动构建三平台安装包并发布到 Releases。
+#
+# 为什么用 CI 而不是本地手动上传：
+# 1. 本地只能构建 Windows（macOS/Linux 的打包链在本机不存在）
+# 2. 产物不进 git 历史，只作为 Release Asset 挂在 tag 上
+# 3. 同样的输入永远产出同样的东西，谁都能复现
+#
+# 触发方式：
+#   git tag v0.1.0 && git push origin v0.1.0
+# 或在 Actions 页面点 "Run workflow" 手动跑一次（只构建、不发布）。
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  # tauri-action 需要写权限才能创建 Release 并上传附件
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            bundles: nsis,msi
+          - platform: macos-latest
+            bundles: app,dmg
+          - platform: ubuntu-22.04
+            bundles: deb,appimage
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      # Linux 缺这几个包会在编译期报一堆看不懂的 pkg-config 错误
+      - name: 安装 Linux 系统依赖
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libgtk-3-dev
+
+      - name: 安装前端依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 构建并发布
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # __VERSION__ 由 tauri-action 从 tauri.conf.json 读出来替换
+          tagName: v__VERSION__
+          releaseName: 'FontNest v__VERSION__'
+          releaseBody: |
+            Windows 用户下载 `FontNest_*_x64-setup.exe`（推荐，安装向导可选中英文）
+            或 `FontNest_*_x64_en-US.msi`。
+
+            应用本体不含任何字体文件，字体在应用内「推荐下载字体」里按需获取。
+          # 先存草稿：避免 CI 一次失误就把一个坏包发布给所有人
+          releaseDraft: true
+          prerelease: false
+          args: --bundles ${{ matrix.bundles }}
