@@ -643,7 +643,9 @@ kbd {
 .hotkey-hint {
   font-size: 11px;
   color: var(--faint);
-  padding: 4px 0 0;
+  /* 上方已有 .pick-row 的 6px，加上这里的 4px 共 10px；下方补同样的 10px，
+     让提示行上下等距地夹在「选择截图」和输入框之间 */
+  padding: 4px 0 10px;
 }
 
 .hotkey-hint kbd {
