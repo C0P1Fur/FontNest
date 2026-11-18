@@ -78,8 +78,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # __VERSION__ 由 tauri-action 从 tauri.conf.json 读出来替换
-          tagName: v__VERSION__
+          # 只有推 tag 时才创建 Release。
+          # 在 master 上手动触发时传空串 → 官方支持的「只构建、不发布」，
+          # 不会生成 tag、也不会留下半成品草稿。
+          tagName: ${{ github.ref_type == 'tag' && 'v__VERSION__' || '' }}
           releaseName: 'FontNest v__VERSION__'
           releaseBody: |
             Windows 用户下载 `FontNest_*_x64-setup.exe`（推荐，安装向导可选中英文）
@@ -89,4 +91,7 @@ jobs:
           # 先存草稿：避免 CI 一次失误就把一个坏包发布给所有人
           releaseDraft: true
           prerelease: false
+          # 无论发不发 Release，都把产物挂到 Actions 运行页面。
+          # runner 是临时的，不这么做的话 job 一结束产物就没了。
+          uploadWorkflowArtifacts: true
           args: --bundles ${{ matrix.bundles }}
