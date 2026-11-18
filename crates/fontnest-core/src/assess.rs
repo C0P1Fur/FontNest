@@ -78,6 +78,20 @@ mod tests {
     use super::*;
 
     fn any_font() -> Option<Vec<u8>> {
+        // 先找一定含拉丁字母的常见字体。只按"第一个大于 50KB 的 ttf"挑，
+        // 在 macOS 上会挑到 /System/Library/Fonts 里的 Apple Braille —— 它没有 "Rag8"。
+        const KNOWN_LATIN: &[&str] = &[
+            "C:\\Windows\\Fonts\\arial.ttf",
+            "/System/Library/Fonts/Supplemental/Arial.ttf",
+            "/System/Library/Fonts/Supplemental/Georgia.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        ];
+        for path in KNOWN_LATIN {
+            if let Ok(bytes) = std::fs::read(path) {
+                return Some(bytes);
+            }
+        }
+
         for dir in crate::platform_dirs() {
             let Ok(entries) = std::fs::read_dir(&dir.path) else {
                 continue;
