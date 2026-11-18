@@ -187,11 +187,18 @@ export default function App() {
       const tag = target?.tagName.toLowerCase() ?? ''
       const typing = tag === 'input' || tag === 'textarea' || tag === 'select'
 
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        ['k', 'f'].includes(event.key.toLowerCase())
+      ) {
         event.preventDefault()
         document.getElementById('search-input')?.focus()
         return
       }
+
+      // 下面的单键操作不能吃掉带修饰键的组合：
+      // 否则 ⌘F / ⌘T / ⌘1 这类系统或习惯快捷键会被误当成「收藏」「换样张」「改字号」
+      if (event.metaKey || event.ctrlKey || event.altKey) return
 
       if (event.key === '/' && !typing) {
         event.preventDefault()
