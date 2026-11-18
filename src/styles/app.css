@@ -1460,6 +1460,59 @@ kbd {
   opacity: 0.5;
 }
 
+/* ───── 同族字重合并 ───── */
+
+/* 展开后卡片底部显示字重名（Bold / Italic），比「N styles」有用 */
+.card-subfamily {
+  color: var(--muted);
+  max-width: 84px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 「N 个字重」入口：只有族里的主面显示，靠右贴边 */
+.card-group {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 5px 2px 7px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-2);
+  /* 卡片脚注是等宽字体，中文标签换回界面字体 */
+  font-family: var(--ui);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--muted);
+  white-space: nowrap;
+  transition:
+    color var(--t-2) var(--e-out),
+    border-color var(--t-2) var(--e-out),
+    background var(--t-2) var(--e-out);
+}
+
+.card-group:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.card-group.is-open {
+  color: var(--ink);
+  background: var(--bg);
+}
+
+.card-group .chev {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  transition: transform var(--t-2) var(--e-out);
+}
+
+.card-group.is-open .chev {
+  transform: rotate(180deg);
+}
+
 .tag-v {
   color: var(--ink);
   border: 1px solid var(--line-2);

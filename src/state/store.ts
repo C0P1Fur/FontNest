@@ -64,6 +64,13 @@ export interface AppState {
   capture: ClipboardCapture | null
   /** 启动时问到的快捷键状态，用来决定要不要劝用户按热键 */
   appStatus: AppStatus | null
+  /**
+   * 已展开的字体族（小写族名）。
+   *
+   * 收起的族只显示主面（Regular），展开后露出全部字重。
+   * 会话级状态，不落盘：用户下次打开大概率还是想先看全局。
+   */
+  expandedFamilies: string[]
 
   /* 选中与瞬时态 */
   selectedId: string | null
@@ -89,6 +96,8 @@ export interface AppState {
   toggleTheme: () => void
   openSettings: () => void
   closeSettings: () => void
+  /** 展开/收起一个字体族 */
+  toggleFamily: (key: string) => void
   openCatalog: () => Promise<void>
   closeCatalog: () => void
   downloadCatalogFont: (id: string) => Promise<void>
@@ -159,6 +168,7 @@ export const useApp = create<AppState>()((set, get) => ({
   theme: readTheme(),
   settingsOpen: false,
   recognizeOpen: false,
+  expandedFamilies: [],
   catalogOpen: false,
   catalogItems: [],
   catalogBusy: null,
@@ -253,6 +263,25 @@ export const useApp = create<AppState>()((set, get) => ({
     const font = get().fonts.find((item) => item.id === id)
     if (!font) return
 
+    /*
+     * 只有「自定义目录 / 字体库」里的字体归我们管。
+     *
+     * 系统字体和用户已装的字体不在安装清单里，后端 uninstall 会直接抛
+     * 「这个字体不是本工具安装的，不会删除」。那句话对用户毫无意义——
+     * 他不知道自己做错了什么，也不知道正确做法是什么。
+     *
+     * 这里提前拦下并说清楚原因。触达路径有三条：卡片双击、Space 快捷键、
+     * 右栏按钮，全部经过这个函数。
+     */
+    if (font.source !== 'custom') {
+      get().showToast(
+        font.source === 'system'
+          ? `${font.family} 是系统字体，由操作系统管理`
+          : `${font.family} 已在系统字体目录里，FontNest 不会改动它`,
+      )
+      return
+    }
+
     const next = !font.enabled
     set({ pendingId: id })
 
@@ -315,6 +344,13 @@ export const useApp = create<AppState>()((set, get) => ({
 
   openSettings: () => set({ settingsOpen: true }),
   closeSettings: () => set({ settingsOpen: false }),
+
+  toggleFamily: (key) =>
+    set((state) => ({
+      expandedFamilies: state.expandedFamilies.includes(key)
+        ? state.expandedFamilies.filter((item) => item !== key)
+        : [...state.expandedFamilies, key],
+    })),
 
   openCatalog: async () => {
     set({ catalogOpen: true, catalogError: null })

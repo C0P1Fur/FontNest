@@ -146,7 +146,7 @@ export function TopBar() {
             </dt>
             <dd>聚焦搜索</dd>
             <dt>
-              <kbd>↑</kbd> <kbd>↓</kbd>
+              <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>
             </dt>
             <dd>在结果间移动</dd>
             <dt>

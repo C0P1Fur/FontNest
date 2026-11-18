@@ -12,10 +12,57 @@ import { CatalogPanel } from './components/CatalogPanel'
 import { RecognizePanel } from './components/RecognizePanel'
 import { Tour } from './components/Tour'
 import { applyQuery } from './lib/filter'
+import { flattenGroups, groupFonts, pickPrimary } from './lib/group'
 import { api, isTauriRuntime } from './lib/ipc'
 import { RIPPLE_SELECTOR, rippleFrom, tactile } from './lib/motion'
 import { SAMPLES, SIZES } from './lib/samples'
 import { useApp } from './state/store'
+import type {
+  Collection,
+  Font,
+  FontCategory,
+  LibraryScope,
+  SortKey,
+} from './types/font'
+
+/**
+ * 算出网格里真正显示的字体列表：筛选 → 分类过滤 → 同族合并 → 按展开状态摊平。
+ *
+ * 渲染和键盘导航必须用同一份结果。两处各算一次的话，收起某个族之后
+ * 方向键会跳到屏幕上看不见的字重上 —— 右栏变了，网格里却没有对应高亮。
+ */
+interface ViewState {
+  fonts: Font[]
+  query: string
+  scope: LibraryScope
+  categories: FontCategory[]
+  sort: SortKey
+  collections: Collection[]
+  activeCollectionId: string | null
+  expandedFamilies: string[]
+}
+
+function selectShown(state: ViewState): Font[] {
+  const base = applyQuery(state.fonts, {
+    query: state.query,
+    scope: state.scope,
+    categories: state.categories,
+    sort: state.sort,
+  })
+
+  let filtered = base
+  if (state.activeCollectionId) {
+    const collection = state.collections.find(
+      (item) => item.id === state.activeCollectionId,
+    )
+    if (collection) {
+      const members = new Set(collection.fontIds)
+      filtered = base.filter((font) => members.has(font.id))
+    }
+  }
+
+  return flattenGroups(groupFonts(filtered), state.expandedFamilies)
+}
 
 /**
  * 这三个处理器定义在模块作用域，而不是组件内联。
@@ -28,6 +75,26 @@ const handleSelect = (id: string) => useApp.getState().select(id)
 const handleToggleFavorite = (id: string) => useApp.getState().toggleFavorite(id)
 const handleToggleEnabled = (id: string) => {
   void useApp.getState().toggleEnabled(id)
+}
+
+/**
+ * 展开/收起一个字体族。
+ *
+ * 收起的瞬间，如果当前选中的是本族的非主面，那张卡会从网格里消失；
+ * 把选择挪到主面，避免「右栏显示 Bold、网格里却找不到任何高亮」。
+ */
+const handleToggleFamily = (key: string) => {
+  const state = useApp.getState()
+  const wasExpanded = state.expandedFamilies.includes(key)
+  state.toggleFamily(key)
+  if (!wasExpanded) return
+
+  const selected = state.fonts.find((font) => font.id === state.selectedId)
+  if (!selected || selected.family.toLowerCase() !== key) return
+
+  const siblings = state.fonts.filter((font) => font.family.toLowerCase() === key)
+  const primary = pickPrimary(siblings)
+  if (primary.id !== selected.id) state.select(primary.id)
 }
 
 /** 拖放时能接受的文件类型。和 Rust 侧的 ALLOWED_EXTENSIONS 保持一致 */
@@ -51,6 +118,8 @@ export default function App() {
   /** 拖放提示：null 表示没在拖，`fonts` 可以导入，`invalid` 拖了非字体 */
   const [dropHint, setDropHint] = useState<'fonts' | 'invalid' | null>(null)
 
+  const expandedFamilies = useApp((state) => state.expandedFamilies)
+
   const visible = useMemo(() => {
     const base = applyQuery(fonts, { query, scope, categories, sort })
     if (!activeCollectionId) return base
@@ -61,6 +130,45 @@ export default function App() {
     const members = new Set(collection.fontIds)
     return base.filter((font) => members.has(font.id))
   }, [fonts, query, scope, categories, sort, collections, activeCollectionId])
+
+  /* 同族字重合并：收起的族只渲染主面，展开的族摊平全部字重 */
+  const groups = useMemo(() => groupFonts(visible), [visible])
+  const shown = useMemo(
+    () =>
+      selectShown({
+        fonts,
+        query,
+        scope,
+        categories,
+        sort,
+        collections,
+        activeCollectionId,
+        expandedFamilies,
+      }),
+    [fonts, query, scope, categories, sort, collections, activeCollectionId, expandedFamilies],
+  )
+
+  /**
+   * 每个 face 所属分组的信息，交给卡片渲染「N 个字重」和展开按钮。
+   * 只在主面上显示计数与按钮，其余字重卡片保持干净。
+   */
+  const groupInfo = useMemo(() => {
+    const open = new Set(expandedFamilies)
+    const map = new Map<
+      string,
+      { key: string; size: number; expanded: boolean; primaryId: string }
+    >()
+    for (const group of groups) {
+      const info = {
+        key: group.key,
+        size: group.faces.length,
+        expanded: open.has(group.key),
+        primaryId: group.primary.id,
+      }
+      for (const font of group.faces) map.set(font.id, info)
+    }
+    return map
+  }, [groups, expandedFamilies])
 
   const selected = useMemo(() => {
     const found = visible.find((font) => font.id === selectedId)
@@ -212,12 +320,8 @@ export default function App() {
 
       if (typing) return
 
-      const list = applyQuery(state.fonts, {
-        query: state.query,
-        scope: state.scope,
-        categories: state.categories,
-        sort: state.sort,
-      })
+      // 与网格同一份列表：收起某个族后，方向键不该跳到看不见的字重上
+      const list = selectShown(state)
       if (list.length === 0) return
 
       const sel = state.selectedId
@@ -231,6 +335,9 @@ export default function App() {
           ?.scrollIntoView({ block: 'nearest' })
       }
 
+      // 网格是流式多列布局，列数随窗口宽度和字号变化，跨行跳 N 个必然算错。
+      // 而 ←/→ 在同一行内本来就等于"前一个/后一个"，所以四个方向统一走
+      // 同一条"线性前进一步"的规则，不另算列数。
       switch (event.key) {
         case 'ArrowDown':
         case 'j':
@@ -239,6 +346,18 @@ export default function App() {
           return
         case 'ArrowUp':
         case 'k':
+          event.preventDefault()
+          moveTo(list[Math.max(index - 1, 0)].id)
+          return
+        // 引导里 → 是"下一步"、← 是"上一步"。Tour 在 capture 阶段接管了它们，
+        // 但它没有 stopPropagation，这里必须让路，否则选中项会跟着一起动。
+        case 'ArrowRight':
+          if (state.tourOpen) return
+          event.preventDefault()
+          moveTo(list[Math.min(index + 1, list.length - 1)].id)
+          return
+        case 'ArrowLeft':
+          if (state.tourOpen) return
           event.preventDefault()
           moveTo(list[Math.max(index - 1, 0)].id)
           return
@@ -287,13 +406,15 @@ export default function App() {
         <div className="scrollarea" id="scroll">
           {status === 'ready' ? (
             <FontGrid
-              fonts={visible}
+              fonts={shown}
+              groupInfo={groupInfo}
               sample={sample}
               selectedId={selected?.id ?? null}
               view={view}
               onSelect={handleSelect}
               onToggleFavorite={handleToggleFavorite}
               onToggleEnabled={handleToggleEnabled}
+              onToggleGroup={handleToggleFamily}
             />
           ) : (
             <div className="empty">
