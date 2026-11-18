@@ -73,6 +73,12 @@ fn platform_dirs_impl() -> Vec<FontDir> {
         },
     ];
 
+    // 「按需下载」的系统字体（宋体-简、兰亭黑、冬青黑体等）不在 /System/Library/Fonts，
+    // 而是由 MobileAsset 放进 AssetsV2，目录名带版本号（Font7、Font8…），逐个枚举。
+    dirs.extend(macos_asset_font_dirs(std::path::Path::new(
+        "/System/Library/AssetsV2",
+    )));
+
     if let Some(home) = home_dir() {
         dirs.push(FontDir {
             path: home.join("Library").join("Fonts"),
@@ -81,6 +87,34 @@ fn platform_dirs_impl() -> Vec<FontDir> {
     }
 
     dirs
+}
+
+/// `root` 下所有 `com_apple_MobileAsset_Font*` 目录，按名字排序保证扫描顺序稳定。
+#[cfg(target_os = "macos")]
+fn macos_asset_font_dirs(root: &std::path::Path) -> Vec<FontDir> {
+    let mut found: Vec<PathBuf> = std::fs::read_dir(root)
+        .map(|entries| {
+            entries
+                .flatten()
+                .filter(|entry| {
+                    entry
+                        .file_name()
+                        .to_str()
+                        .is_some_and(|name| name.starts_with("com_apple_MobileAsset_Font"))
+                })
+                .map(|entry| entry.path())
+                .filter(|path| path.is_dir())
+                .collect()
+        })
+        .unwrap_or_default();
+    found.sort();
+    found
+        .into_iter()
+        .map(|path| FontDir {
+            path,
+            source: Source::System,
+        })
+        .collect()
 }
 
 /* ───────────── Linux ───────────── */
