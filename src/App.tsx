@@ -10,6 +10,7 @@ import { Toast } from './components/Toast'
 import { SettingsPanel } from './components/SettingsPanel'
 import { CatalogPanel } from './components/CatalogPanel'
 import { RecognizePanel } from './components/RecognizePanel'
+import { SelectionBar } from './components/SelectionBar'
 import { Tour } from './components/Tour'
 import { applyQuery } from './lib/filter'
 import { flattenGroups, groupFonts, pickPrimary } from './lib/group'
@@ -73,9 +74,8 @@ function selectShown(state: ViewState): Font[] {
  */
 const handleSelect = (id: string) => useApp.getState().select(id)
 const handleToggleFavorite = (id: string) => useApp.getState().toggleFavorite(id)
-const handleToggleEnabled = (id: string) => {
-  void useApp.getState().toggleEnabled(id)
-}
+const handleToggleSelected = (familyKey: string) =>
+  useApp.getState().toggleSelected(familyKey)
 
 /**
  * 展开/收起一个字体族。
@@ -119,6 +119,11 @@ export default function App() {
   const [dropHint, setDropHint] = useState<'fonts' | 'invalid' | null>(null)
 
   const expandedFamilies = useApp((state) => state.expandedFamilies)
+  const selectionMode = useApp((state) => state.selectionMode)
+  const selectedFamilies = useApp((state) => state.selectedFamilies)
+
+  /** 已选族的集合，做成 Set 传给网格：几百张卡每张都要查一次 */
+  const pickedFamilies = useMemo(() => new Set(selectedFamilies), [selectedFamilies])
 
   const visible = useMemo(() => {
     const base = applyQuery(fonts, { query, scope, categories, sort })
@@ -147,6 +152,23 @@ export default function App() {
       }),
     [fonts, query, scope, categories, sort, collections, activeCollectionId, expandedFamilies],
   )
+
+  /**
+   * 当前通道下可选、且可见的字体族。
+   *
+   * 安装通道只放行"还有字重没装"的族，卸载通道只放行"还有字重装着"的族。
+   * 其余卡片在多选时变灰 —— 用户不需要自己判断哪些能点。
+   */
+  const pickableFamilies = useMemo(() => {
+    if (!selectionMode) return []
+    const installing = selectionMode === 'install'
+    const keys = new Set<string>()
+    for (const font of shown) {
+      if (font.source !== 'custom') continue
+      if (installing ? !font.enabled : font.enabled) keys.add(font.family.toLowerCase())
+    }
+    return [...keys]
+  }, [shown, selectionMode])
 
   /**
    * 每个 face 所属分组的信息，交给卡片渲染「N 个字重」和展开按钮。
@@ -361,10 +383,8 @@ export default function App() {
           event.preventDefault()
           moveTo(list[Math.max(index - 1, 0)].id)
           return
-        case ' ':
-          event.preventDefault()
-          void state.toggleEnabled(currentId)
-          return
+        // 空格不再绑定安装/卸载：装进系统会改系统字体目录与注册表，
+        // 这个动作用一个"顺手按到"的键触发太危险，只保留右栏的显式按钮。
         case 'f':
         case 'F':
           state.toggleFavorite(currentId)
@@ -411,10 +431,12 @@ export default function App() {
               sample={sample}
               selectedId={selected?.id ?? null}
               view={view}
+              selectionMode={selectionMode}
+              pickedFamilies={pickedFamilies}
               onSelect={handleSelect}
               onToggleFavorite={handleToggleFavorite}
-              onToggleEnabled={handleToggleEnabled}
               onToggleGroup={handleToggleFamily}
+              onToggleSelected={handleToggleSelected}
             />
           ) : (
             <div className="empty">
@@ -431,6 +453,7 @@ export default function App() {
 
       <Inspector font={selected} />
       <StatusBar visible={visible.length} total={fonts.length} />
+      <SelectionBar pickableFamilies={pickableFamilies} />
       <SettingsPanel />
       <CatalogPanel />
       <RecognizePanel />

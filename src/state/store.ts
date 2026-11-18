@@ -7,6 +7,7 @@ import type {
   FontCategory,
   LibraryScope,
   ScanPhase,
+  SelectionMode,
   SortKey,
   ViewMode,
 } from '../types/font'
@@ -72,9 +73,13 @@ export interface AppState {
    */
   expandedFamilies: string[]
 
+  /* 多选模式：拆成安装和卸载两条通道，一次只做一件事 */
+  selectionMode: SelectionMode | null
+  selectedFamilies: string[]
+  selectionBusy: boolean
+
   /* 选中与瞬时态 */
   selectedId: string | null
-  pendingId: string | null
   toast: ToastPayload | null
 
   /* 动作 */
@@ -90,7 +95,6 @@ export interface AppState {
   select: (id: string) => void
   /** 清掉所有筛选并选中某个字体 —— 保证它在网格和详情里都看得见 */
   focusFont: (id: string) => void
-  toggleEnabled: (id: string) => Promise<void>
   toggleFavorite: (id: string) => void
   reveal: (id: string) => void
   toggleTheme: () => void
@@ -98,6 +102,19 @@ export interface AppState {
   closeSettings: () => void
   /** 展开/收起一个字体族 */
   toggleFamily: (key: string) => void
+  /** 进入某个多选通道；重复点同一个通道等于退出。退出时清空已选 */
+  startSelection: (mode: SelectionMode) => void
+  exitSelection: () => void
+  /** 勾选/取消一整个字体族（小写族名） */
+  toggleSelected: (familyKey: string) => void
+  /** 整体替换已选集合。全选/清空都走它，避免再开两个动作 */
+  setSelectedFamilies: (keys: string[]) => void
+  /** 底层：对一组字体 id 执行安装/卸载，返回是否真的改动过 */
+  applyEnabled: (ids: string[], enabled: boolean) => Promise<boolean>
+  /** 按字体族安装 / 卸载。全软件的统一粒度 */
+  setFamilyEnabled: (family: string, enabled: boolean) => Promise<void>
+  /** 在当前多选通道里执行批量操作（装还是卸由通道决定） */
+  batchSetEnabled: () => Promise<void>
   openCatalog: () => Promise<void>
   closeCatalog: () => void
   downloadCatalogFont: (id: string) => Promise<void>
@@ -169,6 +186,9 @@ export const useApp = create<AppState>()((set, get) => ({
   settingsOpen: false,
   recognizeOpen: false,
   expandedFamilies: [],
+  selectionMode: null,
+  selectedFamilies: [],
+  selectionBusy: false,
   catalogOpen: false,
   catalogItems: [],
   catalogBusy: null,
@@ -182,7 +202,6 @@ export const useApp = create<AppState>()((set, get) => ({
   appStatus: null,
 
   selectedId: null,
-  pendingId: null,
   toast: null,
 
   bootstrap: async () => {
@@ -258,56 +277,6 @@ export const useApp = create<AppState>()((set, get) => ({
   setSample: (sample) => set({ sample }),
   select: (id) => set({ selectedId: id }),
 
-  toggleEnabled: async (id) => {
-    if (get().pendingId) return
-    const font = get().fonts.find((item) => item.id === id)
-    if (!font) return
-
-    /*
-     * 只有「自定义目录 / 字体库」里的字体归我们管。
-     *
-     * 系统字体和用户已装的字体不在安装清单里，后端 uninstall 会直接抛
-     * 「这个字体不是本工具安装的，不会删除」。那句话对用户毫无意义——
-     * 他不知道自己做错了什么，也不知道正确做法是什么。
-     *
-     * 这里提前拦下并说清楚原因。触达路径有三条：卡片双击、Space 快捷键、
-     * 右栏按钮，全部经过这个函数。
-     */
-    if (font.source !== 'custom') {
-      get().showToast(
-        font.source === 'system'
-          ? `${font.family} 是系统字体，由操作系统管理`
-          : `${font.family} 已在系统字体目录里，FontNest 不会改动它`,
-      )
-      return
-    }
-
-    const next = !font.enabled
-    set({ pendingId: id })
-
-    try {
-      await api.setEnabled([id], next)
-      set((state) => ({
-        fonts: state.fonts.map((item) =>
-          item.id === id ? { ...item, enabled: next } : item,
-        ),
-        pendingId: null,
-      }))
-      get().showToast(
-        next ? `已安装 · ${font.family}` : `已卸载 · ${font.family}`,
-        () => {
-          void get().toggleEnabled(id)
-        },
-      )
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      console.error('[fontnest] 切换启用状态失败', error)
-      set({ pendingId: null })
-      // 把后端的原话透出来：M2 未实现时要让用户知道是"还没做"，不是"出错了"
-      get().showToast(`操作失败：${message}`)
-    }
-  },
-
   toggleFavorite: (id) => {
     const font = get().fonts.find((item) => item.id === id)
     if (!font) return
@@ -351,6 +320,108 @@ export const useApp = create<AppState>()((set, get) => ({
         ? state.expandedFamilies.filter((item) => item !== key)
         : [...state.expandedFamilies, key],
     })),
+
+  startSelection: (mode) =>
+    set((state) => ({
+      // 再点同一个通道等于退出；换通道则直接切换并清空已选
+      selectionMode: state.selectionMode === mode ? null : mode,
+      selectedFamilies: [],
+      selectionBusy: false,
+    })),
+
+  exitSelection: () =>
+    set({ selectionMode: null, selectedFamilies: [], selectionBusy: false }),
+
+  toggleSelected: (familyKey) =>
+    set((state) => ({
+      selectedFamilies: state.selectedFamilies.includes(familyKey)
+        ? state.selectedFamilies.filter((item) => item !== familyKey)
+        : [...state.selectedFamilies, familyKey],
+    })),
+
+  setSelectedFamilies: (keys) => set({ selectedFamilies: keys }),
+
+  /**
+   * 单条批量操作的公共实现。
+   *
+   * 三道过滤，缺一不可：
+   * 1. 调用方只传 `source === 'custom'` 的 id —— 系统字体不在安装清单里
+   * 2. 只处理状态不匹配的 —— 已经在目标状态再点一次是白做功
+   * 3. 结果逐条统计 —— 20 个里挂 1 个，剩下 19 个仍要生效
+   *
+   * 返回是否真的改动过，调用方据此决定要不要重置界面状态。
+   */
+  applyEnabled: async (ids, enabled) => {
+    if (get().selectionBusy) return false
+    if (ids.length === 0) {
+      get().showToast(enabled ? '没有需要安装的字体' : '没有需要卸载的字体')
+      return false
+    }
+
+    set({ selectionBusy: true })
+    try {
+      const report = await api.setEnabled(ids, enabled)
+      // set_enabled 内部会重扫，本地 fonts 已经过期，重新拉一次
+      const fonts = await api.listFonts()
+      set({ fonts, selectionBusy: false })
+
+      const verb = enabled ? '安装' : '卸载'
+      if (report.failed.length === 0) {
+        get().showToast(`已${verb} ${report.changed} 个字体`)
+      } else {
+        get().showToast(
+          `已${verb} ${report.changed} 个，${report.failed.length} 个失败：${report.failed[0]}`,
+        )
+      }
+      return report.changed > 0
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      console.error('[fontnest] 字体安装状态切换失败', error)
+      set({ selectionBusy: false })
+      get().showToast(`操作失败：${message}`)
+      return false
+    }
+  },
+
+  /**
+   * 按字体族安装 / 卸载。
+   *
+   * 这是全软件的统一粒度：字体管理器里"装一个字体"从来都是装一族
+   * （Regular + Bold + Italic…），只装其中一个字重反而会让系统里出现
+   * 半套字体，加粗时字体突然变样。
+   */
+  setFamilyEnabled: async (family, enabled) => {
+    const key = family.toLowerCase()
+    const targets = get()
+      .fonts.filter(
+        (font) =>
+          font.family.toLowerCase() === key &&
+          font.source === 'custom' &&
+          font.enabled !== enabled,
+      )
+      .map((font) => font.id)
+    await get().applyEnabled(targets, enabled)
+  },
+
+  /** 当前通道里的批量操作：装还是卸由通道决定，调用方不用传 */
+  batchSetEnabled: async () => {
+    const state = get()
+    if (!state.selectionMode) return
+    const enabled = state.selectionMode === 'install'
+
+    const keys = new Set(state.selectedFamilies)
+    const targets = state.fonts
+      .filter(
+        (font) =>
+          font.source === 'custom' &&
+          keys.has(font.family.toLowerCase()) &&
+          font.enabled !== enabled,
+      )
+      .map((font) => font.id)
+
+    const changed = await get().applyEnabled(targets, enabled)
+    if (changed) set({ selectedFamilies: [], selectionMode: null })
+  },
 
   openCatalog: async () => {
     set({ catalogOpen: true, catalogError: null })

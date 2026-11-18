@@ -26,8 +26,9 @@ export function Inspector({ font }: { font: Font | null }) {
   const sample = useApp((state) => state.sample)
   const size = useApp((state) => state.size)
   const setSize = useApp((state) => state.setSize)
-  const pendingId = useApp((state) => state.pendingId)
-  const toggleEnabled = useApp((state) => state.toggleEnabled)
+  const busy = useApp((state) => state.selectionBusy)
+  const allFonts = useApp((state) => state.fonts)
+  const setFamilyEnabled = useApp((state) => state.setFamilyEnabled)
   const toggleFavorite = useApp((state) => state.toggleFavorite)
   const reveal = useApp((state) => state.reveal)
   const collections = useApp((state) => state.collections)
@@ -54,6 +55,23 @@ export function Inspector({ font }: { font: Font | null }) {
 
   const { wrapRef, indicatorRef } = useIndicator<TabKey>(tab, 0)
 
+  /**
+   * 安装/卸载的粒度是「字体族」，不是单个字重。
+   *
+   * 只装一个 Regular 会让系统里出现半套字体：用户在 Word 里点加粗，
+   * 字形会突然跳成别的字体。所以按钮统计的是整族的状态。
+   */
+  const familyKey = font ? font.family.toLowerCase() : ''
+  const familyFaces = useMemo(
+    () =>
+      allFonts.filter(
+        (item) => item.source === 'custom' && item.family.toLowerCase() === familyKey,
+      ),
+    [allFonts, familyKey],
+  )
+  const allInstalled = familyFaces.length > 0 && familyFaces.every((item) => item.enabled)
+  const anyInstalled = familyFaces.some((item) => item.enabled)
+
   const face = useMemo(
     () => (font ? { fontFamily: faceFamily(font) } : undefined),
     [font],
@@ -63,7 +81,6 @@ export function Inspector({ font }: { font: Font | null }) {
     return <aside className="inspector" aria-label="字体详情" />
   }
 
-  const pending = pendingId === font.id
   const activeCollection = activeCollectionId
     ? collections.find((item) => item.id === activeCollectionId)
     : undefined
@@ -211,10 +228,10 @@ export function Inspector({ font }: { font: Font | null }) {
         {font.source === 'custom' ? (
           <button
             type="button"
-            className={`btn-primary${font.enabled ? ' is-on' : ''}${pending ? ' is-pending' : ''}`}
-            aria-disabled={pending}
+            className={`btn-primary${allInstalled ? ' is-on' : ''}${busy ? ' is-pending' : ''}`}
+            aria-disabled={busy}
             onClick={() => {
-              void toggleEnabled(font.id)
+              void setFamilyEnabled(font.family, !allInstalled)
             }}
           >
             <span className="btn-lede">
@@ -223,13 +240,17 @@ export function Inspector({ font }: { font: Font | null }) {
               <span className="spinner" />
             </span>
             <span className="btn-text">
-              {pending
-                ? font.enabled
+              {busy
+                ? allInstalled
                   ? '正在卸载…'
                   : '正在安装…'
-                : font.enabled
+                : allInstalled
                   ? '已安装'
-                  : '安装字体'}
+                  : anyInstalled
+                    ? '安装剩余字重'
+                    : familyFaces.length > 1
+                      ? `安装整族（${familyFaces.length} 个字重）`
+                      : '安装字体'}
             </span>
           </button>
         ) : (

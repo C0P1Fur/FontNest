@@ -32,6 +32,8 @@ export function ControlBar() {
   const setSort = useApp((state) => state.setSort)
   const view = useApp((state) => state.view)
   const setView = useApp((state) => state.setView)
+  const selectionMode = useApp((state) => state.selectionMode)
+  const startSelection = useApp((state) => state.startSelection)
 
   return (
     <div className="controlbar">
@@ -78,6 +80,28 @@ export function ControlBar() {
           ariaLabel="视图"
           className="view-toggle"
         />
+
+        {/* 安装和卸载是两条独立通道：意图在点按钮时就定了，
+            不需要先进入一个中立的多选模式再二选一 */}
+        <button
+          type="button"
+          className={selectionMode === 'install' ? 'multi-btn is-active' : 'multi-btn'}
+          aria-pressed={selectionMode === 'install'}
+          title="批量把字体装进系统"
+          onClick={() => startSelection('install')}
+        >
+          多选安装
+        </button>
+
+        <button
+          type="button"
+          className={selectionMode === 'uninstall' ? 'multi-btn is-active' : 'multi-btn'}
+          aria-pressed={selectionMode === 'uninstall'}
+          title="批量把字体从系统里卸掉"
+          onClick={() => startSelection('uninstall')}
+        >
+          多选卸载
+        </button>
       </div>
     </div>
   )

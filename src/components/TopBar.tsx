@@ -150,10 +150,6 @@ export function TopBar() {
             </dt>
             <dd>在结果间移动</dd>
             <dt>
-              <kbd>Space</kbd>
-            </dt>
-            <dd>安装 / 卸载当前字体</dd>
-            <dt>
               <kbd>F</kbd>
             </dt>
             <dd>收藏 / 取消收藏</dd>

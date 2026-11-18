@@ -23,6 +23,15 @@ export type LibraryScope =
   | 'variable'
   | 'favorite'
 
+/**
+ * 多选通道。安装和卸载分成两条独立的通道，而不是进一个模式再二选一：
+ *
+ * - 用户的意图在点按钮那一刻就已经确定了
+ * - 每个通道可以只放行"能操作"的字体（装的时候灰掉已装的，卸的时候灰掉没装的），
+ *   不需要让用户自己判断哪些能点
+ */
+export type SelectionMode = 'install' | 'uninstall'
+
 export type SortKey = 'name' | 'styles' | 'year' | 'state'
 
 export type ViewMode = 'grid' | 'list'

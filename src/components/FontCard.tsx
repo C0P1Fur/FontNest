@@ -12,10 +12,17 @@ interface FontCardProps {
   group?: GroupInfo
   sample: string
   selected: boolean
+  /** 多选模式：此时点击卡片是勾选，而不是切换右栏 */
+  selectionMode: boolean
+  /** 是否已被勾选 */
+  picked: boolean
+  /** 是否可被勾选。系统 / 用户目录的字体不归我们管，一律不可选 */
+  selectable: boolean
   onSelect: (id: string) => void
   onToggleFavorite: (id: string) => void
-  onToggleEnabled: (id: string) => void
   onToggleGroup: (key: string) => void
+  /** 参数是字体族 key —— 多选以族为粒度 */
+  onToggleSelected: (familyKey: string) => void
 }
 
 /**
@@ -33,10 +40,13 @@ export const FontCard = memo(function FontCard({
   group,
   sample,
   selected,
+  selectionMode,
+  picked,
+  selectable,
   onSelect,
   onToggleFavorite,
-  onToggleEnabled,
   onToggleGroup,
+  onToggleSelected,
 }: FontCardProps) {
   useEffect(() => {
     ensureFace(font)
@@ -56,22 +66,52 @@ export const FontCard = memo(function FontCard({
   const isGroupPrimary = Boolean(group && group.primaryId === font.id && group.size > 1)
   const expanded = Boolean(group?.expanded)
 
+  // 多选模式下：占位符状态的系统字体变灰且点不动
+  const unselectable = selectionMode && !selectable
+  const className = [
+    'card',
+    font.enabled ? '' : 'is-off',
+    selectionMode ? 'is-selecting' : '',
+    picked ? 'is-picked' : '',
+    unselectable ? 'is-unselectable' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  function activate() {
+    if (!selectionMode) {
+      onSelect(font.id)
+      return
+    }
+    if (!selectable) return
+    // 以族为粒度：点族里任意一个字重，等于选中整个族
+    onToggleSelected(font.family.toLowerCase())
+  }
+
   return (
     <li
-      className={font.enabled ? 'card' : 'card is-off'}
+      className={className}
       role="option"
-      aria-selected={selected}
+      aria-selected={selectionMode ? picked : selected}
+      aria-disabled={unselectable || undefined}
+      title={
+        unselectable
+          ? font.source === 'system'
+            ? `${font.family} 是系统字体，不归 FontNest 管理，无法批量操作`
+            : `${font.family} 已在系统字体目录里，不归 FontNest 管理，无法批量操作`
+          : undefined
+      }
       tabIndex={selected ? 0 : -1}
       data-id={font.id}
       data-subfamily={font.subfamily}
       style={delay}
-      onClick={() => onSelect(font.id)}
-      onDoubleClick={() => onToggleEnabled(font.id)}
+      onClick={activate}
       onKeyDown={(event) => {
-        // Space 留给全局快捷键（装进系统 / 卸载），这里只接管 Enter
+        // 卡片自己只处理 Enter。装进系统/卸载会改系统目录与注册表，
+        // 不给它双击或空格这类"顺手按到"的入口，只留显式按钮。
         if (event.key === 'Enter') {
           event.preventDefault()
-          onSelect(font.id)
+          activate()
         }
       }}
     >

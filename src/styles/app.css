@@ -1138,6 +1138,181 @@ kbd {
   white-space: nowrap;
 }
 
+/* ═══════════ 多选与批量操作 ═══════════ */
+
+.multi-btn {
+  height: 26px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-2);
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  transition:
+    color var(--t-2) var(--e-out),
+    border-color var(--t-2) var(--e-out),
+    background var(--t-2) var(--e-out);
+}
+
+.multi-btn:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.multi-btn.is-active {
+  color: var(--surface);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+/* 勾选后整张卡描边 + 反色底，不靠角落里的一个小标记 */
+.card.is-picked {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+  background: var(--bg);
+}
+
+/*
+ * 系统 / 用户目录的字体：多选时**整张卡面变灰**。
+ *
+ * 三个手段叠加而不是只调透明度：光降 opacity 会让卡片"变淡"，
+ * 但这张卡本来就有 is-off 的淡出效果，两种状态会分不清。
+ * 换成灰底 + 去色，读起来是"这张卡不可用"，而不是"这张卡没装"。
+ */
+.card.is-unselectable {
+  background: var(--bg);
+  border-color: var(--line);
+  filter: grayscale(1);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.card.is-unselectable .card-name,
+.card.is-unselectable .card-sample {
+  color: var(--faint);
+}
+
+.card.is-unselectable:hover {
+  border-color: var(--line);
+}
+
+/* 多选时收藏星让位给整卡点击：否则点右上角会变成收藏而不是选中。
+   「N 个字重」按钮保留 —— 它不改变选中结果，只是让人看清这一族有哪些字重。 */
+.card.is-selecting .fav {
+  display: none;
+}
+
+.selection-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 42px;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 8px 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  box-shadow: 0 16px 40px -16px rgba(23, 23, 29, 0.45);
+  animation: selectionIn 200ms var(--e-spring) both;
+}
+
+@keyframes selectionIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.selection-count {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.selection-count b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.selection-count em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--faint);
+  margin-left: 6px;
+}
+
+.selection-primary {
+  height: 28px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--surface);
+  background: var(--ink);
+  white-space: nowrap;
+  transition: opacity var(--t-2) var(--e-out);
+}
+
+.selection-primary:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* 两个通道用不同色调：安装偏正色、卸载偏警示，避免手滑点错 */
+.selection-bar.is-uninstall .selection-primary {
+  background: var(--ink);
+  opacity: 0.92;
+}
+
+.selection-note {
+  font-size: 10.5px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.selection-ghost {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-2);
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  transition:
+    color var(--t-2) var(--e-out),
+    border-color var(--t-2) var(--e-out);
+}
+
+.selection-ghost:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.selection-ghost:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.selection-exit {
+  height: 28px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  font-size: 11.5px;
+  color: var(--muted);
+  background: var(--bg);
+}
+
+.selection-exit:hover {
+  color: var(--ink);
+}
+
 /* ═══════════ 拖放导入提示 ═══════════ */
 .drop-overlay {
   position: fixed;

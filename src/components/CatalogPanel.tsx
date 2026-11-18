@@ -29,7 +29,9 @@ export function CatalogPanel() {
   const error = useApp((state) => state.catalogError)
   const download = useApp((state) => state.downloadCatalogFont)
   const remove = useApp((state) => state.removeCatalogFont)
-  const toggleEnabled = useApp((state) => state.toggleEnabled)
+  // 安装粒度是字体族，所以要先从扫描结果里拿到该文件的族名
+  const setFamilyEnabled = useApp((state) => state.setFamilyEnabled)
+  const allFonts = useApp((state) => state.fonts)
   const openCatalog = useApp((state) => state.openCatalog)
   const downloadAll = useApp((state) => state.downloadAllCatalog)
   const cancelAll = useApp((state) => state.cancelDownloadAll)
@@ -242,8 +244,11 @@ export function CatalogPanel() {
                     className="catalog-primary"
                     disabled={locked}
                     onClick={() => {
-                      // 启用之后必须重新拉一次目录，否则按钮不会变成「已装进系统」
-                      void toggleEnabled(item.fontId as string).then(() => openCatalog())
+                      // 装的是整个字体族：只装下载的那一个字重，系统里会出现半套字体
+                      const target = allFonts.find((font) => font.id === item.fontId)
+                      const family = target?.family ?? item.family
+                      // 装完必须重新拉一次目录，否则按钮不会变成「已装进系统」
+                      void setFamilyEnabled(family, true).then(() => openCatalog())
                     }}
                   >
                     装进系统

@@ -32,6 +32,42 @@ pub fn scan_fonts(state: State<'_, AppState>) -> Result<ScanSummary, String> {
     Ok(library.scan())
 }
 
+/* ───────────── 安装 / 卸载 ───────────── */
+
+/// 批量安装/卸载的结果。
+///
+/// 为什么不是 `Result<()>`：批量操作里某一个失败不该拖垮整批。
+/// 用户选了 20 个字体，第 3 个出问题就把剩下 17 个丢掉是不可接受的。
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ToggleReport {
+    pub changed: usize,
+    /// 每条是「字体 id：原因」
+    pub failed: Vec<String>,
+}
+
+#[tauri::command]
+pub fn set_enabled(
+    state: State<'_, AppState>,
+    ids: Vec<String>,
+    enabled: bool,
+) -> Result<ToggleReport, String> {
+    let mut library = state.library.lock().map_err(|_| lock_error())?;
+
+    let mut changed = 0;
+    let mut failed = Vec::new();
+    for id in &ids {
+        match library.set_enabled(id, enabled) {
+            Ok(()) => changed += 1,
+            Err(error) => failed.push(format!("{id}：{error}")),
+        }
+    }
+
+    // 安装/卸载改变了磁盘布局，重扫一次让状态与事实一致
+    library.scan();
+    Ok(ToggleReport { changed, failed })
+}
+
 #[tauri::command]
 pub fn set_favorite(state: State<'_, AppState>, id: String, favorite: bool) -> Result<(), String> {
     let mut library = state.library.lock().map_err(|_| lock_error())?;
@@ -422,25 +458,6 @@ pub fn set_collection_fonts(
     library
         .set_collection_fonts(&id, fonts)
         .map_err(|error| error.to_string())
-}
-
-/// 启用 / 停用。
-///
-/// 只对来自自定义目录的字体有效：安装 = 复制到当前用户字体目录 + 写 HKCU 登记项；
-/// 卸载 = 校验哈希后删登记项、把文件移入回收站。系统字体一律拒绝改动。
-#[tauri::command]
-pub fn set_enabled(state: State<'_, AppState>, ids: Vec<String>, enabled: bool) -> Result<(), String> {
-    let mut library = state.library.lock().map_err(|_| lock_error())?;
-
-    for id in &ids {
-        library
-            .set_enabled(id, enabled)
-            .map_err(|error| error.to_string())?;
-    }
-
-    // 安装/卸载改变了磁盘布局，重扫一次让状态与事实一致
-    library.scan();
-    Ok(())
 }
 
 #[tauri::command]

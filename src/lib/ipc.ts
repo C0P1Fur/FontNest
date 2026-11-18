@@ -64,13 +64,19 @@ async function listFonts(_query?: FontQuery): Promise<Font[]> {
   return mockFonts.map((font) => ({ ...font }))
 }
 
-/** 启用 / 停用。真后端会写注册表并广播 WM_FONTCHANGE。 */
-async function setEnabled(ids: string[], enabled: boolean): Promise<void> {
+/** 批量安装/卸载的结果。批量里个别失败不该拖垮整批，所以逐条汇总。 */
+export interface ToggleReport {
+  changed: number
+  failed: string[]
+}
+
+/** 安装 / 卸载。真后端会写注册表并广播 WM_FONTCHANGE。 */
+async function setEnabled(ids: string[], enabled: boolean): Promise<ToggleReport> {
   if (isTauriRuntime) {
-    await invokeTauri<void>('set_enabled', { ids, enabled })
-    return
+    return invokeTauri<ToggleReport>('set_enabled', { ids, enabled })
   }
   await delay(MOCK_LATENCY.install)
+  return { changed: ids.length, failed: [] }
 }
 
 async function setFavorite(id: string, favorite: boolean): Promise<void> {
