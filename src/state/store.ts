@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type {
   AppStatus,
+  BrowseContainer,
   ClipboardCapture,
   Collection,
   Font,
@@ -13,6 +14,7 @@ import type {
 } from '../types/font'
 import { api } from '../lib/ipc'
 import type { CatalogItem } from '../lib/ipc'
+import { sameContainer } from '../lib/filter'
 
 /**
  * 对比面板同时显示的字体族上限。
@@ -25,6 +27,19 @@ import type { CatalogItem } from '../lib/ipc'
  */
 export const MAX_COMPARE = 4
 export const MIN_COMPARE = 2
+
+/** "全部字体"这个内置视图的容器值，作为默认容器与各类回退目标 */
+export const ALL_VIEW: BrowseContainer = { kind: 'view', scope: 'all' }
+
+/**
+ * 进入某个容器时要一起重置的筛选条件。
+ *
+ * 抽成一个函数，是因为切容器的入口不止 setContainer：新建分类夹会直接
+ * 落到新容器、删掉当前分类夹会回退到「全部」。三处各写一遍迟早会漏。
+ */
+function switchTo(container: BrowseContainer) {
+  return { container, query: '', categories: [] }
+}
 
 export type Theme = 'light' | 'dark'
 
@@ -42,12 +57,18 @@ export interface AppState {
   lastScanAt: number | null
   customDirs: string[]
   collections: Collection[]
-  /** 当前作为筛选条件的分类；null 表示不按分类过滤 */
-  activeCollectionId: string | null
+  /**
+   * 当前浏览的容器 —— 内置视图和用户分类夹是**同一层级的同类对象**，
+   * 用同一个字段表达，天然互斥单选。
+   *
+   * 以前这里是 `scope` + `activeCollectionId` 两个字段，两者会被**同时**
+   * 应用（先用 scope 过滤，再叠一层分类夹），于是分类夹变成了"贴在视图上的
+   * 标签"：选中收藏再点某个分类夹，得到的是两者的交集，左栏还会有两行同时高亮。
+   */
+  container: BrowseContainer
 
   /* 查询 */
   query: string
-  scope: LibraryScope
   categories: FontCategory[]
   sort: SortKey
 
@@ -103,7 +124,8 @@ export interface AppState {
   bootstrap: () => Promise<void>
   rescan: () => Promise<void>
   setQuery: (query: string) => void
-  setScope: (scope: LibraryScope) => void
+  /** 切换浏览容器（内置视图或分类夹），互斥 */
+  setContainer: (container: BrowseContainer) => void
   toggleCategory: (category: FontCategory) => void
   setSort: (sort: SortKey) => void
   setView: (view: ViewMode) => void
@@ -155,7 +177,7 @@ export interface AppState {
   /** 返回 null 表示成功，否则返回给用户看的错误文案 */
   addDir: (path: string) => Promise<string | null>
   removeDir: (path: string) => Promise<string | null>
-  setActiveCollection: (id: string) => void
+  /** 新建分类夹。成功返回 null，失败返回给用户看的错误文案 */
   createCollection: (name: string) => Promise<string | null>
   deleteCollection: (id: string) => Promise<string | null>
   toggleInCollection: (collectionId: string, fontId: string) => Promise<void>
@@ -192,10 +214,8 @@ export const useApp = create<AppState>()((set, get) => ({
   lastScanAt: null,
   customDirs: [],
   collections: [],
-  activeCollectionId: null,
-
+  container: ALL_VIEW,
   query: '',
-  scope: 'all',
   categories: [],
   sort: 'name',
 
@@ -286,7 +306,18 @@ export const useApp = create<AppState>()((set, get) => ({
   },
 
   setQuery: (query) => set({ query }),
-  setScope: (scope) => set({ scope }),
+
+  /**
+   * 切换浏览容器 —— 无条件重置筛选。
+   *
+   * 搜索关键词和类型勾选都是**相对当前容器**的收窄条件：把"inter"带进
+   * 「收藏」或某个分类夹，往往一条都不匹配，网格会空着 —— 看起来像
+   * "这个容器里没有字体"，而不是"你的搜索没命中"。
+   *
+   * 不区分"是否真的换了容器"：点当前高亮的那行也算一次切换，
+   * 等于给用户一个"清掉筛选、回到干净视图"的手势。
+   */
+  setContainer: (container) => set(switchTo(container)),
   toggleCategory: (category) =>
     set((state) => ({
       categories: state.categories.includes(category)
@@ -630,7 +661,7 @@ export const useApp = create<AppState>()((set, get) => ({
   clearCapture: () => set({ capture: null }),
 
   focusFont: (id) =>
-    set({ query: '', scope: 'all', categories: [], selectedId: id }),
+    set({ query: '', container: ALL_VIEW, categories: [], selectedId: id }),
 
   addDir: async (path) => {
     try {
@@ -666,17 +697,15 @@ export const useApp = create<AppState>()((set, get) => ({
     }
   },
 
-  /* ───────────── 分类 ───────────── */
-
-  setActiveCollection: (id) =>
-    set((state) => ({ activeCollectionId: state.activeCollectionId === id ? null : id })),
+  /* ───────────── 分类夹 ───────────── */
 
   createCollection: async (name) => {
     try {
       const created = await api.createCollection(name)
       set((state) => ({
         collections: [...state.collections, created],
-        activeCollectionId: created.id,
+        // 新建后直接进入它 —— 分类夹是容器不是标签，进来同样清掉旧筛选
+        ...switchTo({ kind: 'collection', id: created.id }),
       }))
       get().showToast(`已新建集合 · ${created.name}`)
       return null
@@ -688,11 +717,14 @@ export const useApp = create<AppState>()((set, get) => ({
   deleteCollection: async (id) => {
     try {
       await api.deleteCollection(id)
-      set((state) => ({
-        collections: state.collections.filter((item) => item.id !== id),
-        activeCollectionId:
-          state.activeCollectionId === id ? null : state.activeCollectionId,
-      }))
+      set((state) => {
+        const wasActive = sameContainer(state.container, { kind: 'collection', id })
+        const collections = state.collections.filter((item) => item.id !== id)
+        // 删掉的正是当前容器时回退到"全部"，否则会停在一个不存在的容器上
+        return wasActive
+          ? { collections, ...switchTo(ALL_VIEW) }
+          : { collections }
+      })
       get().showToast('集合已删除')
       return null
     } catch (error) {

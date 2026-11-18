@@ -33,7 +33,7 @@ export function Inspector({ font }: { font: Font | null }) {
   const toggleFavorite = useApp((state) => state.toggleFavorite)
   const reveal = useApp((state) => state.reveal)
   const collections = useApp((state) => state.collections)
-  const activeCollectionId = useApp((state) => state.activeCollectionId)
+  const container = useApp((state) => state.container)
   const toggleInCollection = useApp((state) => state.toggleInCollection)
 
   const [tab, setTab] = useState<TabKey>('meta')
@@ -84,9 +84,11 @@ export function Inspector({ font }: { font: Font | null }) {
     return <aside className="inspector" aria-label="字体详情" />
   }
 
-  const activeCollection = activeCollectionId
-    ? collections.find((item) => item.id === activeCollectionId)
-    : undefined
+  // "加入当前分类夹"只在该容器确实是分类夹时才有意义 —— 视图没有成员概念
+  const activeCollection =
+    container.kind === 'collection'
+      ? collections.find((item) => item.id === container.id)
+      : undefined
   const inCollection = activeCollection?.fontIds.includes(font.id) ?? false
   const weight = axes.wght ?? font.weight
   const variation = font.variable

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { Font } from '../types/font'
-import { applyQuery, countLibrary, fontStack } from './filter'
+import type { Collection, Font, FontQuery } from '../types/font'
+import { applyQuery, countLibrary, fontStack, inContainer, sameContainer } from './filter'
 import { mockFonts } from '../data/mockFonts'
 
 /**
@@ -8,14 +8,19 @@ import { mockFonts } from '../data/mockFonts'
  * 这里只测行为契约，不测实现细节。
  */
 
-function query(overrides: Partial<Parameters<typeof applyQuery>[1]> = {}) {
+function query(overrides: Partial<FontQuery> = {}) {
   return {
     query: '',
-    scope: 'all' as const,
+    container: { kind: 'view', scope: 'all' } as const,
+    collections: [] as Collection[],
     categories: [] as Font['category'][],
     sort: 'name' as const,
     ...overrides,
   }
+}
+
+function collection(id: string, fontIds: string[]): Collection {
+  return { id, name: id, fontIds, createdAt: 0 }
 }
 
 describe('applyQuery', () => {
@@ -45,18 +50,18 @@ describe('applyQuery', () => {
     expect(byFoundry.every((font) => font.foundry.toLowerCase().includes('monotype'))).toBe(true)
   })
 
-  it('scope 过滤只返回符合条件的记录', () => {
-    const enabled = applyQuery(mockFonts, query({ scope: 'enabled' }))
+  it('视图容器只返回符合条件的记录', () => {
+    const enabled = applyQuery(mockFonts, query({ container: { kind: 'view', scope: 'enabled' } }))
     expect(enabled.every((font) => font.enabled)).toBe(true)
 
-    const disabled = applyQuery(mockFonts, query({ scope: 'disabled' }))
+    const disabled = applyQuery(mockFonts, query({ container: { kind: 'view', scope: 'disabled' } }))
     expect(disabled.every((font) => !font.enabled)).toBe(true)
     expect(disabled.length + enabled.length).toBe(mockFonts.length)
 
-    const variable = applyQuery(mockFonts, query({ scope: 'variable' }))
+    const variable = applyQuery(mockFonts, query({ container: { kind: 'view', scope: 'variable' } }))
     expect(variable.every((font) => font.variable)).toBe(true)
 
-    const favorite = applyQuery(mockFonts, query({ scope: 'favorite' }))
+    const favorite = applyQuery(mockFonts, query({ container: { kind: 'view', scope: 'favorite' } }))
     expect(favorite.every((font) => font.favorite)).toBe(true)
   })
 
@@ -113,5 +118,62 @@ describe('fontStack', () => {
     const stack = fontStack(georgia as Font)
     expect(stack.startsWith("'Georgia',")).toBe(true)
     expect(stack).toContain('serif')
+  })
+})
+
+describe('容器：内置视图与分类夹同级互斥', () => {
+  const a = mockFonts[0]
+  const b = mockFonts[1]
+  const bag = [collection('c1', [a.id])]
+
+  it('分类夹容器只返回其成员', () => {
+    const result = applyQuery(mockFonts, query({ container: { kind: 'collection', id: 'c1' }, collections: bag }))
+    expect(result.map((font) => font.id)).toEqual([a.id])
+  })
+
+  it('容器互斥：切到分类夹后，视图条件不再生效', () => {
+    // 同一次查询里只认 container 一个条件。
+    // 以前 scope 和分类夹会同时生效，选中"收藏"再点分类夹得到的是交集。
+    const asCollection = applyQuery(
+      mockFonts,
+      query({ container: { kind: 'collection', id: 'c1' }, collections: bag }),
+    )
+    expect(asCollection).toHaveLength(1)
+
+    // 换回视图，分类夹的成员关系完全不参与
+    const asView = applyQuery(mockFonts, query({ container: { kind: 'view', scope: 'all' }, collections: bag }))
+    expect(asView).toHaveLength(mockFonts.length)
+  })
+
+  it('容器之上的关键词与类型筛选照常生效', () => {
+    const both = [collection('c2', [a.id, b.id])]
+    const result = applyQuery(
+      mockFonts,
+      query({ container: { kind: 'collection', id: 'c2' }, collections: both, query: a.family.slice(0, 3) }),
+    )
+    // 至少不能返回集合之外的字体
+    expect(result.every((font) => font.id === a.id || font.id === b.id)).toBe(true)
+  })
+
+  it('分类夹被删掉后不会把整个库藏空', () => {
+    expect(inContainer(a, { kind: 'collection', id: 'gone' }, [])).toBe(true)
+  })
+
+  it('inContainer 对视图复用 scope 语义', () => {
+    expect(inContainer({ ...a, favorite: true }, { kind: 'view', scope: 'favorite' }, [])).toBe(true)
+    expect(inContainer({ ...a, favorite: false }, { kind: 'view', scope: 'favorite' }, [])).toBe(false)
+  })
+})
+describe('sameContainer', () => {
+  it('同类型同目标才算同一个容器', () => {
+    expect(sameContainer({ kind: 'view', scope: 'all' }, { kind: 'view', scope: 'all' })).toBe(true)
+    expect(sameContainer({ kind: 'view', scope: 'all' }, { kind: 'view', scope: 'favorite' })).toBe(false)
+    expect(sameContainer({ kind: 'collection', id: 'c1' }, { kind: 'collection', id: 'c1' })).toBe(true)
+    expect(sameContainer({ kind: 'collection', id: 'c1' }, { kind: 'collection', id: 'c2' })).toBe(false)
+  })
+
+  it('视图和分类夹永不相等（哪怕 id 撞上 scope 名）', () => {
+    expect(sameContainer({ kind: 'view', scope: 'all' }, { kind: 'collection', id: 'all' })).toBe(false)
+    expect(sameContainer({ kind: 'collection', id: 'all' }, { kind: 'view', scope: 'all' })).toBe(false)
   })
 })

@@ -20,15 +20,15 @@ import { RIPPLE_SELECTOR, rippleFrom, tactile } from './lib/motion'
 import { SAMPLES, SIZES } from './lib/samples'
 import { useApp } from './state/store'
 import type {
+  BrowseContainer,
   Collection,
   Font,
   FontCategory,
-  LibraryScope,
   SortKey,
 } from './types/font'
 
 /**
- * 算出网格里真正显示的字体列表：筛选 → 分类过滤 → 同族合并 → 按展开状态摊平。
+ * 算出网格里真正显示的字体列表：容器 → 关键词/类型筛选 → 同族合并 → 按展开状态摊平。
  *
  * 渲染和键盘导航必须用同一份结果。两处各算一次的话，收起某个族之后
  * 方向键会跳到屏幕上看不见的字重上 —— 右栏变了，网格里却没有对应高亮。
@@ -36,32 +36,23 @@ import type {
 interface ViewState {
   fonts: Font[]
   query: string
-  scope: LibraryScope
+  container: BrowseContainer
   categories: FontCategory[]
   sort: SortKey
   collections: Collection[]
-  activeCollectionId: string | null
   expandedFamilies: string[]
 }
 
 function selectShown(state: ViewState): Font[] {
-  const base = applyQuery(state.fonts, {
+  // 容器（内置视图或分类夹）与关键词、类型筛选在 applyQuery 里一次算完 ——
+  // 以前分类夹是在这里二次 filter 的，等于叠在视图之上的一层
+  const filtered = applyQuery(state.fonts, {
     query: state.query,
-    scope: state.scope,
+    container: state.container,
+    collections: state.collections,
     categories: state.categories,
     sort: state.sort,
   })
-
-  let filtered = base
-  if (state.activeCollectionId) {
-    const collection = state.collections.find(
-      (item) => item.id === state.activeCollectionId,
-    )
-    if (collection) {
-      const members = new Set(collection.fontIds)
-      filtered = base.filter((font) => members.has(font.id))
-    }
-  }
 
   return flattenGroups(groupFonts(filtered), state.expandedFamilies)
 }
@@ -105,7 +96,6 @@ export default function App() {
   const fonts = useApp((state) => state.fonts)
   const status = useApp((state) => state.status)
   const query = useApp((state) => state.query)
-  const scope = useApp((state) => state.scope)
   const categories = useApp((state) => state.categories)
   const sort = useApp((state) => state.sort)
   const view = useApp((state) => state.view)
@@ -114,7 +104,7 @@ export default function App() {
   const theme = useApp((state) => state.theme)
   const selectedId = useApp((state) => state.selectedId)
   const collections = useApp((state) => state.collections)
-  const activeCollectionId = useApp((state) => state.activeCollectionId)
+  const container = useApp((state) => state.container)
 
   /** 拖放提示：null 表示没在拖，`fonts` 可以导入，`invalid` 拖了非字体 */
   const [dropHint, setDropHint] = useState<'fonts' | 'invalid' | null>(null)
@@ -126,16 +116,10 @@ export default function App() {
   /** 已选族的集合，做成 Set 传给网格：几百张卡每张都要查一次 */
   const pickedFamilies = useMemo(() => new Set(selectedFamilies), [selectedFamilies])
 
-  const visible = useMemo(() => {
-    const base = applyQuery(fonts, { query, scope, categories, sort })
-    if (!activeCollectionId) return base
-
-    const collection = collections.find((item) => item.id === activeCollectionId)
-    if (!collection) return base
-
-    const members = new Set(collection.fontIds)
-    return base.filter((font) => members.has(font.id))
-  }, [fonts, query, scope, categories, sort, collections, activeCollectionId])
+  const visible = useMemo(
+    () => applyQuery(fonts, { query, container, collections, categories, sort }),
+    [fonts, query, container, collections, categories, sort],
+  )
 
   /* 同族字重合并：收起的族只渲染主面，展开的族摊平全部字重 */
   const groups = useMemo(() => groupFonts(visible), [visible])
@@ -144,14 +128,13 @@ export default function App() {
       selectShown({
         fonts,
         query,
-        scope,
+        container,
         categories,
         sort,
         collections,
-        activeCollectionId,
         expandedFamilies,
       }),
-    [fonts, query, scope, categories, sort, collections, activeCollectionId, expandedFamilies],
+    [fonts, query, container, categories, sort, collections, expandedFamilies],
   )
 
   /**

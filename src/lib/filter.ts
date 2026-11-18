@@ -1,4 +1,11 @@
-import type { Font, FontCategory, FontQuery } from '../types/font'
+import type {
+  BrowseContainer,
+  Collection,
+  Font,
+  FontCategory,
+  FontQuery,
+  LibraryScope,
+} from '../types/font'
 
 export const CATEGORY_LABEL: Record<FontCategory, string> = {
   sans: '无衬线',
@@ -41,8 +48,8 @@ function isSubsequence(needle: string, haystack: string): boolean {
   return i === needle.length
 }
 
-function matchesScope(font: Font, query: FontQuery): boolean {
-  switch (query.scope) {
+function matchesScope(font: Font, scope: LibraryScope): boolean {
+  switch (scope) {
     case 'enabled':
       return font.enabled
     case 'disabled':
@@ -56,12 +63,38 @@ function matchesScope(font: Font, query: FontQuery): boolean {
   }
 }
 
+/** 两个容器是否指向同一个浏览目标。用于判断"切换"是否真的发生了 */
+export function sameContainer(a: BrowseContainer, b: BrowseContainer): boolean {
+  if (a.kind === 'view') return b.kind === 'view' && a.scope === b.scope
+  return b.kind === 'collection' && a.id === b.id
+}
+
+/**
+ * 容器判定：内置视图与分类夹走同一条路径。
+ *
+ * 这是这次重构的核心 —— 以前视图和分类夹是两层过滤同时生效，
+ * 选中"收藏"再点某个分类夹，得到的是交集，左栏两行同时高亮。
+ * 现在只有一个容器，两者天然互斥。
+ */
+export function inContainer(
+  font: Font,
+  container: BrowseContainer,
+  collections: Collection[],
+): boolean {
+  if (container.kind === 'view') return matchesScope(font, container.scope)
+
+  const collection = collections.find((item) => item.id === container.id)
+  // 容器不存在（刚被删）时不能把所有字体都藏起来 —— 当作"全部"处理
+  if (!collection) return true
+  return collection.fontIds.includes(font.id)
+}
+
 export function applyQuery(fonts: Font[], query: FontQuery): Font[] {
   const needle = query.query.trim().toLowerCase()
   const categories = query.categories
 
   const filtered = fonts.filter((font) => {
-    if (!matchesScope(font, query)) return false
+    if (!inContainer(font, query.container, query.collections)) return false
     if (categories.length > 0 && !categories.includes(font.category)) return false
     if (!needle) return true
 

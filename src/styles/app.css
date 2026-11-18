@@ -443,98 +443,71 @@ kbd {
   border-color: var(--ok);
 }
 
-/* ═══════════ 激活集 ═══════════ */
-.coll-row {
-  display: flex;
-  align-items: center;
-  border-radius: var(--r-sm);
-  transition: background var(--t-2) var(--e-out);
+/* ═══════════ 分类夹：与内置视图同一行样式 ═══════════
+   容器行本身就是 .rail-item，分类夹不再有自己的配色/内边距，
+   否则两者会在视觉上分出层级 —— 而它们本该是平级的同类对象。 */
+.rail-sep {
+  display: block;
+  height: 1px;
+  margin: 6px 8px;
+  background: var(--line);
 }
 
-.coll-row:hover {
+.coll-row {
+  position: relative;
+}
+
+/* 给右侧的删除按钮留出位置，避免计数被盖住 */
+.coll-row .rail-item {
+  padding-right: 26px;
+}
+
+.coll-remove {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  font-size: 9px;
+  color: var(--faint);
+  opacity: 0;
+  transition:
+    opacity var(--t-2) var(--e-out),
+    color var(--t-2) var(--e-out),
+    background var(--t-2) var(--e-out);
+}
+
+/* 只在悬停/聚焦时露出，避免侧栏常态过噪 */
+.coll-row:hover .coll-remove,
+.coll-row:focus-within .coll-remove {
+  opacity: 1;
+}
+
+.coll-remove:hover {
+  color: var(--err);
   background: var(--bg);
 }
 
-.coll-row.is-active {
-  background: var(--ink);
-}
-
-.coll-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 8px;
-  border-radius: var(--r-sm);
-  color: var(--muted);
-  font-size: 12.5px;
-  text-align: left;
-  transition: color var(--t-2) var(--e-out);
-}
-
-.coll-main:hover {
-  color: var(--ink);
-}
-
-.coll-row.is-active .coll-main {
+/* 激活行是反色底，删除按钮得跟着变白 */
+.coll-row:hover .rail-item.is-active ~ .coll-remove {
   color: var(--surface);
-  font-weight: 600;
 }
 
-.coll-row.is-active .coll-main .count {
+.coll-row:hover .rail-item.is-active ~ .coll-remove:hover {
   color: var(--surface);
-  opacity: 0.55;
-}
-
-/* 批量操作只在悬停/聚焦时出现，避免侧栏常态过噪 */
-.coll-actions {
-  display: none;
-  gap: 2px;
-  padding-right: 4px;
-}
-
-.coll-row:hover .coll-actions,
-.coll-row:focus-within .coll-actions {
-  display: flex;
-}
-
-.coll-actions button {
-  font-size: 10px;
-  color: var(--muted);
-  padding: 2px 5px;
-  border-radius: 4px;
-  border: 1px solid var(--line-2);
-  background: var(--surface);
-  transition: color var(--t-2) var(--e-out), border-color var(--t-2) var(--e-out);
-}
-
-.coll-actions button:hover {
-  color: var(--ink);
-  border-color: var(--ink);
-}
-
-.coll-actions .coll-remove:hover {
-  color: var(--err);
-  border-color: var(--err);
-}
-
-.coll-row.is-active .coll-actions button {
-  background: transparent;
-  color: var(--surface);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.coll-empty {
-  font-size: 11px;
-  color: var(--faint);
-  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .coll-form {
   display: flex;
   gap: 4px;
-  padding: 4px 2px 0;
+  /* 没有分类夹时它紧跟在视图行后面，太贴会读成"第 6 个容器" */
+  margin-top: 8px;
+  padding: 0 2px;
 }
 
 .coll-form input {

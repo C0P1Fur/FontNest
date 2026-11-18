@@ -79,9 +79,25 @@ export interface Font {
 }
 
 /** 查询条件。v0.1 在客户端过滤；索引落地后整体下推给 Rust。 */
+/**
+ * 浏览容器。
+ *
+ * 内置的五个视图（全部/已安装/未安装/可变/收藏）和用户自建的分类夹是
+ * **同一层级的同类对象**：都是"一次只看一坨字体"的容器，互斥单选。
+ *
+ * 用联合类型而不是两个独立字段，是为了让"互斥"成为类型层面的必然 ——
+ * 只有一个字段就不可能同时选中两个。
+ */
+export type BrowseContainer =
+  | { kind: 'view'; scope: LibraryScope }
+  | { kind: 'collection'; id: string }
+
 export interface FontQuery {
   query: string
-  scope: LibraryScope
+  /** 当前容器。内置视图与分类夹走同一条判定路径 */
+  container: BrowseContainer
+  /** 解析 collection 容器成员所必需 */
+  collections: Collection[]
   categories: FontCategory[]
   sort: SortKey
 }
