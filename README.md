@@ -16,7 +16,7 @@
 </p>
 
 <p>
-  <a href="https://github.com/C0P1Fur/FontNest/releases/"><img src="https://img.shields.io/badge/下载_FortNest_预览版-lastest-3568AD?style=for-the-badge" alt="直接下载 FortNest 预览版"></a>
+  <a href="https://github.com/C0P1Fur/FontNest/releases/"><img src="https://img.shields.io/badge/下载_FontNest_预览版-latest-3568AD?style=for-the-badge" alt="直接下载 FontNest 预览版"></a>
 </p>
 
 <p><a href="https://github.com/C0P1Fur/FontNest/releases">全部发布版本</a> · <a href="#界面预览">界面预览</a> · <a href="#从源码编译与运行">源码构建</a></p>
