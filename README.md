@@ -1,14 +1,49 @@
-# FontNest
+<div align="center">
 
-<img src="src-tauri/icons/128x128.png" width="80" height="80" alt="FontNest 探头喵图标">
+<img src="src-tauri/icons/128x128.png" width="96" height="96" alt="FontNest 探头喵图标">
 
-一款极简本地字体管理器，让你先看清字体，再决定是否安装。
+<h1>FontNest</h1>
+
+<p><strong>让字体有个小窝，让灵感有处可寻。</strong></p>
+<p>极简本地字体管理器 · 浏览预览 · 收藏分类 · 截图识别</p>
+
+<p>
+  <a href="https://github.com/C0P1Fur/FontNest/releases"><img src="https://img.shields.io/github/v/release/C0P1Fur/FontNest?include_prereleases&amp;style=flat-square&amp;label=Preview&amp;color=6654A4" alt="最新版本（含预览版）"></a>
+  <a href="#下载安装"><img src="https://img.shields.io/badge/Windows-x64-3568AD?style=flat-square" alt="Windows x64"></a>
+  <a href="https://v2.tauri.app/"><img src="https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square&amp;logo=tauri&amp;logoColor=white" alt="Tauri 2"></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-149ECA?style=flat-square&amp;logo=react&amp;logoColor=white" alt="React 19"></a>
+  <a href="#许可证"><img src="https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-497264?style=flat-square" alt="MIT 或 Apache-2.0 许可证"></a>
+</p>
+
+<p>
+  <a href="https://github.com/C0P1Fur/FontNest/releases/download/v0.1.0/FontNest_0.1.0_x64-setup.exe"><img src="https://img.shields.io/badge/下载_Windows_预览版-v0.1.0-3568AD?style=for-the-badge" alt="直接下载 Windows v0.1.0 预览版"></a>
+</p>
+
+<p><a href="https://github.com/C0P1Fur/FontNest/releases">全部发布版本</a> · <a href="#界面预览">界面预览</a> · <a href="#从源码编译与运行">源码构建</a></p>
+
+</div>
 
 浏览本机字体、预览未安装的字体、整理收藏，也可以通过截图在本地字库中寻找相似字体。
 
-> **目前仅提供 Windows 版本，需自行从源码编译。**
+> **v0.1.0 预览版已发布，可直接下载安装，无需自行编译。**
 >
-> 尚未发布可直接下载的预编译程序或安装包。macOS 和 Linux 暂未提供可用版本。
+> 当前主要提供 Windows 使用教程。预览版仍在完善中，功能限制见下文。
+
+## 下载安装
+
+Windows x64 用户推荐下载 EXE 安装程序：
+
+- **[下载 Windows 安装程序（EXE，v0.1.0）](https://github.com/C0P1Fur/FontNest/releases/download/v0.1.0/FontNest_0.1.0_x64-setup.exe)**
+- [下载 Windows 安装程序（MSI，v0.1.0）](https://github.com/C0P1Fur/FontNest/releases/download/v0.1.0/FontNest_0.1.0_x64_en-US.msi)
+- [查看全部版本、更新说明及其他平台产物](https://github.com/C0P1Fur/FontNest/releases)
+
+1. 下载 EXE 安装程序，双击运行并按向导完成安装；EXE 和 MSI 任选一种即可。
+2. 从开始菜单启动 **FontNest**。
+3. 等待首次字体扫描完成，即可浏览本机字体或添加自己的字体目录。
+
+安装发布版不需要 Node.js、pnpm、Rust 或 C++ 构建工具。如果启动时提示缺少 WebView2，请安装 [Microsoft WebView2 Evergreen Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)。
+
+以上直链固定指向 **v0.1.0 预览版**；后续版本请从[发布页面](https://github.com/C0P1Fur/FontNest/releases)获取。
 
 ## 界面预览
 
@@ -28,7 +63,7 @@
 
 ## 平台支持与限制
 
-当前仅提供 Windows 版本。代码中的其他平台适配分支不代表已有可用的 macOS 或 Linux 版本。
+本文主要面向 Windows。v0.1.0 发布页还提供 macOS Apple Silicon 和 Linux x64 构建产物；这些产物的存在不代表各平台功能完全一致，本文尚未验证其安装与运行情况。
 
 使用前请了解：
 
@@ -40,7 +75,7 @@
 
 ## 从源码编译与运行
 
-**目前没有供下载的现成程序或安装包，所有使用方式都需要先获取源码。**
+**仅使用软件，请优先下载上方预览版。以下步骤面向需要修改代码、调试或自行构建的用户。**
 
 下面的命令使用 Windows PowerShell。除环境安装步骤外，请在项目根目录执行，即同时包含 `package.json`、`Cargo.toml` 和 `src-tauri` 的目录。
 
@@ -119,10 +154,10 @@ C++ 工具、MSVC 工具链和 WebView2 的配置依据可参考 [Tauri Windows 
 
 在希望存放项目的位置打开 PowerShell。
 
-将下面的 `仓库克隆地址` 替换为当前 GitHub 仓库 **Code → HTTPS** 中显示的实际地址：
+克隆项目并进入源码目录：
 
 ```powershell
-git clone "仓库克隆地址" FontNest
+git clone https://github.com/C0P1Fur/FontNest.git FontNest
 cd FontNest
 ```
 
@@ -186,7 +221,7 @@ target/release/fontnest.exe
 
 ### 6. 可选：自行生成安装器
 
-当前配置已启用安装器打包，但尚未提供已发布的安装包。
+当前配置已启用安装器打包。官方预览版可直接下载；以下命令用于生成包含你本地修改的安装器。
 
 如果希望从源码生成 NSIS 安装器：
 
