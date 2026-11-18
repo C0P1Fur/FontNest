@@ -59,8 +59,6 @@ export function SelectionBar({ pickableFamilies }: SelectionBarProps) {
 
   return (
     <div className="selection-bar" role="region" aria-label={`批量${ACTION_LABEL[mode]}`}>
-      <span className="selection-mode">{ACTION_LABEL[mode]}</span>
-
       <span className="selection-count">
         已选 <b>{summary.families}</b> 个字体族
         {hint ? <em>{hint}</em> : null}

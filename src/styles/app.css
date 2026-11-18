@@ -1113,17 +1113,6 @@ kbd {
 
 /* ═══════════ 多选与批量操作 ═══════════ */
 
-/* 操作条上标出当前意图，避免用户忘了自己在哪种多选里 */
-.selection-mode {
-  padding: 2px 8px;
-  border-radius: var(--r-pill);
-  background: var(--ink);
-  color: var(--surface);
-  font-size: 10.5px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
 /* 勾选后整张卡描边 + 反色底，不靠角落里的一个小标记 */
 .card.is-picked {
   border-color: var(--ink);
@@ -1740,16 +1729,20 @@ kbd {
   opacity: 0.5;
 }
 
-/* ───── 同族字重合并 ───── */
-
-/* 展开后卡片底部显示字重名（Bold / Italic），比「N styles」有用 */
-.card-subfamily {
+/*
+ * 安装状态。已安装用最弱的颜色（绝大多数系统字体都是这个状态，不该抢眼）；
+ * 未安装反而略重一点 —— 那是用户能动手的那批。
+ */
+.card-state {
   color: var(--muted);
-  max-width: 84px;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.card-state.is-on {
+  color: var(--faint);
+}
+
+/* ───── 同族字重合并 ───── */
 
 /* 「N 个字重」入口：只有族里的主面显示，靠右贴边 */
 .card-group {

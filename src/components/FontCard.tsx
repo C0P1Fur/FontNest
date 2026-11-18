@@ -143,12 +143,14 @@ export const FontCard = memo(function FontCard({
       </span>
 
       <span className="card-foot">
-        {group && group.size > 1 ? (
-          // 展开时显示字重名（Bold / Italic）比「N styles」有用
-          <span className="card-subfamily">{font.subfamily}</span>
-        ) : (
-          <span>{font.instanceCount} styles</span>
-        )}
+        {/*
+          装没装是这张卡最要紧的状态，直接写出来。
+          系统字体的 enabled 恒为 true（library.rs 里系统/用户目录"天然可用"），
+          所以它们显示"已安装"是准确的 —— 它们确实已经在系统里。
+        */}
+        <span className={font.enabled ? 'card-state is-on' : 'card-state'}>
+          {font.enabled ? '已安装' : '未安装'}
+        </span>
 
         {font.variable ? (
           <>
