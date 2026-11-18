@@ -13,6 +13,7 @@ import { RecognizePanel } from './components/RecognizePanel'
 import { Tour } from './components/Tour'
 import { applyQuery } from './lib/filter'
 import { api, isTauriRuntime } from './lib/ipc'
+import { isMacOS } from './lib/platform'
 import { RIPPLE_SELECTOR, rippleFrom, tactile } from './lib/motion'
 import { SAMPLES, SIZES } from './lib/samples'
 import { useApp } from './state/store'
@@ -187,12 +188,20 @@ export default function App() {
       const tag = target?.tagName.toLowerCase() ?? ''
       const typing = tag === 'input' || tag === 'textarea' || tag === 'select'
 
+      const mod = isMacOS ? event.metaKey : event.ctrlKey
       if (
         (event.metaKey || event.ctrlKey) &&
         ['k', 'f'].includes(event.key.toLowerCase())
       ) {
         event.preventDefault()
         document.getElementById('search-input')?.focus()
+        return
+      }
+
+      // macOS 惯例：⌘, 打开偏好设置
+      if (mod && event.key === ',') {
+        event.preventDefault()
+        state.openSettings()
         return
       }
 

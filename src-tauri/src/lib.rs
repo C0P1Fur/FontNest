@@ -11,7 +11,13 @@ use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut,
 
 /// 全局热键。选 Control+Alt+F：三大平台都不与常见系统快捷键冲突，
 /// 且 Control 与 Alt 相邻，单手按得到。
+///
+/// macOS 上刻意**不换成 ⌘⌥F**：全局热键会从所有应用手里抢走这个组合，
+/// 而 ⌘⌥F 是 Xcode / VS Code / Safari 等的「查找替换」。这里只改显示写法。
+#[cfg(not(target_os = "macos"))]
 pub const HOTKEY_ACCELERATOR: &str = "Ctrl+Alt+F";
+#[cfg(target_os = "macos")]
+pub const HOTKEY_ACCELERATOR: &str = "⌃⌥F";
 
 /// 预览图的最大宽度。够看清是不是抓对了，又不会把事件 payload 撑肥。
 const PREVIEW_WIDTH: u32 = 480;
