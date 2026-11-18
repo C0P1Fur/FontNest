@@ -27,25 +27,19 @@
 
 找到候选后，查看字母、数字和汉字的细节，再用同一段文字对比多款字体，最后将选中的字体收进分类夹。让找字体、选字体和整理字体连成一套顺手的流程。
 
-> **v0.1.0 预览版已发布，可直接下载安装，无需自行编译。**
->
 > 当前主要提供 Windows 使用教程。预览版仍在完善中，功能限制见下文。
 
 ## 下载安装
 
-Windows x64 用户推荐下载 EXE 安装程序：
+**当前预览版仅保证Windows用户能够成功下载安装**
 
-- **[下载 Windows 安装程序（EXE，v0.1.0）](https://github.com/C0P1Fur/FontNest/releases/download/v0.1.0/FontNest_0.1.0_x64-setup.exe)**
-- [下载 Windows 安装程序（MSI，v0.1.0）](https://github.com/C0P1Fur/FontNest/releases/download/v0.1.0/FontNest_0.1.0_x64_en-US.msi)
-- [查看全部版本、更新说明及其他平台产物](https://github.com/C0P1Fur/FontNest/releases)
+**[点击下载 FontNest](https://github.com/C0P1Fur/FontNest/releases)**
 
 1. 下载 EXE 安装程序，双击运行并按向导完成安装；EXE 和 MSI 任选一种即可。
 2. 从开始菜单启动 **FontNest**。
 3. 等待首次字体扫描完成，即可浏览本机字体或添加自己的字体目录。
 
 安装发布版不需要 Node.js、pnpm、Rust 或 C++ 构建工具。如果启动时提示缺少 WebView2，请安装 [Microsoft WebView2 Evergreen Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)。
-
-以上直链固定指向 **v0.1.0 预览版**；后续版本请从[发布页面](https://github.com/C0P1Fur/FontNest/releases)获取。
 
 ## 界面预览
 
