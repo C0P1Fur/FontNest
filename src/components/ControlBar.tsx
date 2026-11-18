@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react'
 import type { SortKey, ViewMode } from '../types/font'
 import { SIZES } from '../lib/samples'
-import { MAX_COMPARE, useApp } from '../state/store'
+import { useApp } from '../state/store'
 import { Segmented } from './Segmented'
 import { GridIcon, ListIcon } from './Icons'
+import { SelectionMenu } from './SelectionMenu'
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'name', label: '按名称' },
@@ -32,8 +33,6 @@ export function ControlBar() {
   const setSort = useApp((state) => state.setSort)
   const view = useApp((state) => state.view)
   const setView = useApp((state) => state.setView)
-  const selectionMode = useApp((state) => state.selectionMode)
-  const startSelection = useApp((state) => state.startSelection)
 
   return (
     <div className="controlbar">
@@ -81,37 +80,8 @@ export function ControlBar() {
           className="view-toggle"
         />
 
-        {/* 安装和卸载是两条独立通道：意图在点按钮时就定了，
-            不需要先进入一个中立的多选模式再二选一 */}
-        <button
-          type="button"
-          className={selectionMode === 'install' ? 'multi-btn is-active' : 'multi-btn'}
-          aria-pressed={selectionMode === 'install'}
-          title="批量把字体装进系统"
-          onClick={() => startSelection('install')}
-        >
-          多选安装
-        </button>
-
-        <button
-          type="button"
-          className={selectionMode === 'uninstall' ? 'multi-btn is-active' : 'multi-btn'}
-          aria-pressed={selectionMode === 'uninstall'}
-          title="批量把字体从系统里卸掉"
-          onClick={() => startSelection('uninstall')}
-        >
-          多选卸载
-        </button>
-
-        <button
-          type="button"
-          className={selectionMode === 'compare' ? 'multi-btn is-active' : 'multi-btn'}
-          aria-pressed={selectionMode === 'compare'}
-          title={`并排比较字体的实际排版效果（最多 ${MAX_COMPARE} 个）`}
-          onClick={() => startSelection('compare')}
-        >
-          字体对比
-        </button>
+        {/* 多选入口：下拉里先选"要干什么"，因为三个动作的可选范围完全不同 */}
+        <SelectionMenu />
       </div>
     </div>
   )

@@ -148,6 +148,7 @@ export default function App() {
     if (!selectionMode) return []
     const keys = new Set<string>()
 
+    // 对比谁都能选；装卸只放行"这次真的动得了"的那批
     if (selectionMode === 'compare') {
       for (const font of shown) keys.add(font.family.toLowerCase())
       return [...keys]

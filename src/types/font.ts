@@ -23,14 +23,6 @@ export type LibraryScope =
   | 'variable'
   | 'favorite'
 
-/**
- * 多选通道。安装和卸载分成两条独立的通道，而不是进一个模式再二选一：
- *
- * - 用户的意图在点按钮那一刻就已经确定了
- * - 每个通道可以只放行"能操作"的字体（装的时候灰掉已装的，卸的时候灰掉没装的），
- *   不需要让用户自己判断哪些能点
- */
-export type SelectionMode = 'install' | 'uninstall' | 'compare'
 
 export type SortKey = 'name' | 'styles' | 'year' | 'state'
 
@@ -78,7 +70,6 @@ export interface Font {
   collectionIndex: number
 }
 
-/** 查询条件。v0.1 在客户端过滤；索引落地后整体下推给 Rust。 */
 /**
  * 浏览容器。
  *
@@ -92,6 +83,14 @@ export type BrowseContainer =
   | { kind: 'view'; scope: LibraryScope }
   | { kind: 'collection'; id: string }
 
+/**
+ * 多选意图。
+ *
+ * 进多选之前先在下拉里选"要干什么"，因为三个动作的**可选范围完全不同**：
+ * 安装只放行还没装的，卸载只放行已经装的，对比谁都能选。
+ * 先声明意图，才能在下拉之后就告诉用户"哪些卡片能点、哪些已经灰了"。
+ */
+export type SelectionMode = 'install' | 'uninstall' | 'compare'
 export interface FontQuery {
   query: string
   /** 当前容器。内置视图与分类夹走同一条判定路径 */

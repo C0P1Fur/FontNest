@@ -62,14 +62,15 @@ export const FontGrid = memo(function FontGrid({  fonts,
     >
       {fonts.map((font, index) => {
         const group = groupInfo.get(font.id)
-        // 每个通道只放行"真能操作"的字体：
-        // 装的时候灰掉已装的，卸的时候灰掉没装的；
-        // 对比通道对所有字体开放 —— 系统字体也值得拿来比。
+        // 意图决定可选范围：装了才能卸、没装才能装、对比谁都能选
         const selectable =
-          selectionMode === 'compare'
+          selectionMode === null
             ? true
-            : font.source === 'custom' &&
-              (selectionMode === 'install' ? !font.enabled : font.enabled)
+            : selectionMode === 'compare'
+              ? true
+              : selectionMode === 'install'
+                ? font.source === 'custom' && !font.enabled
+                : font.source === 'custom' && font.enabled
         return (
           <FontCard
             key={font.id}

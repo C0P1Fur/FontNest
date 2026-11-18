@@ -111,3 +111,52 @@ describe('setContainer', () => {
     expect(state.categories).toEqual(['serif'])
   })
 })
+
+describe('勾选数量：装卸不设限，对比卡 6 个', () => {
+  // startSelection 是"再选同一项等于退出"，所以每个用例前必须把模式清干净
+  beforeEach(() => {
+    useApp.setState({ selectionMode: null, selectedFamilies: [], selectionBusy: false })
+  })
+
+  it('安装通道可以勾选超过 6 个族', () => {
+    useApp.getState().startSelection('install')
+    const keys = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+    for (const key of keys) useApp.getState().toggleSelected(key)
+
+    expect(useApp.getState().selectedFamilies).toEqual(keys)
+  })
+
+  it('安装通道全选不截断', () => {
+    useApp.getState().startSelection('install')
+    const keys = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
+    useApp.getState().setSelectedFamilies(keys)
+    expect(useApp.getState().selectedFamilies).toEqual(keys)
+  })
+
+  it('对比通道第 7 个被拒绝，保留前 6 个', () => {
+    useApp.getState().startSelection('compare')
+    const keys = ['a', 'b', 'c', 'd', 'e', 'f']
+    for (const key of keys) useApp.getState().toggleSelected(key)
+
+    useApp.getState().toggleSelected('g')
+
+    const picked = useApp.getState().selectedFamilies
+    expect(picked).toHaveLength(6)
+    expect(picked).not.toContain('g')
+  })
+
+  it('对比通道全选会截断到 6 个', () => {
+    useApp.getState().startSelection('compare')
+    const keys = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+    useApp.getState().setSelectedFamilies(keys)
+    expect(useApp.getState().selectedFamilies).toHaveLength(6)
+  })
+
+  it('退出多选会清空已选', () => {
+    useApp.getState().startSelection('install')
+    useApp.getState().toggleSelected('a')
+    useApp.getState().exitSelection()
+    expect(useApp.getState().selectionMode).toBeNull()
+    expect(useApp.getState().selectedFamilies).toEqual([])
+  })
+})

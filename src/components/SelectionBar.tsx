@@ -1,18 +1,25 @@
-import { MAX_COMPARE, MIN_COMPARE, useApp } from '../state/store'
+import { MAX_COMPARE, MIN_COMPARE, summarizeSelection } from '../lib/selection'
+import { useApp } from '../state/store'
 
 interface SelectionBarProps {
-  /** 当前通道下可选、且可见的字体族 key */
+  /** 当前意图下可选、且可见的字体族 key。全选时用 */
   pickableFamilies: string[]
 }
+
+const ACTION_LABEL = {
+  install: '安装',
+  uninstall: '卸载',
+  compare: '对比',
+} as const
 
 /**
  * 多选操作条。
  *
- * 三条通道各有自己的主按钮：安装 / 卸载 / 对比。
- * 进哪个通道就做什么事，不需要再让用户选一次。
+ * 意图是进多选时在下拉里定下来的，所以这里**只出一个主按钮** ——
+ * 不会再出现"勾完了三个按钮全是灰的，不知道哪儿不对"。
  *
- * 安装和卸载的粒度是**字体族**（只装 Regular 会让系统里出现半套字体）；
- * 对比也按族选，但每个族只取主面展示 —— 比的是设计语言，不是字重。
+ * 按钮可不可点由 `summarizeSelection` 算：装/卸看还有多少个目标字体，
+ * 对比看族数是否落在 2–6。
  */
 export function SelectionBar({ pickableFamilies }: SelectionBarProps) {
   const mode = useApp((state) => state.selectionMode)
@@ -27,92 +34,69 @@ export function SelectionBar({ pickableFamilies }: SelectionBarProps) {
   if (!mode) return null
 
   const picked = new Set(selectedFamilies)
+  const summary = summarizeSelection(fonts, selectedFamilies)
+  const allPicked =
+    pickableFamilies.length > 0 && pickableFamilies.every((key) => picked.has(key))
 
-  if (mode === 'compare') {
-    const enough = picked.size >= MIN_COMPARE
-    return (
-      <div className="selection-bar is-compare" role="region" aria-label="字体对比">
-        <span className="selection-count">
-          已选 <b>{picked.size}</b> / {MAX_COMPARE} 个字体
-          {enough ? null : <em>再选 {MIN_COMPARE - picked.size} 个</em>}
-        </span>
+  const targets =
+    mode === 'install'
+      ? summary.installTargets
+      : mode === 'uninstall'
+        ? summary.uninstallTargets
+        : summary.families
 
-        <button
-          type="button"
-          className="selection-ghost"
-          disabled={picked.size === 0}
-          onClick={() => setSelectedFamilies([])}
-        >
-          清空
-        </button>
+  const enabled =
+    mode === 'compare' ? summary.canCompare : mode === 'install' ? summary.canInstall : summary.canUninstall
 
-        <button
-          type="button"
-          className="selection-primary"
-          disabled={!enough}
-          onClick={openCompare}
-        >
-          {enough ? `开始对比 ${picked.size} 个` : '开始对比'}
-        </button>
-
-        <button type="button" className="selection-exit" onClick={exitSelection}>
-          取消
-        </button>
-      </div>
-    )
-  }
-
-  const installing = mode === 'install'
-  const pickable = new Set(pickableFamilies)
-  const allPicked = pickable.size > 0 && pickableFamilies.every((key) => picked.has(key))
-
-  // 只统计「真的会被改动」的字体：通道本身已经按状态过滤过，
-  // 但选中的族里可能混着已经就位的字重（半装状态）
-  const changed = fonts.filter(
-    (font) =>
-      font.source === 'custom' &&
-      picked.has(font.family.toLowerCase()) &&
-      font.enabled !== installing,
-  ).length
+  const hint =
+    mode === 'compare'
+      ? summary.families < MIN_COMPARE
+        ? `再选 ${MIN_COMPARE - summary.families} 个`
+        : summary.families > MAX_COMPARE
+          ? `最多对比 ${MAX_COMPARE} 个`
+          : null
+      : summary.reason
 
   return (
-    <div
-      className={installing ? 'selection-bar is-install' : 'selection-bar is-uninstall'}
-      role="region"
-      aria-label={installing ? '批量安装' : '批量卸载'}
-    >
+    <div className="selection-bar" role="region" aria-label={`批量${ACTION_LABEL[mode]}`}>
+      <span className="selection-mode">{ACTION_LABEL[mode]}</span>
+
       <span className="selection-count">
-        {installing ? '待安装' : '待卸载'} <b>{picked.size}</b> 个字体族
-        {picked.size === 0 ? (
-          <em>{installing ? '灰色字体已装好' : '灰色字体未安装'}</em>
-        ) : null}
+        已选 <b>{summary.families}</b> 个字体族
+        {hint ? <em>{hint}</em> : null}
       </span>
 
       <button
         type="button"
         className="selection-ghost"
-        disabled={busy || pickable.size === 0}
-        onClick={() => setSelectedFamilies(allPicked ? [] : pickableFamilies)}
+        disabled={busy || pickableFamilies.length === 0 || allPicked}
+        onClick={() => setSelectedFamilies(pickableFamilies)}
       >
-        {allPicked ? '取消全选' : '全选'}
+        全选
+      </button>
+
+      {/* 与"全选"拆成两个按钮：全选只是一个方向，勾了一部分之后再点它
+          只会追加，用户没法一步清空 */}
+      <button
+        type="button"
+        className="selection-ghost"
+        disabled={busy || summary.families === 0}
+        onClick={() => setSelectedFamilies([])}
+      >
+        取消全选
       </button>
 
       <button
         type="button"
         className="selection-primary"
-        disabled={busy || picked.size === 0}
+        disabled={busy || !enabled}
         onClick={() => {
-          void batch()
+          if (mode === 'compare') openCompare()
+          else void batch(mode === 'install')
         }}
       >
-        {busy
-          ? '处理中…'
-          : `${installing ? '安装' : '卸载'}${picked.size > 0 ? ` ${picked.size} 个` : ''}`}
+        {busy ? '处理中…' : `${ACTION_LABEL[mode]}${targets > 0 ? ` ${targets} 个` : ''}`}
       </button>
-
-      {changed === 0 && picked.size > 0 ? (
-        <span className="selection-note">所选字重已就位</span>
-      ) : null}
 
       <button type="button" className="selection-exit" onClick={exitSelection} disabled={busy}>
         取消

@@ -15,18 +15,16 @@ import type {
 import { api } from '../lib/ipc'
 import type { CatalogItem } from '../lib/ipc'
 import { sameContainer } from '../lib/filter'
+import { MAX_COMPARE, MIN_COMPARE } from '../lib/selection'
 
 /**
- * 对比面板同时显示的字体族上限。
+ * 多选态：单一入口。
  *
- * 为什么是 4：对比的目的是"分辨差异"，人眼一次能并排分辨的样式上限大约
- * 就是 3–4 个。再多就得往下滚，滚动会让行与行错位，反而看不清差异；
- * 而且 4 行在 720p 的面板高度里能全部显示，不需要滚动。
- *
- * 下限是 2：只有一个字体不叫对比。
+ * 进入后任意勾选字体族，安装 / 卸载 / 对比三个动作在同一处完成。
+ * 早先拆成三条独立通道（多选安装 / 多选卸载 / 字体对比），用户得先选对通道
+ * 才能开始勾选 —— 而三条通道的可选范围还不一样，等于让用户先猜意图。
  */
-export const MAX_COMPARE = 4
-export const MIN_COMPARE = 2
+
 
 /** "全部字体"这个内置视图的容器值，作为默认容器与各类回退目标 */
 export const ALL_VIEW: BrowseContainer = { kind: 'view', scope: 'all' }
@@ -106,7 +104,7 @@ export interface AppState {
    */
   expandedFamilies: string[]
 
-  /* 多选模式：拆分通道，一次只做一件事 */
+  /* 多选：先在下拉里声明意图，再勾选 */
   selectionMode: SelectionMode | null
   selectedFamilies: string[]
   selectionBusy: boolean
@@ -141,7 +139,7 @@ export interface AppState {
   closeSettings: () => void
   /** 展开/收起一个字体族 */
   toggleFamily: (key: string) => void
-  /** 进入某个多选通道；重复点同一个通道等于退出。退出时清空已选 */
+  /** 进入某个多选意图；重复选同一项等于退出。退出时清空已选 */
   startSelection: (mode: SelectionMode) => void
   exitSelection: () => void
   /** 勾选/取消一整个字体族（小写族名） */
@@ -152,8 +150,8 @@ export interface AppState {
   applyEnabled: (ids: string[], enabled: boolean) => Promise<boolean>
   /** 按字体族安装 / 卸载。全软件的统一粒度 */
   setFamilyEnabled: (family: string, enabled: boolean) => Promise<void>
-  /** 在当前多选通道里执行批量操作（装还是卸由通道决定） */
-  batchSetEnabled: () => Promise<void>
+  /** 对当前勾选的族批量安装或卸载 */
+  batchSetEnabled: (enabled: boolean) => Promise<void>
   /** 用已选的族打开对比面板 */
   openCompare: () => void
   closeCompare: () => void
@@ -376,7 +374,7 @@ export const useApp = create<AppState>()((set, get) => ({
 
   startSelection: (mode) =>
     set((state) => ({
-      // 再点同一个通道等于退出；换通道则直接切换并清空已选
+      // 再选同一项等于退出；换一项则直接切换并清空已选
       selectionMode: state.selectionMode === mode ? null : mode,
       selectedFamilies: [],
       selectionBusy: false,
@@ -394,9 +392,10 @@ export const useApp = create<AppState>()((set, get) => ({
       return
     }
 
-    // 对比有人数上限，超了就明确说不行，而不是静默把第 5 个丢掉
+    // 只有对比卡上限：一次能分辨的样式就那么几个，第 7 个选了也看不过来。
+    // 装卸不设上限 —— 批量装 50 个字体是合理需求。
     if (state.selectionMode === 'compare' && picked.length >= MAX_COMPARE) {
-      state.showToast(`最多同时对比 ${MAX_COMPARE} 个字体`)
+      state.showToast(`对比最多选 ${MAX_COMPARE} 个字体`)
       return
     }
 
@@ -405,7 +404,7 @@ export const useApp = create<AppState>()((set, get) => ({
 
   setSelectedFamilies: (keys) =>
     set((state) => ({
-      // 全选也要守上限：对比通道里截断，安装/卸载通道不限
+      // 全选同样守对比的上限；装卸通道照旧选多少是多少
       selectedFamilies:
         state.selectionMode === 'compare' ? keys.slice(0, MAX_COMPARE) : keys,
     })),
@@ -418,9 +417,13 @@ export const useApp = create<AppState>()((set, get) => ({
       state.showToast(`至少选 ${MIN_COMPARE} 个字体才能对比`)
       return
     }
+    if (picked.length > MAX_COMPARE) {
+      state.showToast(`最多同时对比 ${MAX_COMPARE} 个字体`)
+      return
+    }
 
     set({
-      compareFamilies: picked.slice(0, MAX_COMPARE),
+      compareFamilies: [...picked],
       compareOpen: true,
       selectionMode: null,
       selectedFamilies: [],
@@ -491,11 +494,10 @@ export const useApp = create<AppState>()((set, get) => ({
     await get().applyEnabled(targets, enabled)
   },
 
-  /** 当前通道里的批量操作：装还是卸由通道决定，调用方不用传 */
-  batchSetEnabled: async () => {
+  /** 对当前勾选的族批量安装或卸载。是否允许由 SelectionBar 依据规则禁用 */
+  batchSetEnabled: async (enabled) => {
     const state = get()
     if (!state.selectionMode) return
-    const enabled = state.selectionMode === 'install'
 
     const keys = new Set(state.selectedFamilies)
     const targets = state.fonts
