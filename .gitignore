@@ -70,7 +70,11 @@ $RECYCLE.BIN/
 # AI 助手的技能包（.agents/skills/…），是开发环境的一部分而非产品源码。
 # 如果团队需要共享同一套技能，把下面这行删掉即可。
 .agents/
+# 文件认领工具的临时标记与审计日志，不是项目内容。
+# 注意必须是 *.dshclaim：标记文件叫 src/App.tsx.dshclaim 这种形式，
+# 只写 .dshclaim 只能匹配同名文件，它们当初就是这么被提交进去的。
 .dsh-file-claim.audit.jsonl
+*.dshclaim
 .dshclaim
 
 # ───────── 设计参考（不进库）─────────
