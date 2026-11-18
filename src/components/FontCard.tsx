@@ -149,6 +149,17 @@ export const FontCard = memo(function FontCard({
           所以它们显示"已安装"是准确的 —— 它们确实已经在系统里。
         */}
         <span className={font.enabled ? 'card-state is-on' : 'card-state'}>
+          {/* 实心点 = 已在系统里，空心圈 = 还没装。单色，跟着文字颜色走 */}
+          <svg className="card-state-ico" viewBox="0 0 10 10" aria-hidden="true">
+            <circle
+              cx="5"
+              cy="5"
+              r="3.2"
+              fill={font.enabled ? 'currentColor' : 'none'}
+              stroke="currentColor"
+              strokeWidth="1.2"
+            />
+          </svg>
           {font.enabled ? '已安装' : '未安装'}
         </span>
 

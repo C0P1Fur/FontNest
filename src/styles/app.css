@@ -1608,6 +1608,19 @@ kbd {
   color: var(--ink);
 }
 
+/*
+ * 展开后的选项列表由浏览器原生绘制。
+ *
+ * color-scheme 已经让它在深色模式下用深底，但部分引擎（Windows 上的
+ * WebView2 尤其）仍可能沿用系统弹层的浅底，而文字颜色是从 select 继承的
+ * —— 深色模式下就变成"浅灰字配白底"，等于看不见。这里把底色和字色
+ * 显式钉死，两种主题下都不会撞色。
+ */
+.seg select option {
+  background: var(--surface);
+  color: var(--ink);
+}
+
 .view-toggle button {
   width: 26px;
 }
@@ -1734,12 +1747,23 @@ kbd {
  * 未安装反而略重一点 —— 那是用户能动手的那批。
  */
 .card-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--muted);
   white-space: nowrap;
 }
 
 .card-state.is-on {
   color: var(--faint);
+}
+
+/* 图标跟着文字颜色走，行内尺寸 —— 卡片脚注是 9.5px 的等宽字 */
+.card-state-ico {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  display: block;
 }
 
 /* ───── 同族字重合并 ───── */
