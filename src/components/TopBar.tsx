@@ -15,8 +15,9 @@ export function TopBar() {
   const [keysOpen, setKeysOpen] = useState(false)
 
   return (
-    <header className="topbar">
-      <div className="brand">
+    // data-tauri-drag-region：macOS 的 Overlay 标题栏没有原生拖拽条，顶栏空白处就是拖拽区
+    <header className="topbar" data-tauri-drag-region>
+      <div className="brand" data-tauri-drag-region>
         <span className="brand-mark" aria-hidden="true">
           {/*
             探头喵。黑色部分用 currentColor（跟随主题的 --ink），
