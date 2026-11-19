@@ -188,7 +188,13 @@ export function RecognizePanel() {
               </>
             )}
           </p>
-        ) : null}
+        ) : (
+          <p className="hotkey-hint is-warn">
+            全局快捷键 <kbd>{appStatus?.hotkey || 'Ctrl+Alt+F'}</kbd>{' '}
+            被其它程序占用了，暂时用不了。上面的按钮照样能选图识别；想恢复热键，关掉占用它的程序后重启
+            FontNest。
+          </p>
+        )}
 
         <form
           className="dir-form"

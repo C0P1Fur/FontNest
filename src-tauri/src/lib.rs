@@ -43,7 +43,33 @@ pub struct AppState {
 }
 
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+
+    /*
+     * 单实例锁（仅正式构建）。
+     *
+     * 全局热键是**进程独占的系统资源**：用户再双击一次图标，第二个实例
+     * register 同一个 Ctrl+Alt+F 必然失败，日志里就是那句
+     * "HotKey already registered"。第二份实例本身也没有意义 ——
+     * 它只是又一个空窗口，却会跟第一个抢同一个热键。
+     *
+     * 所以第二次启动时直接激活已有窗口再退出。
+     *
+     * dev 下刻意不启用：`tauri dev` 重建 Rust 时会重启应用，如果上一份
+     * 进程还没退干净，单实例锁会让新代码永远起不来，只能看到旧窗口。
+     */
+    #[cfg(not(debug_assertions))]
+    {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }));
+    }
+
+    builder
         .plugin(tauri_plugin_dialog::init())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
@@ -70,7 +96,14 @@ pub fn run() {
             )) {
                 Ok(()) => true,
                 Err(error) => {
-                    eprintln!("[hotkey] 注册 {HOTKEY_ACCELERATOR} 失败：{error}");
+                    // 最常见的原因是两个 FontNest 同时在跑（见上面的单实例锁），
+                    // 其次是别的软件已经占了这个组合。日志要把这两条说出来，
+                    // 否则用户只看到一句英文报错。
+                    eprintln!(
+                        "[hotkey] 注册 {HOTKEY_ACCELERATOR} 失败：{error}。\
+                         常见原因是已有另一个 FontNest 实例在运行，\
+                         或该组合被其它软件占用。"
+                    );
                     false
                 }
             };

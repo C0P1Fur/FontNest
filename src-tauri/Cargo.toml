@@ -19,6 +19,9 @@ tauri-plugin-dialog = "2"
 # 全局热键：识别入口不再依赖"先点按钮"。插件只在 Rust 侧调用 register，
 # 不暴露给前端，所以 capabilities 里不需要加权限。
 tauri-plugin-global-shortcut = "2"
+# 单实例：热键是进程独占资源，第二个实例抢不到只会白占一个窗口。
+# 只在正式构建里启用，理由见 lib.rs 的注释。
+tauri-plugin-single-instance = "2"
 # 读剪贴板里的截图。只用 get_image，不读也不写文本。
 arboard = "3"
 # 预览图编码成 data URL。预览必须缩到几百像素宽，不能再走一次文件往返。
