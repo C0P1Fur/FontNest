@@ -160,7 +160,22 @@ impl FontHome {
         }
     }
 
-    #[cfg(not(target_os = "windows"))]
+    /// macOS：`~/Library/Fonts` 是当前用户的字体目录，无需提权。
+    /// fontd 会监视这个目录，文件落盘即被系统登记，不需要注册表那一步。
+    /// 回收站放在应用数据目录（~/Library/Application Support/FontNest/trash），
+    /// 不用系统废纸篓：访问 ~/.Trash 受 TCC 保护，会弹「完全磁盘访问」授权。
+    #[cfg(target_os = "macos")]
+    pub fn real() -> Self {
+        let home = crate::paths::home_dir().unwrap_or_else(|| PathBuf::from("."));
+        Self {
+            font_dir: home.join("Library").join("Fonts"),
+            trash_dir: crate::paths::data_dir().join("trash"),
+            registry_path: String::new(),
+            broadcast: true,
+        }
+    }
+
+    #[cfg(all(unix, not(target_os = "macos")))]
     pub fn real() -> Self {
         let mut home = Self::sandboxed(PathBuf::from("."));
         home.broadcast = true;
@@ -247,6 +262,37 @@ impl Registry for WindowsRegistry<'_> {
     }
 }
 
+/// 不需要额外登记的平台（macOS）：字体目录本身就是登记表。
+///
+/// `exists` 恒为 true，对账时就不会去"补登记"一个并不存在的东西；
+/// 文件在不在、哈希对不对，仍由 `reconcile` 照常检查。
+pub struct PassiveRegistry;
+
+impl Registry for PassiveRegistry {
+    fn set(&self, _value_name: &str, _file_name: &str) -> Result<(), CoreError> {
+        Ok(())
+    }
+    fn remove(&self, _value_name: &str) -> Result<(), CoreError> {
+        Ok(())
+    }
+    fn exists(&self, _value_name: &str) -> bool {
+        true
+    }
+}
+
+/// 当前平台该用的登记方式。`path` 只对 Windows 注册表有意义。
+pub fn platform_registry(path: &str) -> Box<dyn Registry + '_> {
+    #[cfg(target_os = "macos")]
+    {
+        let _ = path;
+        Box::new(PassiveRegistry)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        Box::new(WindowsRegistry { path })
+    }
+}
+
 #[cfg(not(target_os = "windows"))]
 impl Registry for WindowsRegistry<'_> {
     fn set(&self, _value_name: &str, _file_name: &str) -> Result<(), CoreError> {
@@ -262,7 +308,7 @@ impl Registry for WindowsRegistry<'_> {
 
 #[cfg(not(target_os = "windows"))]
 fn unsupported() -> CoreError {
-    CoreError::Invalid("当前平台尚未实现字体安装，计划按 Windows → macOS → Linux 推进".to_string())
+    CoreError::Invalid("当前平台尚未实现字体安装（已支持 Windows 与 macOS）".to_string())
 }
 
 /// 测试与预览用的内存注册表
@@ -624,6 +670,38 @@ mod tests {
         assert_eq!(trashed, 1, "文件应进入回收站而不是被删除");
 
         let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn passive_registry_roundtrip_and_reconcile() {
+        let root = scratch("passive");
+        let home = FontHome::sandboxed(root.join("home"));
+        let registry = PassiveRegistry;
+        let mut manifest = Manifest::load(root.join("installed.json"));
+
+        let font = sample_font(&root, "font-p");
+        install(&font, &home, &registry, &mut manifest).expect("安装应成功");
+        let target = PathBuf::from(&manifest.find("font-p").unwrap().target);
+        assert!(target.is_file());
+
+        // 目录即登记表：对账不应试图"修复"任何东西
+        let report = reconcile(&registry, &mut manifest).unwrap();
+        assert_eq!((report.missing, report.drifted, report.repaired), (0, 0, 0));
+
+        uninstall("font-p", &home, &registry, &mut manifest).expect("卸载应成功");
+        assert!(!target.exists());
+        assert!(!manifest.owns("font-p"));
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn macos_installs_into_user_library_fonts() {
+        let home = FontHome::real();
+        assert!(home.font_dir.ends_with("Library/Fonts"));
+        assert!(home.font_dir.starts_with(crate::paths::home_dir().unwrap()));
+        assert!(home.trash_dir.starts_with(crate::paths::data_dir()));
     }
 
     #[test]

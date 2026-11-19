@@ -17,6 +17,7 @@ import { Tour } from './components/Tour'
 import { applyQuery } from './lib/filter'
 import { flattenGroups, groupFonts, pickPrimary } from './lib/group'
 import { api, isTauriRuntime } from './lib/ipc'
+import { isMacOS } from './lib/platform'
 import { RIPPLE_SELECTOR, rippleFrom, tactile } from './lib/motion'
 import { SAMPLES, SIZES } from './lib/samples'
 import { useApp } from './state/store'
@@ -321,11 +322,26 @@ export default function App() {
       const tag = target?.tagName.toLowerCase() ?? ''
       const typing = tag === 'input' || tag === 'textarea' || tag === 'select'
 
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      const mod = isMacOS ? event.metaKey : event.ctrlKey
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        ['k', 'f'].includes(event.key.toLowerCase())
+      ) {
         event.preventDefault()
         document.getElementById('search-input')?.focus()
         return
       }
+
+      // macOS 惯例：⌘, 打开偏好设置
+      if (mod && event.key === ',') {
+        event.preventDefault()
+        state.openSettings()
+        return
+      }
+
+      // 下面的单键操作不能吃掉带修饰键的组合：
+      // 否则 ⌘F / ⌘T / ⌘1 这类系统或习惯快捷键会被误当成「收藏」「换样张」「改字号」
+      if (event.metaKey || event.ctrlKey || event.altKey) return
 
       if (event.key === '/' && !typing) {
         event.preventDefault()

@@ -616,7 +616,9 @@ kbd {
 .hotkey-hint {
   font-size: 11px;
   color: var(--faint);
-  padding: 4px 0 0;
+  /* 上方已有 .pick-row 的 6px，加上这里的 4px 共 10px；下方补同样的 10px，
+     让提示行上下等距地夹在「选择截图」和输入框之间 */
+  padding: 4px 0 10px;
 }
 
 .hotkey-hint kbd {
@@ -2957,4 +2959,22 @@ input[type="range"]::-moz-range-thumb {
   .toast-bar {
     display: none;
   }
+}
+
+/* ───────────── macOS 桌面版：Overlay 标题栏 ─────────────
+   实测量出来的几何（窗口坐标）：
+     · 红绿灯可见圆点从 x≈19.5 开始，到 x≈78.5 结束，垂直中心 y=28 = 顶栏中线；
+     · 右侧图标按钮内含约 8px 留白，padding-right 12px 时图标距右边缘 ≈20px；
+   于是左右两端的可见内缩都约 20px，红绿灯 → 品牌的间距与顶栏 gap 同为 18px。
+   品牌区内的图形和文字不接收指针，按下时事件落到带 data-tauri-drag-region
+   的 .brand 上，整块都能拖动窗口。 */
+.platform-mac .topbar {
+  padding-left: 96px;
+  padding-right: 12px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.platform-mac .brand > * {
+  pointer-events: none;
 }

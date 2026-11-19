@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "FontNest 主窗口权限：核心能力 + 只读的文件夹选择器，不开放文件系统/网络插件",
   "windows": ["main"],
-  "permissions": ["core:default", "dialog:allow-open"]
+  "permissions": ["core:default", "core:window:allow-start-dragging", "dialog:allow-open"]
 }

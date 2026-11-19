@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { RecognizeReport } from '../types/font'
 import { ensureFace, faceFamily } from '../lib/fontFaces'
 import { api, isTauriRuntime } from '../lib/ipc'
+import { isMacOS } from '../lib/platform'
 import { useApp } from '../state/store'
 
 /**
@@ -175,7 +176,17 @@ export function RecognizePanel() {
         {/* 快捷键无效时必须说出来。静默失联会让用户以为功能坏了。 */}
         {hotkeyReady ? (
           <p className="hotkey-hint">
-            随时可以截图后按 <kbd>{appStatus?.hotkey}</kbd> 直接打开这里
+            {isMacOS ? (
+              // macOS 的 ⇧⌘4 默认存到桌面，剪贴板里什么都没有；要多按一个 ⌃
+              <>
+                按 <kbd>⌃⇧⌘4</kbd> 框选截图到剪贴板，再按 <kbd>{appStatus?.hotkey}</kbd>{' '}
+                直接打开这里
+              </>
+            ) : (
+              <>
+                随时可以截图后按 <kbd>{appStatus?.hotkey}</kbd> 直接打开这里
+              </>
+            )}
           </p>
         ) : null}
 

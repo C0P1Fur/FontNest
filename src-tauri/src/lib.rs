@@ -11,7 +11,13 @@ use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut,
 
 /// 全局热键。选 Control+Alt+F：三大平台都不与常见系统快捷键冲突，
 /// 且 Control 与 Alt 相邻，单手按得到。
+///
+/// macOS 上刻意**不换成 ⌘⌥F**：全局热键会从所有应用手里抢走这个组合，
+/// 而 ⌘⌥F 是 Xcode / VS Code / Safari 等的「查找替换」。这里只改显示写法。
+#[cfg(not(target_os = "macos"))]
 pub const HOTKEY_ACCELERATOR: &str = "Ctrl+Alt+F";
+#[cfg(target_os = "macos")]
+pub const HOTKEY_ACCELERATOR: &str = "⌃⌥F";
 
 /// 预览图的最大宽度。够看清是不是抓对了，又不会把事件 payload 撑肥。
 const PREVIEW_WIDTH: u32 = 480;
@@ -103,8 +109,36 @@ pub fn run() {
             commands::import_font_files,
             commands::app_status,
         ])
-        .run(tauri::generate_context!())
-        .expect("FontNest 启动失败");
+        // macOS 惯例：点红灯 / ⌘W 只是收起窗口，App 留在 Dock 里，⌘Q 才退出。
+        // 对 FontNest 尤其重要：全局热键要靠进程活着，窗口一关就退出的话，
+        // 用户截完图按 ⌃⌥F 不会有任何反应。
+        .on_window_event(|window, event| {
+            #[cfg(target_os = "macos")]
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+            }
+            #[cfg(not(target_os = "macos"))]
+            let _ = (window, event);
+        })
+        .build(tauri::generate_context!())
+        .expect("FontNest 启动失败")
+        .run(|app, event| {
+            // 点 Dock 图标时把收起的窗口叫回来
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen {
+                has_visible_windows: false,
+                ..
+            } = event
+            {
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                }
+            }
+            #[cfg(not(target_os = "macos"))]
+            let _ = (app, event);
+        });
 }
 
 /// 热键按下时做的事：抓剪贴板 → 存起来 → 通知前端 → 把窗口叫到前面。

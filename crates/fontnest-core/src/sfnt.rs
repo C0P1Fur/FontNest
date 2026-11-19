@@ -8,8 +8,12 @@
 //! 后续硬化时可以把本文件整体替换为 `read-fonts` / `ttf-parser`，
 //! 对外只暴露 `FontInfo`，替换成本被限制在这一个文件里。
 
-/// 单个字体文件的大小上限，超过直接拒绝（防内存炸弹）
-pub const MAX_FONT_BYTES: u64 = 64 * 1024 * 1024;
+/// 单个字体文件的大小上限，超过直接拒绝（防内存炸弹）。
+///
+/// 64MB 曾经够用，但 macOS 的系统中文字体集合远超这个量级：
+/// PingFang.ttc 78MB、Kaiti.ttc 106MB、Xingkai.ttc 88MB。
+/// 卡在 64MB 会让苹方这类最常用的系统字体整个不出现在列表里。
+pub const MAX_FONT_BYTES: u64 = 160 * 1024 * 1024;
 
 #[derive(Debug, Default, Clone)]
 pub struct FontInfo {

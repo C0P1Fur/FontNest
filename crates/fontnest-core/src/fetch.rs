@@ -224,9 +224,48 @@ fn system_proxy() -> Option<String> {
     Some(server)
 }
 
-#[cfg(not(target_os = "windows"))]
+/// macOS：从访达 / Dock 启动的 App **拿不到** shell 里的代理环境变量，
+/// 系统代理存在 SystemConfiguration 里。`scutil --proxy` 是系统自带的读取入口，
+/// 不需要链接任何框架。
+#[cfg(target_os = "macos")]
 fn system_proxy() -> Option<String> {
-    // macOS / Linux 的图形程序通常带代理环境变量，curl 自己会读
+    let output = Command::new("/usr/sbin/scutil")
+        .arg("--proxy")
+        .stdin(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+        .ok()?;
+    parse_scutil_proxy(&String::from_utf8_lossy(&output.stdout))
+}
+
+/// 解析 `scutil --proxy` 的输出。HTTPS 优先，其次 HTTP，最后 SOCKS。
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn parse_scutil_proxy(text: &str) -> Option<String> {
+    let value = |key: &str| -> Option<&str> {
+        text.lines().find_map(|line| {
+            let (name, rest) = line.trim().split_once(" : ")?;
+            (name == key).then(|| rest.trim())
+        })
+    };
+
+    for (prefix, scheme) in [("HTTPS", "http"), ("HTTP", "http"), ("SOCKS", "socks5h")] {
+        if value(&format!("{prefix}Enable")) != Some("1") {
+            continue;
+        }
+        let Some(host) = value(&format!("{prefix}Proxy")).filter(|host| !host.is_empty()) else {
+            continue;
+        };
+        return Some(match value(&format!("{prefix}Port")) {
+            Some(port) => format!("{scheme}://{host}:{port}"),
+            None => format!("{scheme}://{host}"),
+        });
+    }
+    None
+}
+
+#[cfg(all(unix, not(target_os = "macos")))]
+fn system_proxy() -> Option<String> {
+    // Linux 的图形程序通常带代理环境变量，curl 自己会读
     None
 }
 
@@ -495,6 +534,24 @@ mod tests {
         };
         let error = download_variant(&font, "Regular", |_| {}).unwrap_err();
         assert!(error.to_string().contains("许可不允许"));
+    }
+
+    #[test]
+    fn scutil_proxy_output_is_parsed() {
+        let enabled = "<dictionary> {\n  ExceptionsList : <array> {\n    0 : *.local\n  }\n  HTTPEnable : 1\n  HTTPPort : 1082\n  HTTPProxy : 127.0.0.1\n  HTTPSEnable : 1\n  HTTPSPort : 1083\n  HTTPSProxy : 127.0.0.1\n}\n";
+        assert_eq!(
+            parse_scutil_proxy(enabled).as_deref(),
+            Some("http://127.0.0.1:1083")
+        );
+
+        let socks_only = "<dictionary> {\n  HTTPSEnable : 0\n  SOCKSEnable : 1\n  SOCKSPort : 7890\n  SOCKSProxy : 127.0.0.1\n}\n";
+        assert_eq!(
+            parse_scutil_proxy(socks_only).as_deref(),
+            Some("socks5h://127.0.0.1:7890")
+        );
+
+        let disabled = "<dictionary> {\n  HTTPEnable : 0\n  HTTPSEnable : 0\n}\n";
+        assert_eq!(parse_scutil_proxy(disabled), None);
     }
 
     #[test]
